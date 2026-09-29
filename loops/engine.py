@@ -252,8 +252,8 @@ def ranked(store):
 
 
 def _dur(h):
-    m = round(h * 60)
-    return f"{m} min" if m < 60 else f"{h:.1f}h".replace(".0h", "h")
+    from .forecast import dur
+    return dur(h)
 
 
 def _short(text, n=40):

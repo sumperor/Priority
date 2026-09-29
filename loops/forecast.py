@@ -11,6 +11,14 @@ MISS_FALLBACK = {
 }
 
 
+def dur(h):
+    """Hours as people say them: "55 min", "1 h 10 min", "2 h"."""
+    m = max(1, round((h or 0) * 60))
+    if m < 60:
+        return f"{m} min"
+    return f"{m // 60} h" + (f" {m % 60} min" if m % 60 else "")
+
+
 def _hrs(h):
     h = abs(h)
     return f"{max(1, round(h))}h" if h < 48 else f"{round(h / 24)}d"
@@ -38,7 +46,7 @@ def forecast(loop, p_miss, effort_h, cost, open_by_id):
     if hours_left < 0:
         headline, level = f"Missed by {_hrs(hours_left)}. {stakes}", "late"
     elif latest_start <= now:
-        headline, level = f"At risk: needs about {effort_h:.1f}h and only {_hrs(hours_left)} left.", "late"
+        headline, level = f"At risk: needs about {dur(effort_h)} and only {_hrs(hours_left)} left.", "late"
     elif hours_left < 24:
         ls = latest_start.astimezone()
         when = f"{ls:%H:%M}" if ls.date() == now.astimezone().date() else f"tomorrow {ls:%H:%M}"

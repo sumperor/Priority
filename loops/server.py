@@ -273,14 +273,20 @@ def capture(body: Capture):
     dup = _same_task(s, d["summary"])
     if dup:
         return {"id": dup, "duplicate": True, "questions": []}
-    from .errands import is_errand, questions as errand_questions
+    from .errands import is_errand, parse as errand_parse, questions as errand_questions
     errand = is_errand(body.text)
+    known = errand_parse(body.text) if errand else {}
     loop_id = s.create_loop(source="manual", thread_id="", type=d["type"], person=d.get("person", ""),
                             summary=d["summary"], done_when=d.get("done_when", ""), due=due, cost=d["cost"],
                             consequence=d.get("consequence", "minor"), reversible=int(bool(d.get("reversible", True))),
                             hard_deadline=int(bool(d.get("hard_deadline", False))), effort_h=d["effort_h"],
-                            stakes=d.get("stakes", ""), base_h=d["effort_h"] if errand else None)
-    return {"id": loop_id, "questions": errand_questions(body.text, due) if errand else followups(d)}
+                            stakes=d.get("stakes", ""), base_h=known.get("base_h", d["effort_h"]) if errand else None)
+    if not errand:
+        return {"id": loop_id, "questions": followups(d)}
+    from .maps import home
+    if known:
+        _apply(s, loop_id, dict(known))
+    return {"id": loop_id, "questions": errand_questions(body.text, due, known, home())}
 
 
 _WHEN_TAIL = __import__("re").compile(
@@ -532,13 +538,16 @@ class Edit(BaseModel):
     travel_mode: str | None = None   # walk | cycle | drive | transit | delivery
     travel_min: int | None = None    # one way
     place: str | None = None
+    there_min: int | None = None     # errands: time at the place
+    home: str | None = None          # where errands set off from (saved once, not on the loop)
 
 
 @app.patch("/api/loops/{loop_id}")
 def edit(loop_id: int, body: Edit):
     s = db(); _loop(s, loop_id)
-    _apply(s, loop_id, {k: v for k, v in body.model_dump().items() if v is not None})
-    return {"ok": True}
+    f = _apply(s, loop_id, {k: v for k, v in body.model_dump().items() if v is not None})
+    l = s.get_loop(loop_id)
+    return {"ok": True, "set": {k: l[k] for k in ("travel_min",) if l[k] is not None}, "route": f.get("_route")}
 
 
 def _apply(s, loop_id, f):
@@ -563,10 +572,23 @@ def _apply(s, loop_id, f):
         f["travel_min"] = max(0, min(180, int(f["travel_min"])))
     if "place" in f:
         f["place"] = f["place"].strip()[:80]
+    if "home" in f:
+        from .maps import set_home
+        set_home(f.pop("home"))
+    if "there_min" in f:
+        f["base_h"] = round(max(1, min(600, int(f.pop("there_min")))) / 60, 3)
     if f:
         s.update_loop(loop_id, **f)
     cur = dict(s.get_loop(loop_id))
-    if ({"travel_mode", "travel_min", "place"} & set(f)) or ("commit_at" in f and (cur.get("base_h") or cur.get("travel_mode"))):
+    if ({"travel_mode", "place"} & set(f)) and cur.get("place") and cur.get("travel_mode") not in (None, "delivery") \
+            and "travel_min" not in f and (cur.get("travel_min") is None or "travel_mode" in f):
+        from .maps import travel
+        route = travel(cur["place"], cur["travel_mode"])  # looked up, not guessed
+        if route:
+            s.update_loop(loop_id, travel_min=route["minutes"])
+            cur["travel_min"] = f["travel_min"] = route["minutes"]
+            f["_route"] = route
+    if ({"travel_mode", "travel_min", "place", "base_h"} & set(f)) or ("commit_at" in f and (cur.get("base_h") or cur.get("travel_mode"))):
         from .errands import recompute
         s.update_loop(loop_id, **recompute(cur))
     return f
@@ -596,7 +618,7 @@ def revise_loop(loop_id: int, body: Text):
         if k in ch:
             ch[k] = bool(ch[k])
     applied = _apply(s, loop_id, dict(ch)) if ch else {}
-    return {"changed": sorted(applied)}
+    return {"changed": sorted(k for k in applied if not k.startswith("_"))}
 
 
 @app.post("/api/loops/{loop_id}/ack")
@@ -985,5 +1007,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.22 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.23 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

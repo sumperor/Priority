@@ -972,7 +972,7 @@ function gridHTML(r,D){
       const pos=`top:${top}px;height:${h}px;left:calc(${it.lane*w}% + 2px);width:calc(${w}% - 4px)`;
       if(it.k==='event')return `<div class="blk event" style="${pos}" data-event="${esc(x.title)}|${x.start}"><b>${esc(x.title)}</b><small>${hm(x.start)}</small></div>`;
       if(it.k==='meet')return `<div class="blk meet" style="${pos}" data-task="${x.id}"><b>${esc(x.title)}</b><small>${hm(x.start)}</small></div>`;
-      return `<div class="blk task${x.fixed?' fixed':''}${x.late?' late':''}" style="${pos};--c:${AREA_C[x.area]||AREA_C.Other}" data-block="${x.id}" data-start="${x.start}" data-min="${x.minutes}" title="${esc(x.title)}"><b>${esc(x.title)}</b><small>${hm(x.start)}, ${x.minutes<60?x.minutes+' min':(x.minutes/60).toFixed(x.minutes%60?1:0)+'h'}${x.late?' · late':''}</small></div>`}).join('');
+      return `<div class="blk task${x.fixed?' fixed':''}${x.late?' late':''}" style="${pos};--c:${AREA_C[x.area]||AREA_C.Other}" data-block="${x.id}" data-start="${x.start}" data-min="${x.minutes}" title="${esc(x.title)}"><b>${esc(x.title)}</b><small>${hm(x.start)}, ${dur(x.minutes/60)}${x.late?' · late':''}</small></div>`}).join('');
     const ticks=dls.map(x=>`<div class="duetick" style="top:${px(mins(x.at))}px"></div>`).join('');
     const off=`<div class="off" style="top:0;height:${px(D.day_start*60)}px"></div><div class="off" style="top:${px(D.day_end*60)}px;bottom:0"></div>`;
     const lines=[...Array(SHOW_TO-SHOW_FROM)].map((_,k)=>`<div class="hline" style="top:${k*HOUR}px"></div>`).join('');
@@ -1162,7 +1162,7 @@ function render(){
 function details(l){
   const f=l.forecast;
   return `<div class="in">${l.origin&&l.origin.preview?`<p class="quote" style="margin:0 0 10px">${esc(l.origin.preview)}</p>`:''}<p><b>If missed:</b> ${esc(f.if_missed)}</p><p><b>If it slips a day:</b> ${esc(f.slip_1d)}</p>
-    <p class="nums">${Math.round(100*f.p_miss)}% chance of missing it. Takes about ${l.effort_adj}h. From ${esc(l.source==='manual'?'your notes':SRC_NAME[l.source]||l.source)}.</p>
+    <p class="nums">${Math.round(100*f.p_miss)}% chance of missing it. Takes about ${dur(l.effort_adj)}. From ${esc(l.source==='manual'?'your notes':SRC_NAME[l.source]||l.source)}.</p>
     ${l.note?`<p class="nums">${esc(l.note)}</p>`:''}
     <div class="links"><button class="link" data-act="talk" data-id="${l.id}">Talk about it</button>${canExplore(l)?`<button class="link" data-act="explore" data-id="${l.id}">Explore who this is</button>`:''}<button class="link" data-act="focus-this" data-id="${l.id}">Focus on this</button><button class="link" data-act="later" data-id="${l.id}">Move it</button><button class="link" data-act="dismiss" data-id="${l.id}">Not a task</button></div></div>`;
 }
@@ -1294,10 +1294,13 @@ async function askMissing(c){
   for(let i=0;i<qs.length;i++){
     const q=qs[i];
     if(q.skip_if&&Object.entries(q.skip_if).every(([k,v])=>got[k]===v))continue;
+    if(q.skip_if_set&&got[q.skip_if_set]!=null)continue;
     const v=await step({ctx:c.summary,q:q.question,kind:q.kind||'choice',options:q.options||[],n:i+1,of:qs.length,skip:true,placeholder:q.placeholder||''});
     if(v===null)return;
     got[q.field]=v;
-    if(v!=='')await api(`/api/loops/${c.id}`,{method:'PATCH',body:{[q.field]:v}});
+    if(v!==''){const r=await api(`/api/loops/${c.id}`,{method:'PATCH',body:{[q.field]:v}});
+      Object.assign(got,(r&&r.set)||{});
+      if(r&&r.route)toast(`${r.route.minutes} min each way (${r.route.km} km), from ${r.route.via}.`)}
   }
   closeS();toast('Got it. Plan updated.');refresh();
 }
@@ -1323,6 +1326,7 @@ async function talkFlow(l){
   };
   draw();
 }
+function dur(h){const m=Math.max(1,Math.round((h||0)*60));return m<60?m+' min':Math.floor(m/60)+' h'+(m%60?' '+(m%60)+' min':'')}
 function toLocal(iso){const d=new Date(iso),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}
 function editFlow(l){
   const others=S.loops.filter(o=>o.id!==l.id);
@@ -1333,7 +1337,7 @@ function editFlow(l){
     <label class="field"><span>Task</span><input id="e-s" value="${esc(l.summary)}"></label>
     <label class="field"><span>Who</span><input id="e-p" value="${esc(l.person)}"></label>
     <label class="field"><span>Due</span><input id="e-d" type="datetime-local" value="${toLocal(l.due)}"></label>
-    <label class="field"><span>Takes about (hours)</span><input id="e-h" type="number" min="0.05" step="0.25" value="${Math.round(l.effort_h*100)/100}"></label>
+    <label class="field"><span>Takes about (minutes)</span><input id="e-h" type="number" min="1" step="5" value="${Math.round(l.effort_h*60)}"></label>
     <label class="field"><span>What happens if it's missed</span><input id="e-k" value="${esc(l.stakes)}"></label>
     <label class="check"><input id="e-hd" type="checkbox"${l.hard_deadline?' checked':''}> The deadline is fixed by someone else</label>
     <label class="check"><input id="e-rv" type="checkbox"${l.reversible?'':' checked'}> Can't be recovered if missed</label>
@@ -1351,7 +1355,7 @@ function editFlow(l){
   };
   g('#e-go').onclick=async()=>{
     const due=new Date(g('#e-d').value);
-    const body={summary:g('#e-s').value.trim()||l.summary,person:g('#e-p').value.trim(),effort_h:+g('#e-h').value||l.effort_h,
+    const body={summary:g('#e-s').value.trim()||l.summary,person:g('#e-p').value.trim(),effort_h:(+g('#e-h').value/60)||l.effort_h,
       stakes:g('#e-k').value.trim(),hard_deadline:g('#e-hd').checked,reversible:!g('#e-rv').checked,blocks:+g('#e-b').value};
     if(!isNaN(due))body.due=due.toISOString();
     try{await api(`/api/loops/${l.id}`,{method:'PATCH',body});closeS();toast('Changes saved.');refresh()}catch(e){toast(e.message)}
