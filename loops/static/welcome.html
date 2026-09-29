@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sparrow</title>
+<meta name="description" content="Sparrow turns your inbox into a plan and chases you until it's done.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F4F2EE;--surface:#fff;--raised:#FBFAF8;--ink:#17181C;--muted:#62656E;--faint:#9A9CA3;--line:#E4E1DB;
+  --accent:#0E7C66;--accent-ink:#fff;--accent-soft:#DDF1EA;--late:#C2410C;--soon:#A16207;--jobs:#4F46E5;--study:#B45309;--money:#BE185D;--personal:#15803D;
+  --night:#14133A;--mint:#8FF0D0;--shadow:0 1px 2px rgba(23,24,28,.04),0 10px 30px rgba(23,24,28,.08);
+  --font:"Bricolage Grotesque",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E0F13;--surface:#17181D;--raised:#1D1F25;--ink:#ECEDEF;--muted:#A2A5AD;--faint:#6E717A;--line:#2A2C33;
+  --accent:#34C6A5;--accent-ink:#06201A;--accent-soft:#12332B;--jobs:#8B85FF;--study:#F0A04B;--money:#F06AA8;--personal:#4ACB7A;--shadow:0 10px 30px rgba(0,0,0,.4)}}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:100%;background:linear-gradient(90deg,var(--jobs),var(--accent));transform-origin:0 50%;transform:scaleX(0);z-index:50}
+nav{position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg) 75%,transparent)}
+nav .wrap{display:flex;align-items:center;gap:22px;height:66px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.2rem;letter-spacing:-.02em;text-decoration:none}
+.brand svg{width:34px;height:34px;border-radius:9px}
+nav .links{margin-left:auto;display:flex;gap:22px;align-items:center;font-weight:600;font-size:.95rem}
+nav .links a{text-decoration:none;color:var(--muted)} nav .links a:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:12px 22px;font-weight:700;text-decoration:none;font-size:1rem}
+.btn.pri{background:var(--ink);color:var(--bg)} .btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.sm{padding:9px 16px;font-size:.92rem}
+@media (max-width:720px){nav .links a.hide{display:none}}
+
+/* hero */
+.hero{padding:70px 0 40px;text-align:center;position:relative}
+.hero h1{font-size:clamp(2.6rem,7.4vw,5.6rem);line-height:.98;letter-spacing:-.045em;margin:0 auto;max-width:13ch;font-weight:800;font-variation-settings:"opsz" 96}
+.hero h1 .w{display:inline-block}
+.hero h1 em{font-style:normal}
+.hero h1 em,.hero h1 em .w{background:linear-gradient(90deg,var(--jobs),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1 em .w{padding-bottom:.08em}
+.hero p{font-size:clamp(1.05rem,2vw,1.3rem);color:var(--muted);max-width:40ch;margin:22px auto 30px}
+.ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.aura{position:absolute;inset:-10% 0 auto;height:620px;pointer-events:none;z-index:-1;overflow:hidden}
+.aura i{position:absolute;width:520px;height:520px;border-radius:50%;filter:blur(90px);opacity:.28;left:50%;top:40%;margin:-260px}
+.aura i:nth-child(1){background:var(--jobs)} .aura i:nth-child(2){background:var(--accent)} .aura i:nth-child(3){background:var(--study);opacity:.16}
+
+/* stage: inbox -> sparrow -> calendar */
+.stage{position:relative;margin:54px auto 0;max-width:980px;height:360px;display:grid;grid-template-columns:1fr 1.25fr;gap:60px}
+@media (max-width:760px){.stage{grid-template-columns:1fr;height:auto;gap:24px}}
+.panel{background:var(--surface);border-radius:22px;box-shadow:var(--shadow);padding:16px;text-align:left;position:relative;overflow:hidden}
+.panel h4{margin:0 0 10px;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.mail{display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px;background:var(--raised);margin-bottom:8px;font-size:.88rem;opacity:0}
+.mail .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:.8rem;flex:none}
+.mail b{display:block;font-size:.86rem}
+.mail span{color:var(--muted);font-size:.8rem}
+.cal{display:grid;grid-template-columns:36px repeat(5,1fr);grid-auto-rows:44px;gap:4px;position:relative}
+.cal .h{font-size:.66rem;color:var(--faint);text-align:right;padding-right:4px}
+.cal .d{font-size:.72rem;color:var(--muted);text-align:center;font-weight:700}
+.cal .slot{border-radius:8px;background:var(--raised)}
+.ev{position:absolute;border-radius:9px;padding:5px 7px;font-size:.72rem;font-weight:650;background:var(--raised);box-shadow:inset 3px 0 0 var(--faint);color:var(--muted)}
+.blk{position:absolute;border-radius:9px;padding:5px 8px;font-size:.74rem;font-weight:700;color:var(--ink);opacity:0;display:flex;align-items:center;gap:6px}
+.blk .ck{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;display:grid;place-items:center;flex:none}
+.blk .ck svg{opacity:0}
+.blk.done .ck{background:var(--accent);border-color:var(--accent)} .blk.done .ck svg{opacity:1}
+.bird{position:absolute;width:54px;height:54px;left:0;top:0;z-index:5;pointer-events:none;filter:drop-shadow(0 10px 18px rgba(59,52,201,.35))}
+.spark{position:absolute;width:7px;height:7px;border-radius:2px;pointer-events:none;z-index:6}
+
+/* scenes */
+section.scene{padding:120px 0 40px}
+.scene .grid{display:grid;grid-template-columns:1fr 1.1fr;gap:60px;align-items:center}
+.scene.flip .grid{grid-template-columns:1.1fr 1fr}
+.scene.flip .copy{order:2}
+@media (max-width:860px){.scene .grid,.scene.flip .grid{grid-template-columns:1fr}.scene.flip .copy{order:0}}
+.kicker{font-size:.8rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.scene h2{font-size:clamp(2rem,4.6vw,3.4rem);line-height:1.02;letter-spacing:-.035em;margin:10px 0 14px;font-weight:800}
+.scene p{font-size:1.15rem;color:var(--muted);margin:0;max-width:34ch}
+.box{background:var(--surface);border-radius:26px;box-shadow:var(--shadow);min-height:340px;position:relative;overflow:hidden;padding:22px}
+.chip{position:absolute;padding:9px 13px;border-radius:12px;font-size:.86rem;font-weight:650;background:var(--raised);box-shadow:var(--shadow);white-space:nowrap}
+.col{position:absolute;bottom:18px;width:30%;height:58%;border-radius:16px;border:2px dashed var(--line);padding:8px;font-size:.74rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.note{position:absolute;left:50%;width:min(92%,380px);margin-left:max(-46%,-190px);background:var(--raised);border-radius:18px;padding:12px 14px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:center;opacity:0}
+.note .ic{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;overflow:hidden}
+.note b{display:block;font-size:.84rem} .note span{font-size:.84rem;color:var(--muted)}
+.phone{position:absolute;right:26px;bottom:24px;width:120px;height:120px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);opacity:0}
+.ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent)}
+.mailbig{position:absolute;left:22px;right:22px;top:26px;background:var(--raised);border-radius:16px;padding:14px;box-shadow:var(--shadow);opacity:0}
+.task{position:absolute;left:22px;right:22px;bottom:34px;background:var(--surface);border-radius:16px;padding:16px;box-shadow:0 0 0 1.5px var(--line);display:flex;gap:12px;align-items:center;font-weight:700}
+.task .ck{width:30px;height:30px;border-radius:50%;border:2.5px solid var(--line);display:grid;place-items:center;color:#fff;flex:none}
+.task .ck path{stroke-dasharray:24;stroke-dashoffset:24}
+.badge{font-size:.72rem;font-weight:800;border-radius:999px;padding:3px 9px;text-transform:uppercase;letter-spacing:.03em}
+.b-apply{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)} .b-maybe{background:color-mix(in srgb,var(--soon) 16%,transparent);color:var(--soon)}
+.b-skip{background:var(--raised);color:var(--muted)}
+.job{position:absolute;left:22px;width:52%;background:var(--raised);border-radius:14px;padding:11px 13px;box-shadow:var(--shadow);font-size:.86rem;opacity:0}
+.job b{display:block} .job .badge{margin-top:6px;display:inline-block;opacity:0}
+.cv{position:absolute;right:22px;top:22px;bottom:22px;width:38%;background:#fff;border-radius:10px;box-shadow:var(--shadow);padding:14px 12px}
+.cv i{display:block;height:6px;border-radius:3px;background:#E3E1EA;margin:6px 0;transform-origin:0 50%;transform:scaleX(0)}
+.cv i.t{height:10px;background:#2C2A7A;width:60%}
+.cv i.h{background:#8B85FF;width:35%;margin-top:12px}
+
+/* pricing */
+#pricing{padding:130px 0 40px;text-align:center}
+#pricing h2{font-size:clamp(2rem,4.6vw,3.4rem);letter-spacing:-.035em;margin:0 0 10px}
+#pricing>div>p{color:var(--muted);font-size:1.15rem;margin:0 0 40px}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;text-align:left}
+@media (max-width:900px){.plans{grid-template-columns:1fr}}
+.plan{background:var(--surface);border-radius:26px;padding:26px;box-shadow:var(--shadow);position:relative;opacity:0}
+.plan.pop{background:var(--night);color:#fff}
+.plan.pop .muted,.plan.pop li{color:#C9C7F2}
+.plan .tag{position:absolute;top:18px;right:18px;background:var(--mint);color:var(--night);font-size:.72rem;font-weight:800;border-radius:999px;padding:4px 10px}
+.plan h3{margin:0;font-size:1.1rem}
+.price{font-size:3rem;font-weight:800;letter-spacing:-.04em;margin:10px 0 0}
+.price small{font-size:1rem;font-weight:600;color:var(--muted)}
+.plan.pop .price small{color:#C9C7F2}
+.muted{color:var(--muted);font-size:.95rem;margin:4px 0 18px}
+.plan ul{list-style:none;margin:0 0 24px;padding:0;display:grid;gap:9px;font-size:.95rem}
+.plan li{display:flex;gap:9px;align-items:flex-start;color:var(--muted)}
+.plan li::before{content:"";width:16px;height:16px;border-radius:50%;background:var(--accent);flex:none;margin-top:2px;
+  -webkit-mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" stroke="black" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>') center/12px no-repeat,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.plan .btn{width:100%;justify-content:center}
+.plan.pop .btn.pri{background:var(--mint);color:var(--night)}
+.toggle{display:inline-flex;background:var(--surface);border-radius:999px;padding:4px;box-shadow:var(--shadow);margin:0 0 30px}
+.toggle button{border:0;background:none;border-radius:999px;padding:8px 18px;font-weight:700;color:var(--muted)}
+.toggle button.on{background:var(--ink);color:var(--bg)}
+
+.final{padding:130px 0 90px;text-align:center}
+.final h2{font-size:clamp(2.2rem,5.4vw,4rem);letter-spacing:-.04em;margin:0 0 26px;line-height:1}
+footer{border-top:1px solid var(--line);padding:26px 0;color:var(--muted);font-size:.88rem}
+footer .wrap{display:flex;gap:18px;flex-wrap:wrap;justify-content:space-between}
+.js .scene .copy>*,.js .final h2{opacity:0}
+@media (prefers-reduced-motion:reduce){.mail,.blk,.note,.phone,.mailbig,.job,.job .badge,.plan{opacity:1!important}.cv i{transform:none!important}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="logo" viewBox="0 0 64 64"><defs><linearGradient id="spg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#1F1D4D"/><stop offset="1" stop-color="#3B34C9"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#spg)"/><path d="M9 55l7-7M5 47l6-6M17 59l5-5" stroke="#8FF0D0" stroke-width="2.6" stroke-linecap="round" opacity=".9"/><path d="M49.5 14.5 43.8 16.2C39.6 12.4 32.6 13.6 29.8 19.2 26.2 26.6 21 31.4 13 34.2l6.4 2.6-3.6 7.6 11-5.6C35.6 38 42 32.6 44.4 25c.9-2.9 1.3-5.2 5.1-10.5z" fill="#fff"/><path d="M34.6 25.4C31.2 18 25.6 13.6 17.6 12.2c2.6 7.2 7.4 13 13.6 16.2z" fill="#8FF0D0"/><path d="M36.2 31.5c3.2-.6 5.6-2.6 6.9-5.4" stroke="#E8B27A" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="40.2" cy="18.6" r="1.8" fill="#1F1D4D"/></symbol>
+  <symbol id="tick" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</defs></svg>
+
+<nav><div class="wrap">
+  <a class="brand" href="/welcome"><svg><use href="#logo"/></svg>Sparrow</a>
+  <div class="links"><a class="hide" href="#how">How it works</a><a class="hide" href="#pricing">Pricing</a><a href="/login">Log in</a><a class="btn pri sm" href="/login?mode=signup">Start free</a></div>
+</div></nav>
+
+<header class="hero"><div class="aura" aria-hidden="true"><i></i><i></i><i></i></div><div class="wrap">
+  <h1 id="h1">Stop remembering. <em>Start finishing.</em></h1>
+  <p>Sparrow turns your inbox into a plan and chases you until it's done.</p>
+  <div class="ctas"><a class="btn pri" href="/login?mode=signup">Start free</a><a class="btn ghost" href="#how">See how it works</a></div>
+  <div class="stage" id="stage" aria-hidden="true">
+    <div class="panel"><h4>Your inbox</h4><div id="mails"></div></div>
+    <div class="panel"><h4>Your week</h4>
+      <div class="cal" id="cal"><span></span><span class="d">Mon</span><span class="d">Tue</span><span class="d">Wed</span><span class="d">Thu</span><span class="d">Fri</span></div>
+    </div>
+    <svg class="bird" id="bird"><use href="#logo"/></svg>
+  </div>
+</div></header>
+
+<section class="scene" id="how"><div class="wrap grid">
+  <div class="copy"><div class="kicker">Reads</div><h2>Your inbox becomes a to-do list.</h2><p>Emails, Slack and texts turn into tasks, sorted by what matters.</p></div>
+  <div class="box" id="s1" aria-hidden="true">
+    <div class="col" style="left:4%">Jobs</div><div class="col" style="left:35%">Study</div><div class="col" style="left:66%">Life</div>
+  </div>
+</div></section>
+
+<section class="scene flip"><div class="wrap grid">
+  <div class="copy"><div class="kicker">Plans</div><h2>It plans around your life.</h2><p>Every task lands in a free gap, before its deadline, never in a lecture.</p></div>
+  <div class="box" id="s2" aria-hidden="true"></div>
+</div></section>
+
+<section class="scene"><div class="wrap grid">
+  <div class="copy"><div class="kicker">Chases</div><h2>It chases you. Honestly.</h2><p>Real maths, not vague nudges. Ignore it near a deadline and it calls you.</p></div>
+  <div class="box" id="s3" aria-hidden="true"></div>
+</div></section>
+
+<section class="scene flip"><div class="wrap grid">
+  <div class="copy"><div class="kicker">Checks</div><h2>It knows when you're done.</h2><p>A confirmation lands in your inbox, and the task ticks itself off.</p></div>
+  <div class="box" id="s4" aria-hidden="true"></div>
+</div></section>
+
+<section class="scene"><div class="wrap grid">
+  <div class="copy"><div class="kicker">Job hunt</div><h2>Built for getting hired.</h2><p>Every job alert checked against your CV, then a CV written for the ones worth it.</p></div>
+  <div class="box" id="s5" aria-hidden="true"><div class="cv" id="cv"></div></div>
+</div></section>
+
+<section id="pricing"><div class="wrap">
+  <h2>Simple pricing.</h2><p>Free to start. Upgrade when it's getting you hired.</p>
+  <div class="toggle"><button class="on" data-bill="m">Monthly</button><button data-bill="y">Yearly, 2 months free</button></div>
+  <div class="plans">
+    <div class="plan"><h3>Free</h3><div class="price">£0</div><p class="muted">For getting organised.</p>
+      <ul><li>One inbox, plus calendar</li><li>Tasks, plan and reminders</li><li>Proof-of-done checks</li><li>Runs on your laptop</li></ul>
+      <a class="btn ghost" href="/login?mode=signup&plan=free">Start free</a></div>
+    <div class="plan pop"><span class="tag">Most popular</span><h3>Pro</h3><div class="price" data-m="£6" data-y="£60"><span>£6</span><small data-m="/ month" data-y="/ year"> / month</small></div><p class="muted">For the application season.</p>
+      <ul><li>Everything in Free</li><li>Claude reads, plans and researches</li><li>Every job checked against your CV</li><li>Tailored CVs, PDF or Word</li><li>All your accounts</li><li>Phone calls near deadlines</li></ul>
+      <a class="btn pri" href="/login?mode=signup&plan=pro">Get Pro</a></div>
+    <div class="plan"><h3>Campus</h3><div class="price" style="font-size:2.2rem;padding:8px 0 5px">Let's talk</div><p class="muted">For university careers services.</p>
+      <ul><li>Pro for every student</li><li>Cohort view, with consent</li><li>Deadline and application insights</li><li>Onboarding and support</li></ul>
+      <a class="btn ghost" href="mailto:hello@sparrow.app?subject=Sparrow%20for%20our%20students">Contact us</a></div>
+  </div>
+</div></section>
+
+<section class="final"><div class="wrap">
+  <h2>Your deadlines won't wait.<br>Neither will Sparrow.</h2>
+  <a class="btn pri" href="/login?mode=signup">Start free</a>
+</div></section>
+<footer><div class="wrap"><span>Sparrow. Your inbox stays on your laptop.</span><span><a href="/login">Log in</a> &nbsp; <a href="/">Open the app</a></span></div></footer>
+
+<script src="/static/vendor/motion.js"></script>
+<script>
+(function(){
+const M=window.Motion||{}, RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(M.inView&&!RM)document.documentElement.classList.add('js');
+const $=s=>document.querySelector(s);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const TICK='<svg width="10" height="10"><use href="#tick"/></svg>';
+function go(el,kf,o={}){
+  if(RM||!el)return Promise.resolve();
+  if(M.animate){try{const opts=o.duration!=null?{duration:o.duration,delay:o.delay||0,ease:o.ease||[.2,.8,.2,1]}:{type:M.spring,bounce:o.bounce??.35,visualDuration:o.vd??.5,delay:o.delay||0};
+    return Promise.resolve(M.animate(el,kf,opts))}catch(e){}}
+  const keys=Object.keys(kf), n=Math.max(...keys.map(k=>Array.isArray(kf[k])?kf[k].length:1));
+  const frames=[...Array(n)].map((_,i)=>{const f={},t=[];keys.forEach(k=>{const v=Array.isArray(kf[k])?kf[k][Math.min(i,kf[k].length-1)]:kf[k];
+    if(k==='x')t.push(`translateX(${v}px)`);else if(k==='y')t.push(`translateY(${v}px)`);else if(k==='scale')t.push(`scale(${v})`);else if(k==='rotate')t.push(`rotate(${v}deg)`);else f[k]=v});
+    if(t.length)f.transform=t.join(' ');return f});
+  return el.animate(frames,{duration:(o.duration||.6)*1000,delay:(o.delay||0)*1000,easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'}).finished;
+}
+function burst(host,x,y,n=16){
+  if(RM)return;const cols=['#8FF0D0','#8B85FF','#F0A04B','#F06AA8','#4ACB7A','#FFD166'];
+  for(let i=0;i<n;i++){const s=document.createElement('i');s.className='spark';s.style.background=cols[i%cols.length];s.style.left=x+'px';s.style.top=y+'px';host.appendChild(s);
+    const a=Math.random()*Math.PI*2,d=30+Math.random()*50;s.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d+30}px) rotate(${Math.random()*300}deg)`,opacity:0}],{duration:800+Math.random()*400,easing:'cubic-bezier(.1,.7,.3,1)'}).finished.then(()=>s.remove())}
+}
+/* when a scene is visible, run its loop; stop when it leaves */
+function whenSeen(el,loop){
+  let on=false;const run=async()=>{while(on){await loop()}};
+  if(M.inView&&!RM){M.inView(el,()=>{on=true;run();return()=>{on=false}},{amount:.35})}else{on=!RM;run()}
+}
+
+/* ---- scroll progress bar ---- */
+if(M.scroll&&!RM)M.scroll(M.animate('#bar',{scaleX:[0,1]},{ease:'linear'}));
+
+/* ---- hero: words rise, aura drifts ---- */
+const h1=$('#h1');
+if(!RM){h1.innerHTML=[['Stop remembering.',0],['Start finishing.',1]].map(([t,em])=>{const w=t.split(' ').map(x=>`<span class="w">${x}</span>`).join(' ');return em?`<em>${w}</em>`:w}).join(' ');
+  h1.querySelectorAll('.w').forEach((w,i)=>go(w,{opacity:[0,1],y:[60,0],rotate:[6,0],filter:['blur(8px)','blur(0px)']},{bounce:.4,vd:.8,delay:.1+i*.07}));
+  document.querySelectorAll('.hero p,.ctas').forEach((e,i)=>go(e,{opacity:[0,1],y:[20,0]},{vd:.6,delay:.6+i*.12}));
+  document.querySelectorAll('.aura i').forEach((b,i)=>b.animate([{transform:`rotate(0deg) translateX(${160+i*40}px)`},{transform:`rotate(${i%2?-360:360}deg) translateX(${160+i*40}px)`}],{duration:22000+i*9000,iterations:Infinity}));}
+
+/* ---- hero stage: email arrives, the sparrow carries it into the week, it gets done ---- */
+const MAILS=[['M','#4F46E5','Monzo Careers','Graduate analyst: apply by Friday',1,1,'Apply to Monzo','var(--jobs)'],
+  ['D','#B45309','Dr Patel','Essay draft due Thursday 5pm',3,2,'Essay draft','var(--study)'],
+  ['S','#BE185D','SHL for Shell','Complete your online test',2,3,'Shell test','var(--jobs)'],
+  ['P','#15803D','Priya','Send me the slides?',4,1,'Send Priya the slides','var(--personal)']];
+const cal=$('#cal');
+for(let r=0;r<4;r++){const s=document.createElement('span');s.className='h';s.textContent=`${9+r*2}:00`;cal.appendChild(s);for(let c=0;c<5;c++)cal.appendChild(Object.assign(document.createElement('span'),{className:'slot'}))}
+const EV=[[0,0,'Lecture'],[2,2,'Seminar'],[4,3,'Gym']];
+function cellRect(day,row){const cells=cal.querySelectorAll('.slot');const el=cells[row*5+day];const cr=cal.getBoundingClientRect(),r=el.getBoundingClientRect();return {left:r.left-cr.left,top:r.top-cr.top,width:r.width,height:r.height}}
+function placeEv(){cal.querySelectorAll('.ev').forEach(e=>e.remove());EV.forEach(([d,r,t])=>{const p=cellRect(d,r);const e=document.createElement('div');e.className='ev';Object.assign(e.style,{left:p.left+'px',top:p.top+'px',width:p.width+'px',height:p.height+'px'});e.textContent=t;cal.appendChild(e)})}
+placeEv();addEventListener('resize',placeEv);
+const stage=$('#stage'), mails=$('#mails'), bird=$('#bird');
+let mi=0;
+async function heroLoop(){
+  const [ini,col,from,subj,day,row,title,c]=MAILS[mi++%MAILS.length];
+  const m=document.createElement('div');m.className='mail';m.innerHTML=`<div class="av" style="background:${col}">${ini}</div><div><b>${from}</b><span>${subj}</span></div>`;
+  mails.prepend(m);while(mails.children.length>4)mails.lastChild.remove();
+  await go(m,{opacity:[0,1],y:[-30,0],scale:[.9,1]},{bounce:.45,vd:.5});
+  await sleep(350);
+  const sr=stage.getBoundingClientRect(), mr=m.getBoundingClientRect(), p=cellRect(day,row), cr=cal.getBoundingClientRect();
+  const x0=mr.left-sr.left+mr.width-40, y0=mr.top-sr.top-6, x1=cr.left-sr.left+p.left+p.width/2-27, y1=cr.top-sr.top+p.top-10;
+  bird.style.opacity=1;
+  await go(bird,{x:[x0,(x0+x1)/2,x1],y:[y0,Math.min(y0,y1)-80,y1],rotate:[-20,5,20],scale:[.6,1.1,.8]},{duration:1.1,ease:[.5,0,.2,1]});
+  go(bird,{opacity:[1,0],scale:[.8,.4]},{duration:.25});
+  const b=document.createElement('div');b.className='blk';b.innerHTML=`<span class="ck">${TICK}</span>${title}`;
+  Object.assign(b.style,{left:p.left+'px',top:p.top+'px',width:p.width+'px',height:p.height+'px',background:`color-mix(in srgb,${c} 22%,var(--surface))`,boxShadow:`inset 3px 0 0 ${c}`});
+  cal.appendChild(b);
+  await go(b,{opacity:[0,1],scale:[.4,1]},{bounce:.55,vd:.55});
+  await sleep(700);
+  b.classList.add('done');go(b.querySelector('.ck'),{scale:[.5,1.4,1]},{bounce:.6,vd:.45});
+  burst(cal,p.left+14,p.top+p.height/2);
+  await sleep(1300);
+  go(b,{opacity:[1,0],scale:[1,.9]},{duration:.4}).then(()=>b.remove());
+  await sleep(200);
+}
+whenSeen(stage,heroLoop);
+
+/* ---- scene 1: messages fall into sorted columns ---- */
+const s1=$('#s1');const S1=[['Recruiter: can you chat Thursday?','var(--jobs)',0],['Essay feedback is up','var(--study)',1],['Rent due on the 1st','var(--money)',2],
+  ['HireVue invite from Deloitte','var(--jobs)',0],['Group project meeting moved','var(--study)',1],['Mum: call me back','var(--personal)',2]];
+let k1=0;
+async function s1Loop(){
+  const [t,c,col]=S1[k1++%S1.length];const box=s1.getBoundingClientRect();
+  const ch=document.createElement('div');ch.className='chip';ch.style.boxShadow=`inset 3px 0 0 ${c},var(--shadow)`;ch.textContent=t;s1.appendChild(ch);
+  const colEl=s1.querySelectorAll('.col')[col], cr=colEl.getBoundingClientRect();
+  const stack=[...s1.querySelectorAll('.chip.in')].filter(e=>e.dataset.col==col).length;
+  ch.style.left=(box.width/2-120)+'px';ch.style.top='18px';
+  await go(ch,{opacity:[0,1],y:[-30,0],scale:[.8,1]},{bounce:.5,vd:.5});
+  await sleep(250);
+  const tx=cr.left-box.left+6-(box.width/2-120), ty=cr.top-box.top+30+stack*44-18;
+  ch.style.maxWidth=(cr.width-12)+'px';ch.style.overflow='hidden';ch.style.textOverflow='ellipsis';ch.style.fontSize='.74rem';
+  await go(ch,{x:[0,tx],y:[0,ty],rotate:[0,col===0?-4:col===2?4:0,0]},{bounce:.3,vd:.7});
+  ch.classList.add('in');ch.dataset.col=col;
+  if(s1.querySelectorAll('.chip.in').length>=6){await sleep(1600);const all=[...s1.querySelectorAll('.chip')];await Promise.all(all.map((e,i)=>go(e,{opacity:[1,0],scale:[1,.8]},{duration:.3,delay:i*.04})));all.forEach(e=>e.remove())}
+  await sleep(250);
+}
+whenSeen(s1,s1Loop);
+
+/* ---- scene 2: a week fills itself around your commitments ---- */
+const s2=$('#s2');
+s2.innerHTML=`<div class="cal" style="grid-auto-rows:52px"><span></span>${['Mon','Tue','Wed','Thu','Fri'].map(d=>`<span class="d">${d}</span>`).join('')}${[9,11,13,15].map(h=>`<span class="h">${h}:00</span>${'<span class="slot"></span>'.repeat(5)}`).join('')}</div><div class="now" style="position:absolute;left:58px;right:22px;height:2px;background:var(--late);opacity:.8"></div>`;
+const cal2=s2.querySelector('.cal');
+async function s2Loop(){
+  s2.querySelectorAll('.ev,.blk').forEach(e=>e.remove());
+  const cells=cal2.querySelectorAll('.slot'), br=s2.getBoundingClientRect();
+  const put=(d,r,cls,txt,c)=>{const el=cells[r*5+d].getBoundingClientRect();const e=document.createElement('div');e.className=cls;e.textContent=txt;
+    Object.assign(e.style,{left:(el.left-br.left)+'px',top:(el.top-br.top)+'px',width:el.width+'px',height:el.height+'px'});
+    if(c){e.style.background=`color-mix(in srgb,${c} 22%,var(--surface))`;e.style.boxShadow=`inset 3px 0 0 ${c}`;e.style.opacity=0}s2.appendChild(e);return e};
+  const evs=[[0,0,'Lecture'],[1,1,'Lecture'],[3,0,'Seminar'],[2,3,'Gym'],[4,2,'Lab']].map(([d,r,t])=>put(d,r,'ev',t));
+  await Promise.all(evs.map((e,i)=>go(e,{opacity:[0,1],scale:[.9,1]},{vd:.4,delay:i*.08})));
+  const now=s2.querySelector('.now');
+  go(now,{y:[cells[0].getBoundingClientRect().top-br.top,cells[15].getBoundingClientRect().bottom-br.top]},{duration:6,ease:'linear'});
+  const plan=[[0,1,'Apply: Monzo','var(--jobs)'],[1,0,'Shell test','var(--jobs)'],[2,1,'Essay','var(--study)'],[0,2,'Reply to Priya','var(--personal)'],[3,2,'Revise stats','var(--study)'],[4,0,'Pay rent','var(--money)']];
+  for(const [d,r,t,c] of plan){const b=put(d,r,'blk',t,c);await go(b,{opacity:[0,1],y:[-24,0],scale:[.6,1]},{bounce:.55,vd:.5});await sleep(260)}
+  await sleep(2600);
+}
+whenSeen(s2,s2Loop);
+
+/* ---- scene 3: notifications stack, then a call ---- */
+const s3=$('#s3');
+const NOTE=(t,s)=>`<div class="ic"><svg width="34" height="34"><use href="#logo"/></svg></div><div><b>${t}</b><span>${s}</span></div>`;
+async function s3Loop(){
+  s3.innerHTML='';
+  const notes=[['Heads up','Shell test should start by 14:00.'],['Still there?','You have 50 min left. It needs 60.'],['This one matters','Start now or you\'ll be 10 min short.']];
+  const els=notes.map(([t,s],i)=>{const n=document.createElement('div');n.className='note';n.innerHTML=NOTE(t,s);n.style.top=(24+i*78)+'px';s3.appendChild(n);return n});
+  for(const n of els){await go(n,{opacity:[0,1],y:[-40,0],scale:[.85,1]},{bounce:.5,vd:.5});await sleep(700)}
+  await Promise.all(els.map(n=>go(n,{opacity:[1,.35]},{duration:.4})));
+  const ph=document.createElement('div');ph.className='phone';ph.innerHTML=`<span style="font-weight:800;text-align:center;font-size:.8rem;line-height:1.1;z-index:2">Sparrow<br>calling</span>`;s3.appendChild(ph);
+  await go(ph,{opacity:[0,1],scale:[.3,1]},{bounce:.6,vd:.5});
+  for(let i=0;i<3;i++){const r=document.createElement('i');r.className='ring';ph.appendChild(r);r.animate([{transform:'scale(1)',opacity:.8},{transform:'scale(1.9)',opacity:0}],{duration:1200,easing:'ease-out'}).finished.then(()=>r.remove());
+    go(ph,{rotate:[0,-10,10,-8,8,0]},{duration:.5});await sleep(500)}
+  await sleep(900);
+  const ok=document.createElement('div');ok.className='note';ok.style.top='250px';ok.innerHTML=NOTE('You said: in 10 minutes','Okay. That still leaves enough time.');s3.appendChild(ok);
+  go(ph,{opacity:[1,0],scale:[1,.6]},{duration:.3});
+  await go(ok,{opacity:[0,1],y:[30,0]},{bounce:.4,vd:.5});
+  await sleep(2400);
+}
+whenSeen(s3,s3Loop);
+
+/* ---- scene 4: confirmation email ticks the task ---- */
+const s4=$('#s4');
+async function s4Loop(){
+  s4.innerHTML=`<div class="mailbig"><b>Monzo Careers</b><div style="color:var(--muted);font-size:.9rem;margin-top:4px">Thanks for applying to Monzo. We've received your application.</div></div>
+    <div class="task"><span class="ck"><svg width="16" height="16"><path d="M5 12l5 5L20 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Apply to Monzo</span></div>`;
+  const mail=s4.querySelector('.mailbig'), task=s4.querySelector('.task'), ck=task.querySelector('.ck');
+  await go(task,{opacity:[0,1],y:[20,0]},{vd:.4});
+  await sleep(500);
+  await go(mail,{opacity:[0,1],y:[-60,0],rotate:[-4,0]},{bounce:.45,vd:.6});
+  await sleep(500);
+  await go(mail,{y:[0,120],scale:[1,.4],opacity:[1,0]},{duration:.55,ease:[.6,0,.4,1]});
+  ck.style.background='var(--accent)';ck.style.borderColor='var(--accent)';
+  go(ck,{scale:[.5,1.5,1]},{bounce:.6,vd:.5});
+  const path=ck.querySelector('path');path.animate([{strokeDashoffset:24},{strokeDashoffset:0}],{duration:400,fill:'forwards'});
+  task.style.transition='box-shadow .3s';task.style.boxShadow='0 0 0 2px var(--accent)';
+  const tr=task.getBoundingClientRect(), br=s4.getBoundingClientRect();burst(s4,tr.left-br.left+30,tr.top-br.top+30,26);
+  const n=document.createElement('div');n.className='chip';n.textContent='Nice one. Your Monzo application went in.';n.style.cssText+=';left:22px;bottom:110px;opacity:0;white-space:normal';s4.appendChild(n);
+  await go(n,{opacity:[0,1],y:[16,0]},{bounce:.4,vd:.5});
+  await sleep(2600);
+}
+whenSeen(s4,s4Loop);
+
+/* ---- scene 5: job alerts get verdicts, a CV writes itself ---- */
+const s5=$('#s5'), cv=$('#cv');
+cv.innerHTML='<i class="t"></i><i style="width:45%"></i><i class="h"></i>'+'<i></i>'.repeat(4)+'<i class="h"></i>'+'<i></i>'.repeat(3)+'<i class="h"></i><i style="width:70%"></i>';
+async function s5Loop(){
+  s5.querySelectorAll('.job').forEach(e=>e.remove());cv.querySelectorAll('i').forEach(i=>i.style.transform='scaleX(0)');
+  const jobs=[['Graduate Data Analyst','Monzo, London','apply','Apply'],['Brand Designer','Canva, Sydney','skip','Skip'],['Risk Analyst','Barclays, London','maybe','Maybe']];
+  const els=jobs.map(([t,co,v,l],i)=>{const j=document.createElement('div');j.className='job';j.style.top=(24+i*92)+'px';j.innerHTML=`<b>${t}</b><span style="color:var(--muted)">${co}</span><br><span class="badge b-${v}">${l}</span>`;s5.appendChild(j);return j});
+  els.forEach((j,i)=>go(j,{opacity:[0,1],x:[-30,0]},{bounce:.35,vd:.4,delay:i*.12}));
+  await sleep(550);
+  for(const j of els){go(j.querySelector('.badge'),{opacity:[0,1],scale:[.3,1.15,1]},{bounce:.6,vd:.35});await sleep(260)}
+  go(els[1],{opacity:[1,.35],x:[0,-10]},{duration:.3});
+  go(els[0],{scale:[1,1.05,1]},{bounce:.5,vd:.35});
+  await sleep(250);
+  const lines=[...cv.querySelectorAll('i')];
+  for(let i=0;i<lines.length;i++){go(lines[i],{scaleX:[0,1]},{duration:.3,ease:[.2,.8,.2,1]});await sleep(70)}
+  await sleep(2400);
+  await Promise.all(els.map(j=>go(j,{opacity:[null,0]},{duration:.3})));
+}
+whenSeen(s5,s5Loop);
+
+/* ---- section headings and plans rise in ---- */
+if(M.inView&&!RM){
+  M.inView('.scene .copy',el=>{[...el.children].forEach((c,i)=>go(c,{opacity:[0,1],y:[40,0]},{bounce:.3,vd:.6,delay:i*.08}))},{amount:.4});
+  M.inView('.plans',el=>{el.querySelectorAll('.plan').forEach((p,i)=>go(p,{opacity:[0,1],y:[60,0],scale:[.94,1]},{bounce:.35,vd:.65,delay:i*.12}))},{amount:.25});
+  M.inView('.final h2',el=>go(el,{opacity:[0,1],scale:[.9,1],y:[30,0]},{bounce:.4,vd:.7}),{amount:.5});
+}else document.querySelectorAll('.plan').forEach(p=>p.style.opacity=1);
+
+/* ---- pricing toggle ---- */
+document.querySelectorAll('[data-bill]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-bill]').forEach(x=>x.classList.toggle('on',x===b));
+  const y=b.dataset.bill==='y', p=document.querySelector('.price[data-m]');
+  p.querySelector('span').textContent=y?p.dataset.y:p.dataset.m;p.querySelector('small').textContent=' '+(y?'/ year':'/ month');
+  go(p,{scale:[1.25,1],rotate:[-4,0]},{bounce:.6,vd:.4});
+});
+})();
+</script>
+</body>
+</html>

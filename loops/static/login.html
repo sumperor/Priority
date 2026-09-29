@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Log in to Sparrow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F4F2EE;--surface:#fff;--raised:#FBFAF8;--ink:#17181C;--muted:#62656E;--faint:#9A9CA3;--line:#E4E1DB;--accent:#0E7C66;--late:#C2410C;
+  --night:#14133A;--mint:#8FF0D0;--jobs:#8B85FF;--font:"Bricolage Grotesque",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E0F13;--surface:#17181D;--raised:#1D1F25;--ink:#ECEDEF;--muted:#A2A5AD;--faint:#6E717A;--line:#2A2C33;--accent:#34C6A5}}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;grid-template-columns:1.05fr 1fr;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased}
+@media (max-width:860px){body{grid-template-columns:1fr}.art{min-height:300px}}
+button,input{font:inherit;color:inherit}
+.art{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 20% 10%,#3B34C9 0,#1F1D4D 45%,#0E0D26 100%);color:#fff;display:flex;flex-direction:column;justify-content:flex-end;padding:44px}
+.art h1{font-size:clamp(2rem,4vw,3.2rem);line-height:1.02;letter-spacing:-.04em;margin:0;max-width:12ch;position:relative;z-index:3}
+.art p{color:#C9C7F2;margin:12px 0 0;position:relative;z-index:3}
+.art .brand{position:absolute;top:36px;left:44px;display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.2rem;color:#fff;text-decoration:none;z-index:3}
+.art .brand svg{width:34px;height:34px;border-radius:9px}
+.bird{position:absolute;width:72px;height:72px;z-index:2;filter:drop-shadow(0 12px 22px rgba(0,0,0,.4))}
+.trail{position:absolute;inset:0;z-index:1;pointer-events:none}
+.card{position:absolute;background:rgba(255,255,255,.1);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:12px 14px;display:flex;gap:10px;align-items:center;font-weight:650;font-size:.92rem;z-index:2;opacity:0}
+.card .ck{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.6);display:grid;place-items:center;flex:none}
+.card.done .ck{background:var(--mint);border-color:var(--mint);color:var(--night)}
+.card svg{opacity:0}.card.done svg{opacity:1}
+.side{display:grid;place-items:center;padding:40px 20px}
+.box{width:min(420px,100%)}
+.tabs{display:inline-flex;background:var(--surface);border-radius:999px;padding:4px;box-shadow:0 1px 2px rgba(0,0,0,.05),0 6px 20px rgba(0,0,0,.06);margin-bottom:26px}
+.tabs button{border:0;background:none;border-radius:999px;padding:8px 20px;font-weight:700;color:var(--muted);cursor:pointer}
+.tabs button.on{background:var(--ink);color:var(--bg)}
+h2{font-size:2rem;letter-spacing:-.03em;margin:0 0 6px}
+.sub{color:var(--muted);margin:0 0 22px}
+label{display:block;margin:0 0 14px}
+label span{display:block;font-size:.86rem;font-weight:650;color:var(--muted);margin-bottom:6px}
+input{width:100%;border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:13px 14px;font-size:1rem;outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus{border-color:var(--ink);box-shadow:0 0 0 4px color-mix(in srgb,var(--ink) 8%,transparent)}
+.go{width:100%;border:0;border-radius:999px;background:var(--ink);color:var(--bg);padding:14px;font-weight:800;font-size:1rem;cursor:pointer;margin-top:6px}
+.go:disabled{opacity:.5}
+.err{color:var(--late);font-size:.92rem;min-height:1.3em;margin:10px 0 0}
+.plan{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border-radius:14px;padding:12px 14px;margin:0 0 16px;border:1.5px solid var(--line);font-size:.92rem}
+.plan b{font-size:1rem}
+.fine{color:var(--faint);font-size:.84rem;margin-top:18px;line-height:1.5}
+.fine a{color:var(--muted)}
+.ok{text-align:center}
+.ok .tickbig{width:84px;height:84px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;margin:0 auto 18px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="logo" viewBox="0 0 64 64"><defs><linearGradient id="spg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#1F1D4D"/><stop offset="1" stop-color="#3B34C9"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#spg)"/><path d="M9 55l7-7M5 47l6-6M17 59l5-5" stroke="#8FF0D0" stroke-width="2.6" stroke-linecap="round" opacity=".9"/><path d="M49.5 14.5 43.8 16.2C39.6 12.4 32.6 13.6 29.8 19.2 26.2 26.6 21 31.4 13 34.2l6.4 2.6-3.6 7.6 11-5.6C35.6 38 42 32.6 44.4 25c.9-2.9 1.3-5.2 5.1-10.5z" fill="#fff"/><path d="M34.6 25.4C31.2 18 25.6 13.6 17.6 12.2c2.6 7.2 7.4 13 13.6 16.2z" fill="#8FF0D0"/><path d="M36.2 31.5c3.2-.6 5.6-2.6 6.9-5.4" stroke="#E8B27A" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="40.2" cy="18.6" r="1.8" fill="#1F1D4D"/></symbol>
+</defs></svg>
+
+<div class="art" id="art" aria-hidden="true">
+  <a class="brand" href="/welcome"><svg><use href="#logo"/></svg>Sparrow</a>
+  <svg class="trail" id="trail"><path id="tpath" fill="none" stroke="#8FF0D0" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 9" opacity=".5"/></svg>
+  <svg class="bird" id="bird"><use href="#logo"/></svg>
+  <h1>Every deadline, handled.</h1>
+  <p>Your plan is waiting where you left it.</p>
+</div>
+
+<main class="side"><div class="box">
+  <div id="form">
+    <div class="tabs"><button data-m="login" class="on">Log in</button><button data-m="signup">Sign up</button></div>
+    <h2 id="title">Welcome back.</h2><p class="sub" id="sub">Log in to see your plan.</p>
+    <div class="plan" id="plan" hidden></div>
+    <label id="nameRow" hidden><span>Your name</span><input id="name" autocomplete="name"></label>
+    <label><span>Email</span><input id="email" type="email" autocomplete="email"></label>
+    <label><span>Password</span><input id="pw" type="password" autocomplete="current-password" placeholder="At least 8 characters"></label>
+    <button class="go" id="go">Log in</button>
+    <p class="err" id="err" role="alert"></p>
+    <p class="fine">Your account stays on this computer. <a href="/">Open the app without an account</a>.</p>
+  </div>
+  <div class="ok" id="ok" hidden>
+    <div class="tickbig"><svg width="40" height="40" viewBox="0 0 24 24"><path id="okpath" d="M5 12l5 5L20 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="24" stroke-dashoffset="24"/></svg></div>
+    <h2 id="okTitle">You're in.</h2><p class="sub" id="okSub"></p>
+    <a class="go" href="/" style="display:block;text-align:center;text-decoration:none">Open Sparrow</a>
+  </div>
+</div></main>
+
+<script src="/static/vendor/motion.js"></script>
+<script>
+(function(){
+const M=window.Motion||{}, RM=matchMedia('(prefers-reduced-motion: reduce)').matches, $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const go=(el,kf,o={})=>{if(RM||!el)return Promise.resolve();
+  if(M.animate)return Promise.resolve(M.animate(el,kf,o.duration!=null?{duration:o.duration,delay:o.delay||0,ease:o.ease||[.2,.8,.2,1]}:{type:M.spring,bounce:o.bounce??.35,visualDuration:o.vd??.5,delay:o.delay||0}));
+  return Promise.resolve()};
+const q=new URLSearchParams(location.search);
+let mode=q.get('mode')==='signup'?'signup':'login';
+const plan=q.get('plan')||'free';
+const PLAN={free:['Free','£0'],pro:['Pro','£6 a month']};
+function setMode(m,anim=true){
+  mode=m;
+  document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  $('title').textContent=m==='login'?'Welcome back.':'Start finishing.';
+  $('sub').textContent=m==='login'?'Log in to see your plan.':'Create your account. It takes ten seconds.';
+  $('go').textContent=m==='login'?'Log in':'Create account';
+  $('nameRow').hidden=m!=='signup';
+  $('pw').autocomplete=m==='login'?'current-password':'new-password';
+  const p=PLAN[plan]||PLAN.free;
+  $('plan').hidden=m!=='signup';
+  $('plan').innerHTML=`<span>Plan: <b>${p[0]}</b></span><span>${p[1]}</span>`;
+  $('err').textContent='';
+  if(anim)[...$('form').children].slice(1).forEach((el,i)=>go(el,{opacity:[0,1],x:[20,0]},{bounce:.3,vd:.4,delay:i*.03}));
+}
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+setMode(mode,false);
+async function submit(){
+  $('err').textContent='';$('go').disabled=true;
+  try{
+    const body=mode==='signup'?{name:$('name').value,email:$('email').value,password:$('pw').value,plan}:{email:$('email').value,password:$('pw').value};
+    const r=await fetch(`/api/account/${mode}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||'That didn\'t work.');
+    done(d.user);
+  }catch(e){$('err').textContent=e.message;go($('form'),{x:[0,-10,10,-6,6,0]},{duration:.4})}
+  finally{$('go').disabled=false}
+}
+$('go').onclick=submit;
+['email','pw','name'].forEach(i=>$(i).addEventListener('keydown',e=>{if(e.key==='Enter')submit()}));
+function done(u){
+  $('form').hidden=true;$('ok').hidden=false;
+  $('okTitle').textContent=mode==='signup'?`Welcome, ${u.name}.`:`Welcome back, ${u.name}.`;
+  $('okSub').textContent=u.wanted==='pro'&&u.plan!=='pro'?'You chose Pro. Payments aren\'t switched on yet, so you\'re on Free for now and nothing changes when they are.':'Your plan is ready.';
+  go(document.querySelector('.tickbig'),{scale:[.2,1.15,1],rotate:[-30,0]},{bounce:.55,vd:.6});
+  $('okpath').animate([{strokeDashoffset:24},{strokeDashoffset:0}],{duration:500,delay:200,fill:'forwards'});
+}
+fetch('/api/account').then(r=>r.json()).then(d=>{if(d.user&&!q.get('mode'))$('sub').textContent=`You're logged in as ${d.user.email}.`}).catch(()=>{});
+
+/* the sparrow flies loops through your tasks, ticking them off */
+const art=$('art'), bird=$('bird');
+const TASKS=['Apply to Monzo','Shell numerical test','Essay draft','Reply to Priya','Pay rent','Send thank-you note'];
+let k=0;
+async function loop(){
+  const W=art.clientWidth, H=art.clientHeight;
+  const pts=[[.18,.34],[.62,.22],[.7,.5],[.28,.58]].map(([x,y])=>[x*W,y*H]);
+  const cards=pts.map(([x,y])=>{const c=document.createElement('div');c.className='card';c.innerHTML=`<span class="ck"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg></span>${TASKS[k++%TASKS.length]}`;
+    c.style.left=Math.min(x,W-230)+'px';c.style.top=y+'px';art.appendChild(c);return c});
+  await Promise.all(cards.map((c,i)=>go(c,{opacity:[0,1],y:[20,0],scale:[.85,1]},{bounce:.45,vd:.5,delay:i*.12})));
+  $('tpath').setAttribute('d','M'+[[-60,H*.15],...pts.map(([x,y])=>[x+20,y-30]),[W+80,H*.1]].map(p=>p.join(' ')).join(' L'));
+  $('tpath').animate([{opacity:0},{opacity:.5}],{duration:600,fill:'forwards'});
+  let prev=[-60,H*.15];
+  for(let i=0;i<pts.length;i++){
+    const [x,y]=pts[i];
+    await go(bird,{x:[prev[0],x-10],y:[prev[1],y-40],rotate:[x>prev[0]?10:-10,0]},{bounce:.2,vd:.55});
+    cards[i].classList.add('done');go(cards[i].querySelector('.ck'),{scale:[.5,1.4,1]},{bounce:.6,vd:.4});
+    go(cards[i],{opacity:[1,.55]},{duration:.6,delay:.4});
+    prev=[x-10,y-40];await sleep(180);
+  }
+  await go(bird,{x:[prev[0],W+80],y:[prev[1],H*.08],rotate:[0,-12]},{duration:.9,ease:[.5,0,.3,1]});
+  await sleep(500);
+  await Promise.all(cards.map(c=>go(c,{opacity:[null,0],scale:[1,.9]},{duration:.35})));
+  cards.forEach(c=>c.remove());bird.style.transform='translate(-100px,-100px)';
+}
+(async()=>{if(RM){bird.style.cssText+='left:60%;top:30%';return}while(true){await loop()}})();
+})();
+</script>
+</body>
+</html>

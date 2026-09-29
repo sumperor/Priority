@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -107,6 +107,75 @@ app.mount("/static", StaticFiles(directory=STATIC), name="static")
 @app.get("/")
 def index():
     return FileResponse(STATIC / "index.html")
+
+
+@app.get("/welcome")
+def welcome():
+    return FileResponse(STATIC / "welcome.html")
+
+
+@app.get("/pricing")
+def pricing():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse("/welcome#pricing")
+
+
+@app.get("/login")
+def login_page():
+    return FileResponse(STATIC / "login.html")
+
+
+class SignUp(BaseModel):
+    name: str = ""
+    email: str
+    password: str
+    plan: str = "free"
+
+
+class LogIn(BaseModel):
+    email: str
+    password: str
+
+
+def _with_session(token, user):
+    from fastapi.responses import JSONResponse
+    r = JSONResponse({"user": user})
+    r.set_cookie("sparrow_session", token, httponly=True, samesite="lax", max_age=60 * 60 * 24 * 60)
+    return r
+
+
+@app.post("/api/account/signup")
+def account_signup(body: SignUp):
+    from . import account
+    try:
+        return _with_session(*account.signup(body.name, body.email, body.password, body.plan))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/account/login")
+def account_login(body: LogIn):
+    from . import account
+    try:
+        return _with_session(*account.login(body.email, body.password))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/account")
+def account_me(request: Request):
+    from . import account
+    return {"user": account.me(request.cookies.get("sparrow_session"))}
+
+
+@app.post("/api/account/logout")
+def account_logout(request: Request):
+    from fastapi.responses import JSONResponse
+    from . import account
+    account.logout(request.cookies.get("sparrow_session"))
+    r = JSONResponse({"ok": True})
+    r.delete_cookie("sparrow_session")
+    return r
 
 
 @app.get("/session")
@@ -916,5 +985,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.21 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.22 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")
