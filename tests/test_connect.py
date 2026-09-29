@@ -146,3 +146,24 @@ def test_tasks_show_the_email_they_came_from(tmp_path, monkeypatch):
     o = c.get("/api/state").json()["loops"][0]["origin"]
     assert o["from"] == "Priya Shah" and o["subject"] == "Next steps" and o["ts"]
     assert "availability" in o["preview"] and o["link"] == "https://mail.google.com/mail/?authuser=me%40gmail.com#all/18f3a"
+
+
+def test_explore_who_someone_is_without_a_key(tmp_path, monkeypatch):
+    c = client(tmp_path, monkeypatch)
+    from datetime import datetime, timedelta, timezone
+    from loops.decisions import RuleDecisions
+    from loops.engine import sync
+    from loops.models import Message
+    from loops.server import db
+
+    class Fake:
+        name = "gmail"
+        def fetch(self, since): return [Message("gmail", "t9", "t9", "mahan.agabegi@kpmg.co.uk", "Mahan Agabegi", False,
+                                                "Hi Sumedh, are you free for a quick call on Thursday about the graduate role?",
+                                                datetime.now(timezone.utc) - timedelta(hours=2), "Quick call")]
+    sync(db(), [Fake()], RuleDecisions())
+    loop = c.get("/api/state").json()["loops"][0]
+    x = c.post(f"/api/loops/{loop['id']}/explore").json()
+    assert x["name"] == "Mahan Agabegi" and x["org"] == "KPMG" and not x["searched"]
+    assert "role" in x["likely_reasons"][0] and "linkedin.com" in x["links"][1]["url"]
+    assert c.post(f"/api/loops/{loop['id']}/explore").json() == x          # cached

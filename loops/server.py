@@ -524,6 +524,14 @@ def write_up(loop_id: int, body: Notes):
     return draft(s, l, body.notes, use_ai=_ai())
 
 
+@app.post("/api/loops/{loop_id}/explore")
+def explore_loop(loop_id: int, fresh: bool = False):
+    """Who is this person and what might the meeting be about. Reuses the last result unless fresh."""
+    from .explore import cached, explore
+    s = db(); l = _loop(s, loop_id)
+    return (None if fresh else cached(s, loop_id)) or explore(s, l, use_ai=_ai())
+
+
 @app.post("/api/leads/{lead_id}/apply")
 def lead_apply(lead_id: int):
     from .leads import accept
@@ -582,5 +590,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Loops v0.14 running at http://127.0.0.1:{C.PORT}")
+    print(f"Loops v0.15 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

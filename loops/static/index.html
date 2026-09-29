@@ -144,6 +144,13 @@ a.btn{color:inherit}
 .origin a{color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .hero .origin{margin-top:12px;font-size:.92rem}
 .quote{margin:8px 0 0;padding:8px 12px;border-left:3px solid var(--line);color:var(--muted);font-size:.9rem;max-width:60ch;overflow-wrap:anywhere}
+.xbtn{border:1px solid color-mix(in srgb,var(--jobs) 35%,var(--line));background:color-mix(in srgb,var(--jobs) 7%,transparent);color:var(--jobs);border-radius:999px;padding:4px 11px;font-size:.8rem;font-weight:650;display:inline-flex;gap:5px;align-items:center;margin-top:1px}
+.xbtn:hover{border-color:var(--jobs)}
+.rowside{display:flex;gap:4px;align-items:flex-start}
+.xp h4{margin:14px 0 4px;font-size:.84rem;color:var(--muted);font-weight:650;text-transform:uppercase;letter-spacing:.03em}
+.xp ul{margin:0;padding-left:18px}
+.xp .who{font-size:1.05rem;margin:0}
+.xp .src a{font-size:.84rem;color:var(--muted);overflow-wrap:anywhere}
 .tag{font-size:.74rem;font-weight:650;border-radius:6px;padding:1px 7px;background:var(--raised);border:1px solid var(--line);color:var(--muted)}
 .more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s var(--ease)}
 .row.open .more{grid-template-rows:1fr}
@@ -606,6 +613,28 @@ function originLine(o,{quote=false}={}){
   return `<p class="origin"><span>From <b>${esc(o.from)}</b>${o.subject?`, “${esc(o.subject)}”`:''}, ${esc(stamp(o.ts))}</span>${link}</p>${quote&&o.preview?`<p class="quote">${esc(o.preview)}</p>`:''}`;
 }
 
+/* ---------- explore: who is this person, and why are we meeting ---------- */
+const SPARK_I='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+const canExplore=l=>!!(l.person||(l.origin&&l.origin.from)||/\b(with|meet|meeting|call)\b/i.test(l.summary));
+const exploreFirst=l=>/\b(meet|meeting|call|chat|catch up|coffee)\b|unknown|not sure|\?/i.test(l.summary);
+async function exploreFlow(l,fresh=false){
+  loading(fresh?'Looking again':'Looking them up. With your API key this searches the web and can take 20 seconds.');
+  let x;try{x=await api(`/api/loops/${l.id}/explore${fresh?'?fresh=true':''}`,{method:'POST'})}catch(e){closeS();return toast(e.message)}
+  const li=a=>(a||[]).map(v=>`<li>${esc(v)}</li>`).join('');
+  const d=frame(`<div class="xp"><p class="ctx">Explore</p><h2>${esc(x.name||'Who is this?')}</h2>
+    <p class="who">${esc(x.who)}${x.role||x.org?`<br><span class="nums">${esc([x.role,x.org].filter(Boolean).join(', '))}</span>`:''}</p>
+    ${x.unsure?`<p class="note" style="color:var(--soon)">${esc(x.unsure)}</p>`:''}
+    ${x.background&&x.background.length?`<h4>What they do</h4><ul>${li(x.background)}</ul>`:''}
+    <h4>Why you might be meeting</h4><ul>${li(x.likely_reasons)}</ul>
+    ${x.prep&&x.prep.length?`<h4>Before you go</h4><ul>${li(x.prep)}</ul>`:''}
+    ${x.sources&&x.sources.length?`<h4>Sources</h4><div class="src">${x.sources.map(u=>`<div><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//,'').slice(0,70))}</a></div>`).join('')}</div>`:''}
+    ${x.searched?'':`<p class="note">${S.ai?'Web search didn\'t return anything useful, so this is from what Loops already has.':'This is from what Loops already has. Add your API key and Explore searches the web too.'}</p>`}
+    <div class="srow">${(x.links||[]).map(k=>`<a class="btn" href="${esc(k.url)}" target="_blank" rel="noopener" style="text-decoration:none">${esc(k.label)}</a>`).join('')}
+      <button class="btn ghost" id="x-again">Look again</button><button class="btn pri" id="x-x">Done</button></div></div>`);
+  d.querySelectorAll('.xp h4, .xp ul, .xp .who').forEach((el,i)=>motion(el,{opacity:[0,1],y:[8,0]},{bounce:.2,vd:.35,delay:i*.04}));
+  d.querySelector('#x-x').onclick=closeS;d.querySelector('#x-again').onclick=()=>exploreFlow(l,true);
+}
+
 /* ---------- render ---------- */
 function render(){
   const before=snap(), newbies=[];
@@ -640,6 +669,7 @@ function render(){
       ${originLine(top.origin,{quote:true})}
       <p class="why${top.forecast.level==='late'?' late':''}">${esc(top.why||top.forecast.headline)}</p>
       <div class="heroacts"><button class="closer" data-act="close" data-id="${top.id}"><span class="ring">${TICK}</span>Done</button>
+        ${canExplore(top)?`<button class="btn${exploreFirst(top)?'':' ghost'}" data-act="explore" data-id="${top.id}">${SPARK_I} Explore</button>`:''}
         <button class="btn ghost" data-act="later" data-id="${top.id}">Not now</button>
         <button class="btn ghost" data-act="edit" data-id="${top.id}">Edit</button>
         <button class="btn ghost" data-act="toggle" data-id="${top.id}">${expanded.has(top.id)?'Less':'Why this?'}</button></div>
@@ -704,7 +734,7 @@ function details(l){
   return `<div class="in">${l.origin&&l.origin.preview?`<p class="quote" style="margin:0 0 10px">${esc(l.origin.preview)}</p>`:''}<p><b>If missed:</b> ${esc(f.if_missed)}</p><p><b>If it slips a day:</b> ${esc(f.slip_1d)}</p>
     <p class="nums">${Math.round(100*f.p_miss)}% chance of missing it. Takes about ${l.effort_adj}h. From ${esc(l.source==='manual'?'your notes':SRC_NAME[l.source]||l.source)}.</p>
     ${l.note?`<p class="nums">${esc(l.note)}</p>`:''}
-    <div class="links"><button class="link" data-act="talk" data-id="${l.id}">Talk about it</button><button class="link" data-act="focus-this" data-id="${l.id}">Focus on this</button><button class="link" data-act="later" data-id="${l.id}">Move it</button><button class="link" data-act="dismiss" data-id="${l.id}">Not a task</button></div></div>`;
+    <div class="links"><button class="link" data-act="talk" data-id="${l.id}">Talk about it</button>${canExplore(l)?`<button class="link" data-act="explore" data-id="${l.id}">Explore who this is</button>`:''}<button class="link" data-act="focus-this" data-id="${l.id}">Focus on this</button><button class="link" data-act="later" data-id="${l.id}">Move it</button><button class="link" data-act="dismiss" data-id="${l.id}">Not a task</button></div></div>`;
 }
 function row(l){
   const why=l.type==='waiting'?`waiting on ${l.person||'them'}`:l.bucket==='Later'?'when you have a gap':(l.why||'');
@@ -714,7 +744,7 @@ function row(l){
       <p class="meta"><span class="when">${esc(whenText(l))}</span>${l.type==='waiting'?'<span class="tag">Waiting</span>':''}<span>${esc(why)}</span></p>
       ${originLine(l.origin)}
       <div class="more"><div>${details(l)}</div></div></div>
-    <button class="pen" data-act="edit" data-id="${l.id}" aria-label="Edit: ${esc(l.summary)}">${PEN}</button></li>`;
+    <div class="rowside">${canExplore(l)&&exploreFirst(l)?`<button class="xbtn" data-act="explore" data-id="${l.id}">${SPARK_I}Explore</button>`:''}<button class="pen" data-act="edit" data-id="${l.id}" aria-label="Edit: ${esc(l.summary)}">${PEN}</button></div></li>`;
 }
 function leadCard(x){
   const reasons=(x.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join('')+(x.flags||[]).map(f=>`<li class="flag">${esc(f)}</li>`).join('');
@@ -916,6 +946,7 @@ document.addEventListener('click',async e=>{
     if(act==='later')return laterFlow(l);
     if(act==='edit')return editFlow(l);
     if(act==='talk')return talkFlow(l);
+    if(act==='explore')return exploreFlow(l);
     if(act==='notdone')return notDoneFlow(l);
     if(act==='writeup')return writeUpFlow(l);
     if(act==='lead-apply'){const r=await api(`/api/leads/${id}/apply`,{method:'POST'});toast('Added to Jobs. It will spot the confirmation email when you apply.');return refresh()}
