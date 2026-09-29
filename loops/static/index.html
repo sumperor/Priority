@@ -1405,8 +1405,14 @@ document.addEventListener('click',async e=>{
 const notifOn=()=>('Notification' in window)&&Notification.permission==='granted';
 function remLabel(){$('rem').classList.toggle('on',notifOn());$('rem').title=notifOn()?'Reminders on':'Turn on reminders'}
 $('rem').onclick=()=>remindersFlow();
+const AGENT_PROMPT=`You are Sparrow, a warm but firm accountability coach, phoning the user because a deadline is close and they haven't answered reminders.
+If {{is_test}} is yes: say this is a test call from Sparrow, that calls are working, and end politely.
+Otherwise: the task is {{task}}. It's due {{deadline}}. They have {{minutes_left}} minutes left and it needs about {{minutes_needed}} minutes{{short_by}}.
+Why it matters: {{why_it_matters}}
+Keep the call under 45 seconds. Ask whether they've started, and if not, exactly when they will. If they give a time, repeat it back. If they say it's done or not needed, accept that.
+Only use the numbers given above. Never invent times or facts. Be kind, never guilt-trip, and end the call once they've committed.`.replace('{{short_by}}',' (if {{short_by}} is more than 0, they are already {{short_by}} minutes short)');
 async function remindersFlow(){
-  let N;try{N=await api('/api/notify')}catch(e){return toast(e.message)}
+  let N,K;try{[N,K]=await Promise.all([api('/api/notify'),api('/api/calls')])}catch(e){return toast(e.message)}
   const tog=(id,on,label,desc,disabled)=>`<label class="check" style="align-items:flex-start;margin:0 0 14px${disabled?';opacity:.5':''}"><input type="checkbox" id="${id}"${on?' checked':''}${disabled?' disabled':''} style="margin-top:4px"><span><b>${label}</b><br><span class="nums">${desc}</span></span></label>`;
   const d=frame(`<p class="ctx">Reminders</p><h2>Where Sparrow reaches you</h2>
     <p class="note" style="margin:-8px 0 16px">Before each reminder it checks your inbox for proof it's already done. Nothing is sent during a focus session.</p>
@@ -1415,7 +1421,29 @@ async function remindersFlow(){
     <div id="n-phone">${N.ntfy&&N.ntfy_url?`<ol class="steps"><li>Install <b>ntfy</b> from the App Store or Google Play.</li><li>In the app, tap + and subscribe to this topic. Keep it private: anyone with the name can read your reminders.${copyBtn(N.ntfy_topic)}</li></ol>`:''}</div>
     ${tog('n-web',notifOn(),'This browser','Pops up while this tab is open, even in the background.',!('Notification' in window))}
     ${Object.keys(N.errors||{}).length?`<p class="note" style="color:var(--late)">Last problem: ${esc(Object.values(N.errors).join('; '))}</p>`:''}
-    <div class="srow"><button class="btn pri" id="n-test">Send a test</button><button class="btn ghost" id="n-x">Done</button></div>`);
+    <div class="srow"><button class="btn pri" id="n-test">Send a test</button><button class="btn ghost" id="n-x">Done</button></div>
+    <div style="margin-top:22px;padding-top:16px;border-top:1px solid var(--line)">
+      ${tog('k-on',K.enabled,'Phone call, as a last resort',`Rings you when a deadline is close and you haven't answered two reminders. Never during a calendar event, a focus session, or quiet hours (${K.quiet_from}:00 to ${K.quiet_to}:00). At most one call per task.`)}
+      <div id="k-more" ${K.enabled?'':'hidden'}>
+        <label class="field"><span>Your mobile</span><input id="k-phone" value="${esc(K.phone)}" placeholder="+44 7700 900123"></label>
+        <label class="field"><span>ElevenLabs agent ID</span><input id="k-agent" value="${esc(K.agent_id)}" placeholder="agent_..."></label>
+        <label class="field"><span>ElevenLabs phone number ID (your Twilio number, added in ElevenLabs)</span><input id="k-pn" value="${esc(K.phone_number_id)}" placeholder="phnum_..."></label>
+        <div class="srow" style="margin-top:0"><label class="field" style="margin:0"><span>Quiet from</span><input id="k-qf" type="number" min="0" max="23" value="${K.quiet_from}" style="width:90px"></label>
+          <label class="field" style="margin:0"><span>until</span><input id="k-qt" type="number" min="0" max="23" value="${K.quiet_to}" style="width:90px"></label></div>
+        ${K.api_key?'':'<p class="note" style="color:var(--soon)">Add ELEVENLABS_API_KEY to your .env file, then restart Sparrow.</p>'}
+        <details style="margin-top:10px"><summary class="link" style="cursor:pointer">How to set up the agent (once)</summary><ol class="steps" style="margin-top:10px">
+          <li>In <a href="https://www.twilio.com/console" target="_blank" rel="noopener">Twilio</a>, buy a UK number.</li>
+          <li>In <a href="https://elevenlabs.io/app/agents" target="_blank" rel="noopener">ElevenLabs Agents</a>, go to Phone Numbers, import your Twilio number, and copy its ID.</li>
+          <li>Create an agent. Set its first message to: <code>Hi, it's Sparrow. Quick one about {{task}}.</code></li>
+          <li>Paste this as its instructions:${copyBtn(AGENT_PROMPT)}</li>
+          <li>Copy the agent ID into the box above, then press Test call.</li></ol></details>
+        <div class="srow"><button class="btn" id="k-save">Save</button><button class="btn pri" id="k-test">Test call</button><span class="nums">${K.ready?'Ready.':''}${K.error?` Last problem: ${esc(K.error)}`:''}</span></div>
+      </div></div>`);
+  d.querySelector('#k-on').onchange=async e=>{try{await api('/api/calls',{method:'POST',body:{enabled:e.target.checked}});remindersFlow()}catch(err){toast(err.message)}};
+  const kv=()=>({phone:d.querySelector('#k-phone').value,agent_id:d.querySelector('#k-agent').value,phone_number_id:d.querySelector('#k-pn').value,
+    quiet_from:+d.querySelector('#k-qf').value,quiet_to:+d.querySelector('#k-qt').value});
+  const ks=d.querySelector('#k-save');if(ks)ks.onclick=async()=>{try{await api('/api/calls',{method:'POST',body:kv()});toast('Saved.');remindersFlow()}catch(e){toast(e.message)}};
+  const kt=d.querySelector('#k-test');if(kt)kt.onclick=async()=>{try{await api('/api/calls',{method:'POST',body:kv()});await api('/api/calls/test',{method:'POST'});toast('Calling your phone now.')}catch(e){toast(e.message)}};
   const save=async body=>{try{await api('/api/notify',{method:'POST',body});remindersFlow()}catch(e){toast(e.message)}};
   d.querySelector('#n-mac').onchange=e=>save({mac:e.target.checked});
   d.querySelector('#n-ntfy').onchange=e=>save({ntfy:e.target.checked});

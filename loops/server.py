@@ -750,11 +750,27 @@ def run_nudges():
     from .agent import due_nudges
     from .notify import dispatch
     s = _session_db()
-    if _active_session(s):
-        return []  # no nagging mid-session; the session screen shows what's pressing
-    nudges = due_nudges(s, ranked(s))
+    busy = bool(_active_session(s))
+    rows = ranked(s)
+    nudges = [] if busy else due_nudges(s, rows)   # no nagging mid-session
     dispatch(nudges)
+    _maybe_call(s, rows, busy)
     return nudges
+
+
+def _maybe_call(s, rows, busy):
+    """Last resort: a phone call when a close deadline's reminders are being ignored."""
+    from . import caller
+    if not caller.ready():
+        return
+    from .planner import calendar_events
+    now = datetime.now(timezone.utc)
+    try:
+        events = calendar_events(now - timedelta(hours=12), now + timedelta(hours=12))
+    except Exception:
+        events = []
+    rows = [{**r, **dict(s.get_loop(r["id"]))} for r in rows if r["status"] == "open"]
+    caller.tick(s, rows, events, busy, now)
 
 
 def _nudger():
@@ -769,6 +785,64 @@ def _nudger():
 @app.post("/api/nudges/tick")
 def nudges_tick():
     return {"nudges": run_nudges()}
+
+
+@app.get("/api/calls")
+def calls_settings():
+    from . import caller
+    st = caller.settings()
+    return {**st, "api_key": bool(caller.api_key()), "ready": caller.ready(st), "error": caller.last["error"],
+            "phone": st["phone"]}
+
+
+class CallSettings(BaseModel):
+    enabled: bool | None = None
+    phone: str | None = None
+    agent_id: str | None = None
+    phone_number_id: str | None = None
+    quiet_from: int | None = None
+    quiet_to: int | None = None
+
+
+@app.post("/api/calls")
+def calls_update(body: CallSettings):
+    import re
+    from . import caller
+    st = caller.settings()
+    f = {k: v for k, v in body.model_dump().items() if v is not None}
+    if "phone" in f:
+        p = re.sub(r"[\s()-]", "", f["phone"])
+        if p.startswith("07"):
+            p = "+44" + p[1:]   # UK mobile written the usual way
+        if p and not re.fullmatch(r"\+\d{8,15}", p):
+            raise HTTPException(400, "Use your full mobile number, like +44 7700 900123.")
+        f["phone"] = p
+    for k in ("agent_id", "phone_number_id"):
+        if k in f:
+            f[k] = f[k].strip()
+    for k in ("quiet_from", "quiet_to"):
+        if k in f:
+            f[k] = max(0, min(23, int(f[k])))
+    st.update(f)
+    caller.save(st)
+    return calls_settings()
+
+
+@app.post("/api/calls/test")
+def calls_test():
+    from . import caller
+    st = caller.settings()
+    missing = [name for name, ok in (("your mobile", st["phone"]), ("the agent ID", st["agent_id"]),
+                                     ("the phone number ID", st["phone_number_id"]),
+                                     ("ELEVENLABS_API_KEY in .env", caller.api_key())) if not ok]
+    if missing:
+        raise HTTPException(400, "Still needed: " + ", ".join(missing) + ".")
+    fake = {"id": 0, "summary": "a test task", "due": (datetime.now(timezone.utc) + timedelta(minutes=40)).isoformat(),
+            "effort_h": 0.5, "stakes": ""}
+    try:
+        return {"conversation_id": caller.call(_session_db(), fake, test=True)}
+    except Exception as e:
+        raise HTTPException(400, f"Couldn't start the call: {e}")
 
 
 @app.get("/api/notify")
@@ -842,5 +916,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.20 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.21 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

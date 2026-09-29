@@ -25,6 +25,7 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - `loops/planner.py` the calendar: events, meetings, deadlines and planned task blocks in free time (08:00 to 22:00); drag keeps a time
 - `loops/errands.py` errands ask when, how you travel and how far; minutes computed in code
 - `tests/test_scenarios.py` 20 end-to-end edge cases; run them before shipping
+- `loops/caller.py` last-resort phone call (ElevenLabs agent + Twilio): deadline close, 2 reminders ignored, not in an event/focus/quiet hours; transcript read back as a reply
 - `loops/notify.py` reminders to Mac notifications and phone (ntfy), sent by a server timer
 - `loops/static/vendor/motion.js` Motion 12 (animations); page falls back to built-in animations
 - `loops/connect.py` Connect buttons: Google/Microsoft sign-in, Slack token, iMessage access, disconnect
