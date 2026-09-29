@@ -47,7 +47,7 @@ button{cursor:pointer}
 .brand:hover .logo{transform:rotate(-8deg) scale(1.08)}
 .wrap{position:relative;z-index:1}
 .composer{z-index:5}
-.wrap{max-width:720px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top,0px)) 16px 190px}
+.wrap{max-width:1480px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top,0px)) 16px 190px}
 
 /* top */
 .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
@@ -96,9 +96,62 @@ button{cursor:pointer}
 .donering{display:flex;align-items:center;gap:8px;font-size:.84rem;color:var(--muted);justify-self:end}
 .donering b{display:grid;place-items:center;min-width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:.95rem}
 .soundbtn{border:0;background:none;color:var(--faint);font-size:.78rem;padding:0;justify-self:end}
-@media (min-width:1320px){.clock-side{position:fixed;right:24px;top:50%;transform:translateY(-50%);width:250px;margin:0;grid-template-columns:1fr;z-index:2}
-  .donering,.soundbtn{justify-self:start}}
+
 .confetti{position:fixed;width:8px;height:12px;border-radius:2px;pointer-events:none;z-index:70;left:0;top:0}
+/* layout: calendar on the left, what's left to do on the right */
+.layout{display:grid;grid-template-columns:minmax(0,65fr) minmax(330px,35fr);gap:22px;align-items:start;margin-top:14px}
+.side{min-width:0}
+.side .clock-side{margin-top:0}
+.side .hero h1{font-size:clamp(1.5rem,2.3vw,2.25rem)}
+@media (max-width:1099px){.layout{grid-template-columns:1fr}.side{max-width:720px;margin:0 auto;width:100%}}
+/* calendar */
+.calpane{background:var(--surface);border-radius:24px;box-shadow:var(--shadow);padding:14px 14px 10px;position:sticky;top:12px;height:calc(100vh - 250px);min-height:560px;display:flex;flex-direction:column;overflow:hidden}
+@media (max-width:1099px){.calpane{position:relative;top:0;height:72vh;min-height:480px}}
+.calhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:2px 4px 10px}
+.calhead h2{margin:0 6px 0 4px;font-size:1.15rem;letter-spacing:-.01em;flex:1;min-width:120px}
+.seg{display:inline-flex;background:var(--raised);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:none;border-radius:999px;padding:5px 12px;font-size:.84rem;font-weight:650;color:var(--muted)}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.navb{width:32px;height:32px;border-radius:10px;border:0;background:var(--raised);display:grid;place-items:center;color:var(--ink)}
+.calscroll{flex:1;overflow:auto;position:relative;border-top:1px solid var(--line);overscroll-behavior:contain}
+.cgrid{display:grid;position:relative}
+.dayhead{position:sticky;top:0;z-index:4;background:var(--surface);text-align:center;padding:6px 2px 4px;height:62px;box-sizing:border-box;font-size:.78rem;color:var(--muted);border-bottom:1px solid var(--line)}
+.dayhead b{display:block;font-size:1.15rem;color:var(--ink);font-weight:720;line-height:1.1}
+.dayhead.today b{color:#fff;background:var(--accent);border-radius:999px;width:32px;height:32px;display:grid;place-items:center;margin:2px auto 0}
+.allday{position:sticky;z-index:3;background:var(--surface);border-bottom:1px solid var(--line);padding:3px;display:flex;flex-direction:column;gap:2px;min-height:26px}
+.dl{font-size:.7rem;font-weight:650;border-radius:6px;padding:2px 6px;background:color-mix(in srgb,var(--late) 10%,transparent);color:var(--late);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.dl.ok{background:var(--raised);color:var(--muted)} .dl.soon{background:color-mix(in srgb,var(--soon) 12%,transparent);color:var(--soon)}
+.gutter{position:relative}
+.gutter span{position:absolute;right:6px;transform:translateY(-50%);font-size:.7rem;color:var(--faint)}
+.daycol{position:relative;border-left:1px solid var(--line)}
+.daycol.today{background:color-mix(in srgb,var(--accent) 4%,transparent)}
+.daycol .off{position:absolute;left:0;right:0;background:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in srgb,var(--line) 45%,transparent) 6px 7px);pointer-events:none}
+.hline{position:absolute;left:0;right:0;border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent);pointer-events:none}
+.blk{position:absolute;border-radius:9px;padding:4px 7px;font-size:.76rem;line-height:1.25;overflow:hidden;box-sizing:border-box;cursor:pointer;
+  border-left:3px solid var(--c,var(--other));background:color-mix(in srgb,var(--c,var(--other)) 14%,var(--surface));color:var(--ink);transition:box-shadow .2s}
+.blk b{display:block;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.blk small{color:var(--muted)}
+.blk.task{touch-action:none;cursor:grab;background:color-mix(in srgb,var(--c) 20%,var(--surface))}
+.blk.task:not(.fixed){border-style:dashed;border-left-style:solid;border-width:1px 1px 1px 3px;border-color:color-mix(in srgb,var(--c) 45%,transparent)}
+.blk.task.fixed{background:color-mix(in srgb,var(--c) 30%,var(--surface))}
+.blk.late{box-shadow:0 0 0 1.5px var(--late) inset}
+.blk.event{--c:var(--faint);background:var(--raised);cursor:default}
+.blk.meet{--c:var(--jobs);background:color-mix(in srgb,var(--jobs) 18%,var(--surface))}
+.blk.dragging{cursor:grabbing;z-index:20;box-shadow:0 14px 30px -8px rgba(0,0,0,.35);opacity:.95}
+.blk:hover{box-shadow:0 6px 16px -8px rgba(0,0,0,.3)}
+.duetick{position:absolute;left:0;right:0;border-top:2px dashed var(--late);pointer-events:none;opacity:.7}
+.nowline{position:absolute;left:-4px;right:0;border-top:2px solid var(--late);z-index:6;pointer-events:none}
+.nowline::before{content:"";position:absolute;left:-1px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--late)}
+.month{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding-top:6px}
+.month .mh{font-size:.72rem;color:var(--muted);text-align:center;padding:2px}
+.mcell{min-height:92px;border-radius:12px;background:var(--raised);padding:6px;font-size:.72rem;cursor:pointer;overflow:hidden}
+.mcell.other{opacity:.45}
+.mcell.today{box-shadow:0 0 0 2px var(--accent) inset}
+.mcell .n{font-weight:720;font-size:.85rem}
+.mcell i{display:block;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;padding-left:6px;border-left:3px solid var(--c,var(--faint))}
+.calfoot{display:flex;gap:12px;flex-wrap:wrap;font-size:.74rem;color:var(--muted);padding:8px 4px 0}
+.calfoot span{display:inline-flex;align-items:center;gap:5px}
+.calfoot i{width:10px;height:10px;border-radius:3px;display:inline-block}
 /* wins */
 #wins{display:grid;gap:12px;margin-top:22px}
 #wins:empty{display:none}
@@ -366,6 +419,9 @@ details.closed[open] summary::after{content:" \2212"}
   </header>
   <p class="hello" id="hello" style="margin:14px 0 0"></p>
   <p class="status" id="status"></p>
+  <div class="layout">
+  <section class="calpane" id="calpane" aria-label="Your calendar"></section>
+  <div class="side">
   <aside class="clock-side" id="clockside" aria-label="Time now"><div><div class="place" id="cplace"></div><div class="t" id="ctime"></div></div>
     <div class="donering" id="cdone"></div><div class="next" id="cnext"></div><button class="soundbtn" id="csound"></button></aside>
   <section id="wins" aria-live="polite"></section>
@@ -373,6 +429,7 @@ details.closed[open] summary::after{content:" \2212"}
   <div id="areas"></div>
   <details class="closed" id="pastSec" hidden><summary id="pastSum">Past deadline</summary><p class="nums" style="margin:6px 0 0">These passed their deadline, so Sparrow has stopped chasing them. Tick one off, move it, or drop it.</p><div id="past" style="margin-top:8px"></div></details>
   <details class="closed" id="closedSec" hidden><summary id="closedSum">Done recently</summary><div id="closed" style="margin-top:8px"></div></details>
+  </div></div>
 </main>
 
 <div class="composer">
@@ -540,7 +597,7 @@ function sparkle(host){
 
 /* ---------- data ---------- */
 async function refresh(){
-  try{S=await api('/api/state');render()}
+  try{S=await api('/api/state');render();loadCal()}
   catch(e){$('hero').innerHTML='<div class="empty"><p>Sparrow isn\'t running</p><h1>Start it in Terminal with python run.py serve</h1></div>'}
   clearTimeout(pollT);pollT=setTimeout(refresh,S&&S.sync.running?3000:30000);
 }
@@ -840,6 +897,167 @@ async function profileFlow(){
     toast('Reading your public profile. About 20 seconds.');
     try{const r=await api('/api/profile/linkedin-url',{method:'POST',body:{url:/^https?:/.test(url)?url:'https://'+url}});toast(r.warning||'LinkedIn profile saved.');profileFlow()}catch(e){toast(e.message)}};
   d.querySelector('#p-done').onclick=()=>jobsFlow();
+}
+
+/* ---------- the calendar: events, meetings, deadlines and Sparrow's plan ---------- */
+const HOUR=52, SHOW_FROM=7, SHOW_TO=23;
+let CV=(()=>{let v='week';try{v=localStorage.getItem('sparrow.view')||(innerWidth<700?'3day':'week')}catch(e){}return {view:v,anchor:new Date(),data:null,scrolled:false}})();
+const dayStart=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x};
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+function range(){
+  const a=dayStart(CV.anchor);
+  if(CV.view==='day')return {start:a,days:1};
+  if(CV.view==='3day')return {start:a,days:3};
+  if(CV.view==='month'){const f=new Date(a.getFullYear(),a.getMonth(),1);const off=(f.getDay()+6)%7;return {start:addDays(f,-off),days:42}}
+  const off=(a.getDay()+6)%7;return {start:addDays(a,-off),days:7};
+}
+async function loadCal(){
+  const r=range();
+  try{CV.data=await api(`/api/calendar?start=${encodeURIComponent(r.start.toISOString())}&days=${r.days}`)}catch(e){CV.data=null}
+  drawCal();
+}
+function calTitle(r){
+  const e=addDays(r.start,r.days-1), o={day:'numeric',month:'short'};
+  if(CV.view==='month')return CV.anchor.toLocaleDateString([], {month:'long',year:'numeric'});
+  if(r.days===1)return r.start.toLocaleDateString([], {weekday:'long',day:'numeric',month:'long'});
+  return `${r.start.toLocaleDateString([],o)} – ${e.toLocaleDateString([],o)}`.replace('–','to');
+}
+function drawCal(){
+  if(document.querySelector('.blk.dragging'))return;   // don't redraw under your finger
+  const pane=$('calpane'), r=range(), D=CV.data;
+  const head=`<div class="calhead"><button class="navb" data-cal="prev" aria-label="Back">‹</button><button class="navb" data-cal="next" aria-label="Forward">›</button>
+    <button class="btn ghost" data-cal="today" style="padding:5px 12px">Today</button><h2>${esc(calTitle(r))}</h2>
+    <div class="seg">${[['day','Day'],['3day','3 days'],['week','Week'],['month','Month']].map(([k,t])=>`<button data-view="${k}" class="${CV.view===k?'on':''}">${t}</button>`).join('')}</div></div>`;
+  const foot=`<div class="calfoot"><span><i style="background:color-mix(in srgb,var(--jobs) 40%,transparent)"></i>Meeting</span><span><i style="background:var(--raised);border:1px solid var(--line)"></i>Calendar</span>
+    <span><i style="border:1px dashed var(--muted)"></i>Sparrow's plan (drag to move)</span><span><i style="background:var(--muted)"></i>Your chosen time</span><span><i style="border-top:2px dashed var(--late);height:0;width:14px;border-radius:0"></i>Deadline</span>
+    ${D&&D.unplaced&&D.unplaced.length?`<span style="color:var(--soon)">${D.unplaced.length} task${D.unplaced.length>1?'s':''} didn't fit this view</span>`:''}</div>`;
+  if(!D){pane.innerHTML=head+'<p class="nums" style="padding:20px">Couldn\'t load the calendar.</p>';return}
+  const body=CV.view==='month'?monthHTML(r,D):gridHTML(r,D);
+  const prevScroll=pane.querySelector('.calscroll')?.scrollTop;
+  pane.innerHTML=head+`<div class="calscroll" id="calscroll">${body}</div>`+foot;
+  const sc=$('calscroll');
+  if(CV.view!=='month'){
+    if(prevScroll!=null&&CV.scrolled)sc.scrollTop=prevScroll;
+    else{sc.scrollTop=Math.max(0,(Math.min(new Date().getHours(),20)-SHOW_FROM-1)*HOUR);CV.scrolled=true}
+    placeNow();wireDrag();
+  }
+  if(!pane.dataset.shown){pane.dataset.shown=1;pane.querySelectorAll('.blk').forEach((b,i)=>motion(b,{opacity:[0,1],scale:[.85,1],y:[10,0]},{bounce:.4,vd:.5,delay:Math.min(i,20)*.02}))}
+}
+const mins=d=>{const x=new Date(d);return x.getHours()*60+x.getMinutes()};
+function lanes(items){ // side-by-side placement for overlapping items in one day
+  items.sort((a,b)=>a.s-b.s);let groups=[],cur=[],end=-1;
+  items.forEach(it=>{if(it.s>=end&&cur.length){groups.push(cur);cur=[]}cur.push(it);end=Math.max(end,it.e)});if(cur.length)groups.push(cur);
+  groups.forEach(g=>{const cols=[];g.forEach(it=>{let k=cols.findIndex(c=>c<=it.s);if(k<0){k=cols.length;cols.push(0)}cols[k]=it.e;it.lane=k});g.forEach(it=>it.n=cols.length)});
+  return items;
+}
+function gridHTML(r,D){
+  const today=dayStart(new Date()), cols=r.days, H=(SHOW_TO-SHOW_FROM)*HOUR;
+  const tmpl=`grid-template-columns:52px repeat(${cols},minmax(${cols>3?90:120}px,1fr))`;
+  let heads='<div class="dayhead" style="grid-column:1"></div>', all='<div class="allday" style="grid-column:1;top:62px;font-size:.66rem;color:var(--faint);justify-content:center">due</div>', bodies='';
+  const gut=[...Array(SHOW_TO-SHOW_FROM)].map((_,k)=>k?`<span style="top:${k*HOUR}px">${String(SHOW_FROM+k).padStart(2,'0')}:00</span>`:'').join('');
+  for(let i=0;i<cols;i++){
+    const d=addDays(r.start,i), isT=+d===+today, next=addDays(d,1);
+    const inDay=x=>new Date(x)>=d&&new Date(x)<next;
+    heads+=`<div class="dayhead${isT?' today':''}" style="grid-column:${i+2}" data-day="${d.toISOString()}">${d.toLocaleDateString([], {weekday:'short'})}<b>${d.getDate()}</b></div>`;
+    const dls=D.deadlines.filter(x=>inDay(x.at));
+    all+=`<div class="allday" style="grid-column:${i+2};top:62px">${dls.map(x=>`<span class="dl ${x.level}" data-task="${x.id}" title="${esc(x.title)}">${hm(x.at)} ${esc(x.title)}</span>`).join('')}</div>`;
+    const items=[
+      ...D.events.filter(x=>inDay(x.start)).map(x=>({k:'event',x,s:mins(x.start),e:Math.max(mins(x.start)+20,inDay(x.end)?mins(x.end):24*60)})),
+      ...D.meetings.filter(x=>inDay(x.start)).map(x=>({k:'meet',x,s:mins(x.start),e:mins(x.start)+30})),
+      ...D.blocks.filter(x=>inDay(x.start)).map(x=>({k:'task',x,s:mins(x.start),e:mins(x.start)+x.minutes}))];
+    lanes(items);
+    const px=m=>(m-SHOW_FROM*60)/60*HOUR;
+    const blks=items.map(it=>{const top=Math.max(0,px(it.s)), h=Math.max(20,px(it.e)-px(it.s)-2), w=100/it.n, x=it.x;
+      const pos=`top:${top}px;height:${h}px;left:calc(${it.lane*w}% + 2px);width:calc(${w}% - 4px)`;
+      if(it.k==='event')return `<div class="blk event" style="${pos}" data-event="${esc(x.title)}|${x.start}"><b>${esc(x.title)}</b><small>${hm(x.start)}</small></div>`;
+      if(it.k==='meet')return `<div class="blk meet" style="${pos}" data-task="${x.id}"><b>${esc(x.title)}</b><small>${hm(x.start)}</small></div>`;
+      return `<div class="blk task${x.fixed?' fixed':''}${x.late?' late':''}" style="${pos};--c:${AREA_C[x.area]||AREA_C.Other}" data-block="${x.id}" data-start="${x.start}" data-min="${x.minutes}" title="${esc(x.title)}"><b>${esc(x.title)}</b><small>${hm(x.start)}, ${x.minutes<60?x.minutes+' min':(x.minutes/60).toFixed(x.minutes%60?1:0)+'h'}${x.late?' · late':''}</small></div>`}).join('');
+    const ticks=dls.map(x=>`<div class="duetick" style="top:${px(mins(x.at))}px"></div>`).join('');
+    const off=`<div class="off" style="top:0;height:${px(D.day_start*60)}px"></div><div class="off" style="top:${px(D.day_end*60)}px;bottom:0"></div>`;
+    const lines=[...Array(SHOW_TO-SHOW_FROM)].map((_,k)=>`<div class="hline" style="top:${k*HOUR}px"></div>`).join('');
+    bodies+=`<div class="daycol${isT?' today':''}" style="grid-column:${i+2};height:${H}px" data-col="${i}" data-day="${d.toISOString()}">${off}${lines}${ticks}${blks}</div>`;
+  }
+  return `<div class="cgrid" style="${tmpl}">${heads}${all}<div class="gutter" style="grid-column:1;height:${H}px">${gut}</div>${bodies}</div>`;
+}
+function monthHTML(r,D){
+  const today=dayStart(new Date()), m=CV.anchor.getMonth();
+  const names=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(n=>`<div class="mh">${n}</div>`).join('');
+  let cells='';
+  for(let i=0;i<42;i++){
+    const d=addDays(r.start,i), next=addDays(d,1), inDay=x=>new Date(x)>=d&&new Date(x)<next;
+    const items=[...D.meetings.filter(x=>inDay(x.start)).map(x=>({t:x.title,at:x.start,c:'var(--jobs)'})),
+      ...D.events.filter(x=>inDay(x.start)).map(x=>({t:x.title,at:x.start,c:'var(--faint)'})),
+      ...D.deadlines.filter(x=>inDay(x.at)).map(x=>({t:'Due: '+x.title,at:x.at,c:'var(--late)'})),
+      ...D.blocks.filter(x=>inDay(x.start)).map(x=>({t:x.title,at:x.start,c:AREA_C[x.area]||AREA_C.Other}))].sort((a,b)=>new Date(a.at)-new Date(b.at));
+    cells+=`<div class="mcell${d.getMonth()!==m?' other':''}${+d===+today?' today':''}" data-goday="${d.toISOString()}"><div class="n">${d.getDate()}</div>
+      ${items.slice(0,3).map(x=>`<i style="--c:${x.c}">${esc(x.t)}</i>`).join('')}${items.length>3?`<i style="border:0;color:var(--muted)">+${items.length-3} more</i>`:''}</div>`;
+  }
+  return `<div class="month">${names}${cells}</div>`;
+}
+function placeNow(){
+  const col=document.querySelector('.daycol.today');document.querySelectorAll('.nowline').forEach(n=>n.remove());
+  if(!col)return;const m=mins(new Date());if(m<SHOW_FROM*60||m>SHOW_TO*60)return;
+  const n=document.createElement('div');n.className='nowline';n.style.top=((m-SHOW_FROM*60)/60*HOUR)+'px';col.appendChild(n);
+}
+setInterval(placeNow,60000);
+document.addEventListener('click',e=>{
+  const nb=e.target.closest('[data-cal]');
+  if(nb){const k=nb.dataset.cal, step=CV.view==='day'?1:CV.view==='3day'?3:CV.view==='week'?7:0;
+    if(k==='today')CV.anchor=new Date();
+    else if(CV.view==='month')CV.anchor=new Date(CV.anchor.getFullYear(),CV.anchor.getMonth()+(k==='next'?1:-1),1);
+    else CV.anchor=addDays(CV.anchor,k==='next'?step:-step);
+    $('calpane').dataset.shown='';CV.scrolled=false;loadCal();
+    motion($('calpane').querySelector('.calscroll'),{opacity:[.3,1],x:[k==='prev'?-30:30,0]},{bounce:.25,vd:.4});return}
+  const vb=e.target.closest('[data-view]');
+  if(vb){CV.view=vb.dataset.view;try{localStorage.setItem('sparrow.view',CV.view)}catch(err){}$('calpane').dataset.shown='';CV.scrolled=false;loadCal();return}
+  const gd=e.target.closest('[data-goday]');
+  if(gd){CV.anchor=new Date(gd.dataset.goday);CV.view='day';$('calpane').dataset.shown='';loadCal();return}
+  const ev=e.target.closest('[data-event]');
+  if(ev){const [t,at]=ev.dataset.event.split('|');return toast(`${t}, ${stamp(at)}. From your calendar.`)}
+  const tk=e.target.closest('[data-task]');
+  if(tk&&S){const l=S.loops.find(x=>x.id===+tk.dataset.task);if(l)taskSheet(l)}
+});
+function taskSheet(l){
+  const d=frame(`<p class="ctx">${esc(l.area||'Task')}</p><h2>${esc(l.summary)}</h2>
+    <p style="margin:0">${esc(l.why||'')}</p>${originLine(l.origin)}${l.note?`<p class="nums">${esc(l.note)}</p>`:''}
+    <div class="srow"><button class="btn pri" id="t-done">Done</button><button class="btn" id="t-talk">Talk about it</button>
+    ${canExplore(l)?'<button class="btn" id="t-exp">Explore</button>':''}<button class="btn ghost" id="t-later">Not now</button><button class="btn ghost" id="t-edit">Edit</button></div>`);
+  d.querySelector('#t-done').onclick=()=>closeFlow(l);d.querySelector('#t-talk').onclick=()=>talkFlow(l);
+  d.querySelector('#t-later').onclick=()=>laterFlow(l);d.querySelector('#t-edit').onclick=()=>editFlow(l);
+  const x=d.querySelector('#t-exp');if(x)x.onclick=()=>exploreFlow(l);
+}
+/* drag a planned block to a new time */
+function wireDrag(){
+  document.querySelectorAll('.blk.task').forEach(b=>{
+    b.onpointerdown=e=>{
+      if(e.button!==0)return;e.preventDefault();
+      const cols=[...document.querySelectorAll('.daycol')], rects=cols.map(c=>c.getBoundingClientRect());
+      const home=b.parentElement, hr=home.getBoundingClientRect(), br=b.getBoundingClientRect();
+      const sx=e.clientX, sy=e.clientY, top0=parseFloat(b.style.top); let moved=false, target=home, newTop=top0;
+      b.setPointerCapture(e.pointerId);
+      b.onpointermove=ev=>{
+        const dx=ev.clientX-sx, dy=ev.clientY-sy;
+        if(!moved&&Math.hypot(dx,dy)<6)return;
+        if(!moved){moved=true;b.classList.add('dragging')}
+        const ci=rects.findIndex(r=>ev.clientX>=r.left&&ev.clientX<r.right); target=ci>=0?cols[ci]:target;
+        const tr=target.getBoundingClientRect();
+        newTop=Math.max(0,Math.round((top0+dy)/(HOUR/4))*(HOUR/4));
+        b.style.transform=`translate(${tr.left-hr.left}px,${newTop-top0}px)`;
+        const m=SHOW_FROM*60+newTop/HOUR*60;b.querySelector('small').textContent=`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+      };
+      b.onpointerup=async ev=>{
+        b.onpointermove=b.onpointerup=null;
+        if(!moved){const l=S&&S.loops.find(x=>x.id===+b.dataset.block);if(l)taskSheet(l);return}
+        b.classList.remove('dragging');
+        const day=new Date(target.dataset.day), m=SHOW_FROM*60+newTop/HOUR*60;
+        day.setHours(Math.floor(m/60),m%60,0,0);
+        motion(b,{scale:[1.06,1]},{bounce:.5,vd:.4});
+        try{const r=await api(`/api/loops/${b.dataset.block}/move`,{method:'POST',body:{start:day.toISOString()}});
+          toast(r.warning||`Moved to ${day.toLocaleDateString([], {weekday:'short'})} ${hm(day)}. Sparrow will hold you to it.`);
+          await refresh()}catch(err){toast(err.message);loadCal()}
+      };
+    };
+  });
 }
 
 /* ---------- render ---------- */

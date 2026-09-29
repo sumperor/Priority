@@ -496,9 +496,10 @@ def _apply(s, loop_id, f):
         f["place"] = f["place"].strip()[:80]
     if f:
         s.update_loop(loop_id, **f)
-    if {"commit_at", "travel_mode", "travel_min", "place"} & set(f):
+    cur = dict(s.get_loop(loop_id))
+    if ({"travel_mode", "travel_min", "place"} & set(f)) or ("commit_at" in f and (cur.get("base_h") or cur.get("travel_mode"))):
         from .errands import recompute
-        s.update_loop(loop_id, **recompute(dict(s.get_loop(loop_id))))
+        s.update_loop(loop_id, **recompute(cur))
     return f
 
 
@@ -597,6 +598,29 @@ def explore_loop(loop_id: int, fresh: bool = False):
     from .explore import cached, explore
     s = db(); l = _loop(s, loop_id)
     return (None if fresh else cached(s, loop_id)) or explore(s, l, use_ai=_ai())
+
+
+# ---------------------------------------------------------------- the calendar
+@app.get("/api/calendar")
+def calendar(start: str, days: int = 7):
+    from .planner import _utc, build
+    s = db()
+    return build(ranked(s), _utc(start), max(1, min(42, days)))
+
+
+class Move(BaseModel):
+    start: str
+
+
+@app.post("/api/loops/{loop_id}/move")
+def move(loop_id: int, body: Move):
+    """Dragged on the calendar: keep that time, hold you to it, and say if it's too late."""
+    from .planner import _utc, move_warning
+    s = db(); l = _loop(s, loop_id)
+    t = _utc(body.start)
+    s.update_loop(loop_id, commit_at=t.isoformat(), last_nudge=None)
+    eff = (l["effort_h"] or 0.25) * s.effort_multiplier(l["type"])
+    return {"ok": True, "warning": move_warning(dict(l), t, eff)}
 
 
 # ---------------------------------------------------------------- jobs from your inbox
@@ -818,5 +842,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.19 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.20 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")
