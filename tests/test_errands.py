@@ -14,7 +14,6 @@ def app(tmp_path, monkeypatch):
     monkeypatch.setattr(C, "CONNECTORS", [])
     monkeypatch.setattr(C, "SECRETS_DIR", str(tmp_path / "secrets"))
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.delenv("GOOGLE_MAPS_API_KEY", raising=False)
     from fastapi.testclient import TestClient
     from loops.server import app
     return TestClient(app)

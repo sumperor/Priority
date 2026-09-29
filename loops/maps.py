@@ -1,17 +1,14 @@
 """Travel time from A to B, looked up instead of asked.
 
-Google Maps (Routes API) when GOOGLE_MAPS_API_KEY is set, which also covers bus and train.
-Otherwise free OpenStreetMap: Nominatim finds the places, routing.openstreetmap.de times the route
-for walking, cycling and driving. If neither works the errand just asks you, as before.
+Free OpenStreetMap, no key: Nominatim finds the places, routing.openstreetmap.de times the route
+for walking, cycling and driving. Bus and train aren't covered, so those (and failed lookups) just ask you.
 Your starting point ("home") is saved once in secrets/places.json.
 """
-import os
-
 import requests
 
 from . import config as C
 
-MODES = {"walk": ("WALK", "foot"), "cycle": ("BICYCLE", "bike"), "drive": ("DRIVE", "car"), "transit": ("TRANSIT", None)}
+MODES = {"walk": "foot", "cycle": "bike", "drive": "car"}
 UA = {"User-Agent": "Sparrow/1.0 (local task app)"}
 last = {"error": ""}
 
@@ -26,17 +23,6 @@ def set_home(address):
     C.write_secret("places.json", d)
 
 
-def _google(origin, dest, mode, key):
-    r = requests.post("https://routes.googleapis.com/directions/v2:computeRoutes", timeout=15,
-                      headers={"X-Goog-Api-Key": key, "X-Goog-FieldMask": "routes.duration,routes.distanceMeters"},
-                      json={"origin": {"address": origin}, "destination": {"address": dest}, "travelMode": MODES[mode][0]})
-    r.raise_for_status()
-    routes = r.json().get("routes") or []
-    if not routes:
-        return None
-    return int(routes[0]["duration"].rstrip("s")), routes[0].get("distanceMeters")
-
-
 def _geocode(q, near=None):
     params = {"q": q, "format": "json", "limit": 1}
     if near:  # look for "Tesco" close to home, not anywhere in the country
@@ -49,9 +35,7 @@ def _geocode(q, near=None):
 
 
 def _osm(origin, dest, mode):
-    profile = MODES[mode][1]
-    if not profile:
-        return None
+    profile = MODES[mode]
     a = _geocode(origin)
     b = a and (_geocode(dest, near=a) or _geocode(dest))
     if not b:
@@ -72,22 +56,15 @@ def travel(dest, mode, origin=None):
     k = f"{origin}|{dest}|{mode}".lower()
     if k in cache:
         return cache[k]
-    key = os.getenv("GOOGLE_MAPS_API_KEY", "")
-    found, via = None, ""
-    for name, fn in (("Google Maps", lambda: _google(origin, dest, mode, key) if key else None),
-                     ("OpenStreetMap", lambda: _osm(origin, dest, mode))):
-        try:
-            found = fn()
-        except Exception as e:
-            last["error"] = f"{name}: {str(e)[:150]}"
-            found = None
-        if found:
-            via = name
-            break
+    try:
+        found = _osm(origin, dest, mode)
+    except Exception as e:
+        last["error"] = str(e)[:150]
+        found = None
     if not found:
         return None
     secs, metres = found
-    out = {"minutes": max(1, -(-secs // 60)), "km": round((metres or 0) / 1000, 1), "via": via}
+    out = {"minutes": max(1, -(-secs // 60)), "km": round((metres or 0) / 1000, 1), "via": "OpenStreetMap"}
     d = C.read_secret("places.json")
     d.setdefault("routes", {})[k] = out
     C.write_secret("places.json", d)
