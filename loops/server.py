@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from . import config as C
 from .engine import ranked, sync
-from .store import Store
+from .store import Store, now_iso
 
 app = FastAPI(title="Sparrow")
 from .session import router as session_router, active as _active_session, db as _session_db  # noqa: E402
@@ -260,6 +260,9 @@ class Capture(BaseModel):
     importance: int | None = None  # 1 low, 2 normal, 3 high
 
 
+_GAVE_REASON = __import__("re").compile(r"\b(because|cause|so that|so i|otherwise|or else|in case|before (my|the)|for (my|the|an?|his|her|their)\s+\w+)", __import__("re").I)
+
+
 @app.post("/api/capture")
 def capture(body: Capture):
     from .extract import capture as parse
@@ -267,6 +270,8 @@ def capture(body: Capture):
         raise HTTPException(400, "Empty")
     d = parse(body.text.strip())  # importance is decided by the algorithm, never by the user
     d["summary"] = tidy_summary(d["summary"])
+    if not _GAVE_REASON.search(body.text):
+        d["stakes"] = ""   # don't invent why it matters; the card asks instead
     due = d.get("due") or (datetime.now(timezone.utc) +
                            timedelta(hours=C.DEFAULT_DUE_HOURS.get(d["type"], 48))).isoformat()
     s = db()
@@ -525,6 +530,22 @@ def dismiss(loop_id: int):
     s = db(); _loop(s, loop_id)
     s.close_loop(loop_id, outcome="dismissed")
     s.label_decision(loop_id, "detect", False)
+    return {"ok": True}
+
+
+@app.delete("/api/loops/{loop_id}")
+def delete_loop(loop_id: int):
+    """Delete button: gone from the list and the calendar. Kept for a while so Undo works."""
+    s = db(); _loop(s, loop_id)
+    s.update_loop(loop_id, status="deleted", closed_at=now_iso())
+    return {"ok": True}
+
+
+@app.post("/api/loops/{loop_id}/restore")
+def restore_loop(loop_id: int):
+    s = db(); l = _loop(s, loop_id)
+    if l["status"] == "deleted":
+        s.update_loop(loop_id, status="open", closed_at=None)
     return {"ok": True}
 
 
@@ -1053,5 +1074,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.28 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.29 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

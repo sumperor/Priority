@@ -203,7 +203,7 @@ def get_session():
     elapsed = round((utcnow() - datetime.fromisoformat(sess["started"])).total_seconds() / 60)
     submitted = sum(1 for a in apps if a["status"] == "submitted")
     assessments = [dict(r) for r in s.db.execute(
-        "SELECT id, summary, due, person, effort_h FROM loops WHERE type='assessment' AND status!='closed' ORDER BY due")]
+        "SELECT id, summary, due, person, effort_h FROM loops WHERE type='assessment' AND status NOT IN ('closed','deleted') ORDER BY due")]
     from .engine import ranked
     other = [{"id": r["id"], "summary": r["summary"], "why": r.get("why", ""), "due": r["due"]}
              for r in ranked(s) if r["bucket"] == "Do now" and r["type"] != "assessment"][:3]
@@ -429,7 +429,7 @@ def checkin(body: Checkin):
     elif body.mood == "stuck":
         lines.append("What's blocking you? Ask the helper, or skip this one and come back to it.")
     else:
-        a = s.db.execute("SELECT id, summary, due, effort_h FROM loops WHERE type='assessment' AND status!='closed' "
+        a = s.db.execute("SELECT id, summary, due, effort_h FROM loops WHERE type='assessment' AND status NOT IN ('closed','deleted') "
                          "ORDER BY due LIMIT 1").fetchone()
         if a:
             due = datetime.fromisoformat(a["due"]).astimezone()

@@ -84,6 +84,12 @@ button{cursor:pointer}
 .focusbtn .live{width:8px;height:8px;border-radius:50%;background:var(--accent)}
 
 /* live clock: time is passing, and here's the next deadline */
+.miniclock{margin-left:12px;padding:3px 10px;border-radius:999px;background:var(--raised);border:1px solid var(--line);font-size:.82rem;font-weight:650;font-variant-numeric:tabular-nums;color:var(--muted);letter-spacing:.01em}
+.del{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;opacity:.55;transition:opacity .15s,background .15s,color .15s}
+.del:hover,.del:focus-visible{opacity:1;background:color-mix(in srgb,var(--late) 12%,transparent);color:var(--late)}
+.hero{position:relative}
+.rowside .del{position:static;width:28px;height:28px}
+.why-ask{display:flex;gap:8px;margin-top:6px}.why-ask input{flex:1;border:1px solid var(--line);background:var(--raised);border-radius:10px;padding:8px 10px}
 .clock-side{margin-top:14px;padding:14px 16px;border-radius:20px;background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:var(--shadow);display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:end}
 .clock-side .place{font-size:.78rem;color:var(--muted);font-weight:650;letter-spacing:.04em;text-transform:uppercase}
 .clock-side .t{font-size:1.9rem;font-weight:760;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
@@ -417,12 +423,13 @@ details.closed[open] summary::after{content:" \2212"}
 <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
 <main class="wrap">
   <header class="top">
-    <div class="brand"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="spg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#1F1D4D"/><stop offset="1" stop-color="#3B34C9"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#spg)"/><path d="M9 55l7-7M5 47l6-6M17 59l5-5" stroke="#8FF0D0" stroke-width="2.6" stroke-linecap="round" opacity=".9"/><path d="M49.5 14.5 43.8 16.2C39.6 12.4 32.6 13.6 29.8 19.2 26.2 26.6 21 31.4 13 34.2l6.4 2.6-3.6 7.6 11-5.6C35.6 38 42 32.6 44.4 25c.9-2.9 1.3-5.2 5.1-10.5z" fill="#fff"/><path d="M34.6 25.4C31.2 18 25.6 13.6 17.6 12.2c2.6 7.2 7.4 13 13.6 16.2z" fill="#8FF0D0"/><path d="M36.2 31.5c3.2-.6 5.6-2.6 6.9-5.4" stroke="#E8B27A" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="40.2" cy="18.6" r="1.8" fill="#1F1D4D"/></svg><span>Sparrow</span></div>
+    <div class="brand"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="spg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#1F1D4D"/><stop offset="1" stop-color="#3B34C9"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#spg)"/><path d="M9 55l7-7M5 47l6-6M17 59l5-5" stroke="#8FF0D0" stroke-width="2.6" stroke-linecap="round" opacity=".9"/><path d="M49.5 14.5 43.8 16.2C39.6 12.4 32.6 13.6 29.8 19.2 26.2 26.6 21 31.4 13 34.2l6.4 2.6-3.6 7.6 11-5.6C35.6 38 42 32.6 44.4 25c.9-2.9 1.3-5.2 5.1-10.5z" fill="#fff"/><path d="M34.6 25.4C31.2 18 25.6 13.6 17.6 12.2c2.6 7.2 7.4 13 13.6 16.2z" fill="#8FF0D0"/><path d="M36.2 31.5c3.2-.6 5.6-2.6 6.9-5.4" stroke="#E8B27A" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="40.2" cy="18.6" r="1.8" fill="#1F1D4D"/></svg><span>Sparrow</span><time class="miniclock" id="ctime" aria-label="Time now"></time></div>
     <div class="icons">
       <button class="focusbtn" id="focusbtn"><span class="live" id="focuslive" hidden></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span id="focuslabel">Focus</span></button>
       <button class="ib" id="sync" aria-label="Check now" title="Check now"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg></button>
       <button class="ib" id="rem" aria-label="Reminders" title="Reminders"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></button>
       <button class="ib" id="hear" aria-label="Hear brief" title="Hear brief"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg></button>
+      <button class="ib" id="csound" aria-label="Sound" title="Sound"></button>
       <a class="ib" id="acct" href="/login" aria-label="Account" title="Log in"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></a>
       <button class="ib" id="acc" aria-label="Accuracy" title="How well it's working"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
     </div>
@@ -432,8 +439,6 @@ details.closed[open] summary::after{content:" \2212"}
   <div class="layout">
   <section class="calpane" id="calpane" aria-label="Your calendar"></section>
   <div class="side">
-  <aside class="clock-side" id="clockside" aria-label="Time now"><div><div class="place" id="cplace"></div><div class="t" id="ctime"></div></div>
-    <div class="donering" id="cdone"></div><div class="next" id="cnext"></div><button class="soundbtn" id="csound"></button></aside>
   <section id="wins" aria-live="polite"></section>
   <section id="hero" aria-live="polite"></section>
   <div id="areas"></div>
@@ -476,7 +481,13 @@ const CHEV='<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="n
 let S=null, expanded=new Set(), pollT=null, shut=new Set();
 try{shut=new Set(JSON.parse(localStorage.getItem('loops.shut')||'[]'))}catch(e){}
 
-function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3200)}
+function toast(m,undo){const t=$('toast');t.textContent=m;
+  if(undo){const u=document.createElement('button');u.className='link';u.textContent='Undo';u.style.cssText='margin-left:12px;pointer-events:auto;color:#8FF0D0;font-weight:700;text-decoration:underline';
+    u.onclick=()=>{t.classList.remove('show');undo()};t.appendChild(u)}
+  t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),undo?6000:3200)}
+async function deleteLoop(l){
+  await api(`/api/loops/${l.id}`,{method:'DELETE'});expanded.delete(l.id);await refresh();
+  toast(`Deleted: ${l.summary.slice(0,50)}`,async()=>{await api(`/api/loops/${l.id}/restore`,{method:'POST'});refresh()})}
 async function api(path,opts={}){
   const r=await fetch(path,{headers:{'Content-Type':'application/json'},...opts,body:opts.body?JSON.stringify(opts.body):undefined});
   if(!r.ok){let m='That didn\'t work. Check the Terminal window running Sparrow.';try{m=(await r.json()).detail||m}catch(e){}throw new Error(m)}
@@ -571,7 +582,7 @@ function confetti(x=lastTap.x,y=lastTap.y,n=46){
     c.animate(kf,{duration:T*1000,easing:'linear'}).finished.then(()=>c.remove());
   }
 }
-function celebrate(x,y){confetti(x,y);chime();setTimeout(()=>{const b=document.querySelector('#cdone b');if(b)bump(b)},350)}
+function celebrate(x,y){confetti(x,y);chime()}
 /* every button gives a little under your finger */
 const PRESSABLE='.btn,.closer,.tick,.choices button,.quick button,.add,.mic,.ib,.focusbtn,.src-chip,.ahead';
 document.addEventListener('pointerdown',e=>{const b=e.target.closest(PRESSABLE);if(!b||b.disabled)return;
@@ -766,6 +777,7 @@ function originLine(o,{quote=false}={}){
 
 /* ---------- explore: who is this person, and why are we meeting ---------- */
 const SPARK_I='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+const BIN='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>';
 const canExplore=l=>!!(l.person||(l.origin&&l.origin.from)||/\b(with|meet|meeting|call)\b/i.test(l.summary));
 const exploreFirst=l=>/\b(meet|meeting|call|chat|catch up|coffee)\b|unknown|not sure|\?/i.test(l.summary);
 async function exploreFlow(l,fresh=false){
@@ -798,22 +810,17 @@ function nextDeadline(){
 }
 function span(ms){const late=ms<0;ms=Math.abs(ms);const h=Math.floor(ms/36e5),m=Math.floor(ms%36e5/6e4),sec=Math.floor(ms%6e4/1e3);
   return (h>=24?`${Math.floor(h/24)}d ${h%24}h `:h?`${h}h `:'')+`${p2(m)}m ${p2(sec)}s`}
-let nd=null, ndAt=0;
+const SOUND_ON='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+const SOUND_OFF='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".55"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/><path d="M3 3l18 18"/></svg>';
+function drawSound(){const b=$('csound');b.innerHTML=soundOn?SOUND_ON:SOUND_OFF;b.title=soundOn?'Sounds on (click to mute)':'Sounds off (click to turn on)'}
+let lastSec=-1;
 function tickClock(){
-  const t=performance.timeOrigin+performance.now(), d=new Date(t);
-  const ms=Math.floor(t%1000), us=Math.floor((t*1000)%1000);
-  $('ctime').innerHTML=`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}<small>.${p3(ms)}<b>${p3(us)}</b></small>`;
-  if(t-ndAt>1000){ndAt=t;nd=nextDeadline();
-    const done=S?S.closed.filter(l=>l.closed_at&&sameDay(new Date(l.closed_at),d)&&!['dismissed','dropped'].includes(l.outcome)).length:0;
-    const cd=$('cdone');const txt=`<b>${done}</b>done today`;if(cd.innerHTML!==txt)cd.innerHTML=txt;
-    $('cplace').textContent=`${PLACE} \u00b7 ${d.toLocaleDateString([], {weekday:'short',day:'numeric',month:'short'})}`;
-    $('csound').textContent=soundOn?'Sound on':'Sound off';}
-  if(nd){const left=nd.at-t, cls=left<0?'late':left<36e5?'soon':'';
-    $('cnext').innerHTML=`<span>${nd.l.type==='meeting'?'Next meeting':'Next start'}:</span><b>${esc(nd.l.summary.slice(0,48))}</b><span class="cd ${cls}">${left<0?'late by ':'in '}${span(left)}</span>`}
-  else $('cnext').innerHTML='<span>Nothing with a deadline. Enjoy it.</span>';
+  const d=new Date();
+  if(d.getSeconds()!==lastSec){lastSec=d.getSeconds();$('ctime').textContent=`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`}
   requestAnimationFrame(tickClock);
 }
-$('csound').onclick=()=>{soundOn=!soundOn;try{localStorage.setItem('sparrow.sound',soundOn?'on':'off')}catch(e){}$('csound').textContent=soundOn?'Sound on':'Sound off';if(soundOn)chime()};
+$('csound').onclick=()=>{soundOn=!soundOn;try{localStorage.setItem('sparrow.sound',soundOn?'on':'off')}catch(e){}drawSound();if(soundOn)chime()};
+drawSound();
 requestAnimationFrame(tickClock);
 
 /* ---------- jobs from your inbox ---------- */
@@ -1030,10 +1037,10 @@ document.addEventListener('click',e=>{
 function taskSheet(l){
   const d=frame(`<p class="ctx">${esc(l.area||'Task')}</p><h2>${esc(l.summary)}</h2>
     <p style="margin:0">${esc(l.why||'')}</p>${originLine(l.origin)}${l.note?`<p class="nums">${esc(l.note)}</p>`:''}
-    <div class="srow"><button class="btn pri" id="t-done">Done</button><button class="btn" id="t-talk">Talk about it</button>
-    ${canExplore(l)?'<button class="btn" id="t-exp">Explore</button>':''}<button class="btn ghost" id="t-later">Not now</button><button class="btn ghost" id="t-edit">Edit</button></div>`);
+    <div class="srow"><button class="btn pri" id="t-done">Done</button><button class="btn" id="t-talk">Say when you'll start</button>
+    ${canExplore(l)?'<button class="btn" id="t-exp">Explore</button>':''}<button class="btn ghost" id="t-later">Not now</button><button class="btn ghost" id="t-edit">Edit</button><button class="btn ghost" id="t-del">Delete</button></div>`);
   d.querySelector('#t-done').onclick=()=>closeFlow(l);d.querySelector('#t-talk').onclick=()=>talkFlow(l);
-  d.querySelector('#t-later').onclick=()=>laterFlow(l);d.querySelector('#t-edit').onclick=()=>editFlow(l);
+  d.querySelector('#t-later').onclick=()=>laterFlow(l);d.querySelector('#t-edit').onclick=()=>editFlow(l);d.querySelector('#t-del').onclick=()=>{closeS();deleteLoop(l)};
   const x=d.querySelector('#t-exp');if(x)x.onclick=()=>exploreFlow(l);
 }
 /* drag a planned block to a new time */
@@ -1098,7 +1105,7 @@ function render(){
 
   /* hero: the one next action */
   const hk=top?'h'+top.id:'empty';
-  const heroHTML=top?`<article class="hero" style="--c:${AREA_C[top.area]||AREA_C.Other}">
+  const heroHTML=top?`<article class="hero" style="--c:${AREA_C[top.area]||AREA_C.Other}"><button class="del" data-act="delete" data-id="${top.id}" aria-label="Delete: ${esc(top.summary)}" title="Delete">${BIN}</button>
       <p class="lead"><span>Do this next</span><span class="chip">${esc(top.area||'Other')}</span></p>
       <h1>${esc(top.summary)}</h1>
       ${originLine(top.origin,{quote:true})}${!top.origin&&top.note?`<p class="origin"><span>${esc(top.note)}</span></p>`:''}
@@ -1170,10 +1177,12 @@ function render(){
 }
 function details(l){
   const f=l.forecast;
-  return `<div class="in">${l.origin&&l.origin.preview?`<p class="quote" style="margin:0 0 10px">${esc(l.origin.preview)}</p>`:''}<p><b>If missed:</b> ${esc(f.if_missed)}</p><p><b>If it slips a day:</b> ${esc(f.slip_1d)}</p>
+  return `<div class="in">${l.origin&&l.origin.preview?`<p class="quote" style="margin:0 0 10px">${esc(l.origin.preview)}</p>`:''}${f.if_missed?`<p><b>Why it matters:</b> ${esc(f.if_missed)}</p>`:`<p><b>Why it matters:</b> you haven't said, so Sparrow won't guess.</p>
+      <form class="why-ask" data-why="${l.id}"><input name="w" placeholder="e.g. out of milk for breakfast, or my sister's birthday"><button class="btn">Save</button></form>`}
+    ${l.hard_deadline?`<p><b>If it slips a day:</b> ${esc(f.slip_1d)}</p>`:''}
     <p class="nums">${Math.round(100*f.p_miss)}% chance of missing it. Takes about ${dur(l.effort_adj)}. From ${esc(l.source==='manual'?'your notes':SRC_NAME[l.source]||l.source)}.</p>
     ${l.note?`<p class="nums">${esc(l.note)}</p>`:''}
-    <div class="links"><button class="link" data-act="talk" data-id="${l.id}">Talk about it</button>${canExplore(l)?`<button class="link" data-act="explore" data-id="${l.id}">Explore who this is</button>`:''}<button class="link" data-act="focus-this" data-id="${l.id}">Focus on this</button><button class="link" data-act="later" data-id="${l.id}">Move it</button><button class="link" data-act="dismiss" data-id="${l.id}">Not a task</button></div></div>`;
+    <div class="links"><button class="link" data-act="talk" data-id="${l.id}">Tell Sparrow when you'll start</button>${canExplore(l)?`<button class="link" data-act="explore" data-id="${l.id}">Look up ${esc(l.person||'who this is')}</button>`:''}<button class="link" data-act="focus-this" data-id="${l.id}">Start a timer for it</button><button class="link" data-act="later" data-id="${l.id}">Move to later</button>${l.source!=='manual'?`<button class="link" data-act="dismiss" data-id="${l.id}">Not a task</button>`:''}</div></div>`;
 }
 function row(l){
   const why=l.type==='waiting'?`waiting on ${l.person||'them'}`:l.bucket==='Later'?'when you have a gap':(l.why||'');
@@ -1183,7 +1192,7 @@ function row(l){
       <p class="meta"><span class="when">${esc(whenText(l))}</span>${l.type==='waiting'?'<span class="tag">Waiting</span>':''}<span>${esc(why)}</span></p>
       ${originLine(l.origin)}
       <div class="more"><div>${details(l)}</div></div></div>
-    <div class="rowside">${canExplore(l)&&exploreFirst(l)?`<button class="xbtn" data-act="explore" data-id="${l.id}">${SPARK_I}Explore</button>`:''}<button class="pen" data-act="edit" data-id="${l.id}" aria-label="Edit: ${esc(l.summary)}">${PEN}</button></div></li>`;
+    <div class="rowside">${canExplore(l)&&exploreFirst(l)?`<button class="xbtn" data-act="explore" data-id="${l.id}">${SPARK_I}Explore</button>`:''}<button class="pen" data-act="edit" data-id="${l.id}" aria-label="Edit: ${esc(l.summary)}">${PEN}</button><button class="del" data-act="delete" data-id="${l.id}" aria-label="Delete: ${esc(l.summary)}" title="Delete">${BIN}</button></div></li>`;
 }
 function leadCard(x){
   const reasons=(x.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join('')+(x.flags||[]).map(f=>`<li class="flag">${esc(f)}</li>`).join('');
@@ -1428,14 +1437,21 @@ function accuracyFlow(){
   dd.querySelector('#a-x').onclick=closeS;
 }
 
+document.addEventListener('submit',async e=>{
+  const f=e.target.closest('form.why-ask');if(!f)return;e.preventDefault();
+  const w=f.w.value.trim();if(!w)return toast('Type why it matters first.');
+  try{await api(`/api/loops/${f.dataset.why}`,{method:'PATCH',body:{stakes:w}});toast('Saved. Sparrow will use that.');refresh()}catch(err){toast(err.message)}
+});
 /* ---------- clicks ---------- */
 document.addEventListener('click',async e=>{
   const h=e.target.closest('.ahead');
   if(h){const a=h.dataset.area,sec=h.closest('.area');sec.classList.toggle('shut');const s=sec.classList.contains('shut');h.setAttribute('aria-expanded',!s);
     s?shut.add(a):shut.delete(a);try{localStorage.setItem('loops.shut',JSON.stringify([...shut]))}catch(err){}return}
+  if(e.target.closest('form.why-ask'))return;
   const b=e.target.closest('[data-act]');if(!b||b.closest('#sheet')||b.closest('#focus'))return;
   const id=+b.dataset.id, act=b.dataset.act, l=S&&[...S.loops,...S.closed].find(x=>x.id===id);
   try{
+    if(act==='delete')return deleteLoop(l);
     if(act==='focus'){answers={};preset=new Set();qi=0;return openFocus()}
     if(act==='focus-this'){answers={kind:'custom',which:l.summary};preset=new Set(['kind','which']);qi=0;return openFocus()}
     if(act==='toggle'){
@@ -1633,14 +1649,14 @@ async function renderIntake(){
       :`<div class="inrow"><textarea id="qa" placeholder="${esc(q.placeholder||'')}"></textarea><button class="mic" id="qmic" aria-label="Dictate">${MIC}</button></div>
         <div class="srow"><button class="btn pri" id="qnext">Next</button></div>`}
     <div class="srow">${qi?'<button class="btn ghost" id="qback">Back</button>':''}</div>
-    <p class="nums" style="margin-top:28px">${D.cv?`Using your CV: ${esc(D.cv)}. <button class="link" id="cvbtn">Replace</button>`:'Upload your CV so research, answers and job leads are tailored to you. <button class="link" id="cvbtn">Upload CV</button>'}</p></section>`;
+    ${preset.has('which')&&!/\b(job|cv|interview|application|apply|cover letter|assessment|recruit)/i.test(answers.which||'')?'':`<p class="nums" style="margin-top:28px">${D.cv?`Using your CV: ${esc(D.cv)}. <button class="link" id="cvbtn">Replace</button>`:'Upload your CV so research, answers and job leads are tailored to you. <button class="link" id="cvbtn">Upload CV</button>'}</p>`}</section>`;
   const sec=$('fview').firstElementChild;anim(sec,[{opacity:0,transform:'translateX(16px)'},{opacity:1,transform:'none'}],{duration:320});
   const next=v=>{answers[q.id]=v;qi++;renderIntake()};
   if(q.type==='choice'){const c=sec.querySelector('.choices');c.onclick=e=>{const b=e.target.closest('button');if(b)next(q.options[+b.dataset.k].value)};c.querySelector('button').focus()}
   else{const t=$('qa');t.focus();attachMic($('qmic'),t);$('qnext').onclick=()=>{stopAllMics();if(t.value.trim())next(t.value.trim());else toast('Type or say something first.')};
     t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('qnext').click()}})}
   if($('qback'))$('qback').onclick=()=>{qi--;renderIntake()};
-  $('cvbtn').onclick=pickCV;
+  if($('cvbtn'))$('cvbtn').onclick=pickCV;
 }
 async function startSession(){
   $('fview').innerHTML='<section class="intake"><p class="ctx">Setting up</p><h1>Working out your objectives</h1></section>';

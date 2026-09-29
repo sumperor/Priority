@@ -41,10 +41,11 @@ def forecast(loop, p_miss, effort_h, cost, open_by_id):
     # Latest safe start: effort plus a 25% overrun buffer plus 15 minutes
     latest_start = due - timedelta(hours=effort_h * 1.25 + 0.25)
     chain = knock_on(loop, open_by_id)
-    stakes = loop.get("stakes") or MISS_FALLBACK.get(loop["type"], MISS_FALLBACK["task"])
+    # your own notes: no made-up reason. Messages keep a plain default (someone is waiting on you)
+    stakes = loop.get("stakes") or ("" if loop.get("source") == "manual" else MISS_FALLBACK.get(loop["type"], MISS_FALLBACK["task"]))
 
     if hours_left < 0:
-        headline, level = f"Missed by {_hrs(hours_left)}. {stakes}", "late"
+        headline, level = f"Missed by {_hrs(hours_left)}. {stakes}".strip(), "late"
     elif latest_start <= now:
         headline, level = f"At risk: needs about {dur(effort_h)} and only {_hrs(hours_left)} left.", "late"
     elif hours_left < 24:
@@ -64,7 +65,7 @@ def forecast(loop, p_miss, effort_h, cost, open_by_id):
 
     if_missed = stakes
     if chain:
-        if_missed += " It also holds up: " + "; ".join(c["summary"] for c in chain) + "."
+        if_missed = (if_missed + " " if if_missed else "") + "It also holds up: " + "; ".join(c["summary"] for c in chain) + "."
 
     return {"headline": headline, "level": level, "if_missed": if_missed, "slip_1d": slip,
             "knock_on": [{"id": c["id"], "summary": c["summary"]} for c in chain],

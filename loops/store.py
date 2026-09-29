@@ -127,7 +127,7 @@ class Store:
     def loops(self, status=None):
         if status:
             return self.db.execute("SELECT * FROM loops WHERE status=?", (status,)).fetchall()
-        return self.db.execute("SELECT * FROM loops WHERE status!='closed'").fetchall()
+        return self.db.execute("SELECT * FROM loops WHERE status NOT IN ('closed','deleted')").fetchall()
 
     def close_loop(self, loop_id, outcome, confidence=None, actual_h=None):
         loop = self.get_loop(loop_id)

@@ -248,3 +248,22 @@ def test_20_focus_session_on_one_task_pauses_reminders(app):
     assert c.post("/api/nudges/tick").json()["nudges"] == []
     c.post("/api/session/end")
     assert c.post("/api/nudges/tick").json()["nudges"]
+
+
+def test_delete_and_undo(app):
+    c, _ = app
+    i = c.post("/api/capture", json={"text": "Call the dentist"}).json()["id"]
+    assert c.delete(f"/api/loops/{i}").status_code == 200
+    assert not open_tasks(c) and all(l["id"] != i for l in state(c)["closed"])     # gone everywhere
+    c.post(f"/api/loops/{i}/restore")
+    assert [l["id"] for l in open_tasks(c)] == [i]
+
+
+def test_no_made_up_reason_for_your_own_notes(app):
+    c, _ = app
+    i = c.post("/api/capture", json={"text": "Buy groceries"}).json()["id"]
+    l = next(l for l in open_tasks(c) if l["id"] == i)
+    assert l["stakes"] == "" and l["forecast"]["if_missed"] == ""                   # the card asks you instead
+    c.patch(f"/api/loops/{i}", json={"stakes": "Nothing in for breakfast"})
+    l = next(l for l in open_tasks(c) if l["id"] == i)
+    assert l["forecast"]["if_missed"] == "Nothing in for breakfast"
