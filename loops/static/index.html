@@ -96,6 +96,7 @@ a.btn{color:inherit}
 .hero{margin-top:26px;padding:26px 24px 22px;border-radius:26px;background:var(--surface);box-shadow:var(--shadow);position:relative;overflow:hidden}
 .hero .lead{margin:0 0 8px;color:var(--muted);font-size:.9rem;display:flex;gap:8px;align-items:center}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:650;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--c,var(--other)) 13%,transparent);color:var(--c,var(--other))}
+.hero h1 .w{display:inline-block;will-change:transform}
 .hero h1{margin:0;font-size:clamp(1.85rem,6vw,2.9rem);line-height:1.04;font-weight:760;letter-spacing:-.028em;max-width:20ch;font-variation-settings:"opsz" 96;overflow-wrap:anywhere}
 .hero .why{margin:12px 0 0;font-size:1.04rem;max-width:52ch}
 .hero .why.late{color:var(--late)}
@@ -112,7 +113,7 @@ a.btn{color:inherit}
 
 /* area sections */
 #areas{margin-top:14px}
-.area{margin-top:14px;border-radius:22px;background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
+.area{transition:box-shadow .3s;margin-top:14px;border-radius:22px;background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
 .ahead{width:100%;display:flex;align-items:center;gap:10px;border:0;background:none;padding:16px 18px;text-align:left}
 .ahead .dot{width:10px;height:10px;border-radius:50%;background:var(--c)}
 .ahead h2{margin:0;font-size:1.02rem;font-weight:700;letter-spacing:-.01em;flex:1}
@@ -330,6 +331,7 @@ details.closed[open] summary::after{content:" \2212"}
 <input type="file" id="cvfile" accept=".pdf,.txt,.md" hidden>
 <div id="toast" role="status"></div>
 
+<script src="/static/vendor/motion.js"></script><!-- spring animations; the page still works if it's missing -->
 <script>
 (function(){
 const $=id=>document.getElementById(id);
@@ -356,14 +358,46 @@ const hm=d=>new Date(d).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',
 const sameDay=(a,b)=>a.toDateString()===b.toDateString();
 const dayName=d=>{const n=new Date();d=new Date(d);return sameDay(d,n)?'today':sameDay(d,new Date(n.getTime()+864e5))?'tomorrow':d.toLocaleDateString([], {weekday:'long'})};
 
-/* ---------- motion ---------- */
-const anim=(el,kf,o)=>RM||!el.animate?{finished:Promise.resolve()}:el.animate(kf,{duration:280,easing:EASE,fill:'none',...o});
-function enter(el,i=0){anim(el,[{opacity:0,transform:'translateY(10px) scale(.985)'},{opacity:1,transform:'none'}],{duration:340,delay:Math.min(i,8)*40,fill:'backwards'})}
+/* ---------- motion ----------
+   Springs come from Motion (motion.dev), bundled in static/vendor. If it's missing,
+   the same animations run on the browser's built-in engine with a spring-shaped curve. */
+const SPRING='linear(0,0.009,0.035 2.1%,0.141 4.4%,0.723 12.9%,0.938 16.7%,1.017 20.3%,1.043 24.3%,1.035 28.5%,1.013 34.1%,0.998 39.8%,0.995 48.4%,1)';
+const anim=(el,kf,o)=>RM||!el||!el.animate?{finished:Promise.resolve()}:el.animate(kf,{duration:320,easing:SPRING,fill:'none',...o});
+/* motion(el, {opacity:[0,1], y:[12,0], scale:[.96,1]}, {bounce, delay, vd}) -> Promise */
+function motion(el,props,o={}){
+  if(RM||!el)return Promise.resolve();
+  const Mo=window.Motion, moves=['x','y','scale','rotate'].some(k=>k in props);
+  const clean=()=>{if(moves&&el.isConnected)el.style.transform=''};
+  if(Mo&&Mo.animate){
+    try{
+      const opts=o.duration?{duration:o.duration,delay:o.delay||0,ease:o.ease||[.2,.8,.2,1]}
+        :{type:Mo.spring,bounce:o.bounce??.22,visualDuration:o.vd??.42,delay:o.delay||0};
+      return Promise.resolve(Mo.animate(el,props,opts)).then(clean,clean);
+    }catch(e){}
+  }
+  const n=Math.max(...Object.values(props).map(v=>Array.isArray(v)?v.length:1));
+  const frames=[...Array(n)].map((_,i)=>{const f={},t=[];
+    for(const [k,v] of Object.entries(props)){const x=Array.isArray(v)?v[Math.min(i,v.length-1)]:v;
+      if(k==='x')t.push(`translateX(${x}px)`);else if(k==='y')t.push(`translateY(${x}px)`);else if(k==='scale')t.push(`scale(${x})`);
+      else if(k==='rotate')t.push(`rotate(${x}deg)`);else f[k]=typeof x==='number'&&k!=='opacity'?x+'px':x}
+    if(t.length)f.transform=t.join(' ');return f});
+  return el.animate(frames,{duration:(o.duration||o.vd*1.6||.62)*1000,delay:(o.delay||0)*1000,easing:o.duration?EASE:SPRING,fill:'backwards'}).finished.then(clean,clean);
+}
+function enter(el,i=0){
+  const d=Math.min(i,10)*.045;
+  if(el.classList.contains('win'))return motion(el,{opacity:[0,1],y:[-18,0],scale:[.94,1]},{bounce:.38,vd:.5,delay:d});
+  if(el.classList.contains('area'))return motion(el,{opacity:[0,1],y:[22,0],scale:[.97,1]},{bounce:.18,vd:.5,delay:d});
+  motion(el,{opacity:[0,1],y:[12,0]},{bounce:.2,vd:.4,delay:d});
+}
 function leave(el){
   if(el.classList.contains('leaving'))return;
   el.classList.add('leaving');el.style.pointerEvents='none';
   const h=el.offsetHeight;el.style.overflow='hidden';
-  anim(el,[{height:h+'px',opacity:1,transform:'none'},{height:h+'px',opacity:0,transform:'translateX(18px)',offset:.5},{height:'0px',opacity:0,paddingTop:'0px',paddingBottom:'0px',marginTop:'0px',marginBottom:'0px'}],{duration:420}).finished.then(()=>el.remove());
+  // Slide out and fade first, then close the gap, so the rest of the list glides up
+  motion(el,{opacity:[1,0],x:[0,28],scale:[1,.98]},{duration:.22}).then(()=>{
+    el.style.opacity='0';
+    return anim(el,[{height:h+'px'},{height:'0px',paddingTop:'0px',paddingBottom:'0px',marginTop:'0px',marginBottom:'0px'}],{duration:380,fill:'forwards'}).finished;
+  }).then(()=>el.remove());
 }
 function snap(){const m=new Map();document.querySelectorAll('main [data-key]').forEach(el=>{if(!el.classList.contains('leaving'))m.set(el,el.getBoundingClientRect())});return m}
 function flip(before){
@@ -373,9 +407,22 @@ function flip(before){
     const n=el.getBoundingClientRect();let dy=r.top-n.top;
     const p=el.parentElement&&el.parentElement.closest('[data-key]');
     if(p&&before.has(p)){dy-=before.get(p).top-p.getBoundingClientRect().top}
-    if(Math.abs(dy)>1)el.animate([{transform:`translateY(${dy}px)`},{transform:'none'}],{duration:380,easing:EASE});
+    if(Math.abs(dy)>1)motion(el,{y:[dy,0]},{bounce:.15,vd:.45});
   });
 }
+/* "Do this next": the title rises in word by word */
+function wordsIn(h1){
+  if(!h1||RM)return;
+  h1.innerHTML=h1.textContent.split(/\s+/).filter(Boolean).map(w=>`<span class="w">${esc(w)}</span>`).join(' ');
+  h1.querySelectorAll('.w').forEach((w,i)=>motion(w,{opacity:[0,1],y:[26,0],rotate:[3,0]},{bounce:.3,vd:.55,delay:.05+i*.035}));
+}
+function bump(el){motion(el,{scale:[1.45,1]},{bounce:.5,vd:.4})}
+/* every button gives a little under your finger */
+const PRESSABLE='.btn,.closer,.tick,.choices button,.quick button,.add,.mic,.ib,.focusbtn,.src-chip,.ahead';
+document.addEventListener('pointerdown',e=>{const b=e.target.closest(PRESSABLE);if(!b||b.disabled)return;
+  motion(b,{scale:.94},{bounce:0,vd:.12});
+  const up=()=>{motion(b,{scale:1},{bounce:.55,vd:.35});b.removeEventListener('pointerup',up);b.removeEventListener('pointerleave',up)};
+  b.addEventListener('pointerup',up);b.addEventListener('pointerleave',up)});
 const frag=h=>{const t=document.createElement('template');t.innerHTML=h.trim();return t.content.firstElementChild};
 /* keep elements with the same key, patch changed ones, animate the rest in and out */
 function reconcile(parent,items,newbies){
@@ -600,7 +647,11 @@ function render(){
       ${expanded.has(top.id)?`<div class="more" style="grid-template-rows:1fr"><div>${details(top)}</div></div>`:''}</article>`
     :`<div class="empty"><p>${wins.length?'That\'s everything on your plate for now':'Nothing waiting on you'}</p><h1>Add anything you need to remember below.</h1></div>`;
   const hero=$('hero'), cur=hero.firstElementChild;
-  if(!cur||cur.dataset.key!==hk){hero.innerHTML=heroHTML;const el=hero.firstElementChild;el.dataset.key=hk;el.dataset.sig=heroHTML;if(cur)anim(el,[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{duration:420})}
+  if(!cur||cur.dataset.key!==hk){
+    const swap=()=>{hero.innerHTML=heroHTML;const el=hero.firstElementChild;el.dataset.key=hk;el.dataset.sig=heroHTML;
+      motion(el,{opacity:[0,1],y:[18,0],scale:[.98,1]},{bounce:.25,vd:.5});if(top)wordsIn(el.querySelector('h1'))};
+    if(cur&&!RM){cur.dataset.key='';motion(cur,{opacity:[1,0],y:[0,-14],scale:[1,.98]},{duration:.18}).then(swap)}else swap();
+  }
   else if(cur.dataset.sig!==heroHTML){const n=frag(heroHTML);cur.innerHTML=n.innerHTML;cur.dataset.sig=heroHTML}
 
   /* area sections: one per area that has something in it, in plan order */
@@ -628,7 +679,8 @@ function render(){
     const items=groups.get(a);
     const leadItems=a==='Jobs'?S.leads.map(x=>({key:'lead'+x.id,html:leadCard(x)})):[];
     const rowItems=items.map(l=>({key:'r'+l.id,html:row(l)}));
-    sec.querySelector('.count').textContent=items.length+leadItems.length;
+    const cnt=sec.querySelector('.count'), nc=String(items.length+leadItems.length);
+    if(cnt.textContent&&cnt.textContent!==nc){cnt.textContent=nc;bump(cnt)}else cnt.textContent=nc;
     reconcile(sec.querySelector('.rows'),[...rowItems,...leadItems],newbies);
     const work=items.filter(l=>l.type!=='waiting').reduce((t,l)=>t+(l.effort_adj||0),0)+0.75*leadItems.length;
     const mins=Math.round(work*60/5)*5;
@@ -645,7 +697,7 @@ function render(){
     <button class="link" data-act="reopen" data-id="${l.id}">Reopen</button></div>`).join('');
 
   flip(before);
-  newbies.forEach((el,i)=>{enter(el,i);if(el.classList.contains('win')&&!oldWins.has(el.dataset.key)&&el.querySelector('.badge:not(.q)')){const b=el.querySelector('.badge');anim(b,[{transform:'scale(.4)'},{transform:'scale(1.12)'},{transform:'none'}],{duration:520,delay:120});setTimeout(()=>sparkle(b),200)}});
+  newbies.forEach((el,i)=>{enter(el,i);if(el.classList.contains('win')&&!oldWins.has(el.dataset.key)&&el.querySelector('.badge:not(.q)')){const b=el.querySelector('.badge');motion(b,{scale:[.3,1],rotate:[-25,0]},{bounce:.55,vd:.55,delay:.15});setTimeout(()=>sparkle(b),260)}});
 }
 function details(l){
   const f=l.forecast;
@@ -859,7 +911,8 @@ document.addEventListener('click',async e=>{
       if(r){r.classList.toggle('open');expanded.has(id)?expanded.delete(id):expanded.add(id);return}
       expanded.has(id)?expanded.delete(id):expanded.add(id);return render();
     }
-    if(act==='close'){const r=b.closest('.row');if(r){r.classList.add('ticking');await new Promise(z=>setTimeout(z,RM?0:420))}return closeFlow(l)}
+    if(act==='close'){const r=b.closest('.row');if(r){r.classList.add('ticking');motion(r.querySelector('.tick'),{scale:[.6,1.25,1]},{bounce:.5,vd:.45});motion(r,{x:[0,6,0]},{duration:.35});await new Promise(z=>setTimeout(z,RM?0:420))}
+      else if(b.classList.contains('closer')){motion(b.querySelector('.ring'),{scale:[.7,1.2,1]},{bounce:.5,vd:.4})}return closeFlow(l)}
     if(act==='later')return laterFlow(l);
     if(act==='edit')return editFlow(l);
     if(act==='talk')return talkFlow(l);

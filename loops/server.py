@@ -99,6 +99,10 @@ def start_scheduler():
         threading.Thread(target=_scheduler, daemon=True).start()
 
 
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+app.mount("/static", StaticFiles(directory=STATIC), name="static")
+
+
 @app.get("/")
 def index():
     return FileResponse(STATIC / "index.html")
@@ -578,5 +582,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Loops v0.13 running at http://127.0.0.1:{C.PORT}")
+    print(f"Loops v0.14 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")
