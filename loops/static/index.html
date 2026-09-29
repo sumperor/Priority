@@ -1309,6 +1309,7 @@ function mapBox(m){if(!m||m.lat==null)return '';const b=[m.lon-.008,m.lat-.005,m
   <div class="maplinks"><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${m.lat},${m.lon}">Open in Google Maps</a><a target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${m.lat}&mlon=${m.lon}#map=17/${m.lat}/${m.lon}">OpenStreetMap</a></div></div>`}
 async function errandFlow(c){
   // one question at a time; the server decides what's still unknown
+  let triedLoc=false;
   for(let n=1;n<12;n++){
     let q;try{q=await api(`/api/loops/${c.id}/next`)}catch(e){closeS();return toast(e.message)}
     if(q.kind==='summary'){
@@ -1317,6 +1318,9 @@ async function errandFlow(c){
       if(v==='time'){await api(`/api/loops/${c.id}`,{method:'PATCH',body:{start_at:'__day'}});continue}
       break}
     let v;
+    if(q.field==='here'&&!triedLoc){triedLoc=true;loading('Finding where you are');const at=await whereAmI();
+      if(at){await api(`/api/loops/${c.id}`,{method:'PATCH',body:{here:at}});loading('Looking it up on the map');continue}
+      if(locWhy&&!q.question.startsWith('I couldn'))q.question="I couldn't get your location. "+q.question}
     if(q.kind==='text'){
       const ex=(q.extra||[])[0];
       v=await step({ctx:q.ctx,q:q.question,kind:'text',placeholder:q.placeholder||'',skip:!!ex,skipLabel:ex?ex.label:''});

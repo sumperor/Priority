@@ -297,9 +297,11 @@ def capture(body: Capture):
 def errand_next(loop_id: int):
     """The next errand question (one at a time), or the finished estimate."""
     from .errands import next_step
-    from .maps import origin, travel
+    from .maps import mac_location, origin, set_here, travel
     from .planner import calendar_events
     s = db(); l = dict(_loop(s, loop_id))
+    if not origin() and l.get("place") and l.get("commit_at") and not l.get("place_ok"):
+        set_here(mac_location())   # the Mac's own location, when the browser didn't give one
     now = datetime.now(timezone.utc)
     try:
         events = calendar_events(now - timedelta(hours=1), now + timedelta(days=15))
@@ -1051,5 +1053,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.27 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.28 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

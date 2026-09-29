@@ -60,6 +60,22 @@ def here():
     return h.get("at", "") if time.time() - h.get("ts", 0) < HERE_FRESH_S else ""
 
 
+def mac_location():
+    """Where this Mac is, from macOS Location Services, via the free CoreLocationCLI tool
+    (brew install corelocationcli). "lat,lon" or "" if it isn't installed or isn't allowed."""
+    import shutil
+    import subprocess
+    exe = shutil.which("CoreLocationCLI")
+    if not exe:
+        return ""
+    try:
+        out = subprocess.run([exe], capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    m = re.search(r"(-?\d{1,2}\.\d+)[,\s]+(-?\d{1,3}\.\d+)", out or "")
+    return f"{m.group(1)},{m.group(2)}" if m else ""
+
+
 def origin():
     """Where an errand sets off from: where you said you are, in the last few hours."""
     return here()

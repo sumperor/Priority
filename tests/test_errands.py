@@ -161,3 +161,17 @@ def test_nearest_branch_and_wrong_place(app, monkeypatch):
     app.patch(f"/api/loops/{i}", json={"travel_mode": "__wrong"})
     q = app.get(f"/api/loops/{i}/next").json()
     assert q["field"] == "place"
+
+
+def test_uses_the_macs_location_without_asking(app, monkeypatch):
+    from loops import maps
+    monkeypatch.setattr(maps, "mac_location", lambda: "51.30000,-0.75000")
+    monkeypatch.setattr(maps, "_search", lambda q, near=None, bounded=False: [(51.29, -0.755, "Halfords, Farnborough")])
+
+    class R:
+        def raise_for_status(self): pass
+        def json(self): return {"routes": [{"duration": 600, "distance": 2000}]}
+    monkeypatch.setattr(maps.requests, "get", lambda url, **kw: R())
+    i = app.post("/api/capture", json={"text": "Buy skating shoes from Halfords in Farnborough tomorrow at 2pm"}).json()["id"]
+    q = app.get(f"/api/loops/{i}/next").json()
+    assert q["kind"] == "place" and "Halfords" in q["question"]      # never asked where you are
