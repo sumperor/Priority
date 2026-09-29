@@ -93,3 +93,34 @@ def test_imessage_from_a_mac_database(tmp_path, monkeypatch):
     msgs = imessage.IMessageConnector().fetch(datetime.now(timezone.utc) - timedelta(days=1))
     assert [m.text for m in msgs] == ["Can you send me the deck today?"]
     assert msgs[0].sender == "+447700900123" and not msgs[0].is_from_me
+
+
+def test_gmail_only_fetches_new_and_errors_are_plain(tmp_path, monkeypatch):
+    c = client(tmp_path, monkeypatch)
+    from datetime import datetime, timedelta, timezone
+    from loops import engine
+    from loops.connect import _mark
+    from loops.decisions import RuleDecisions
+    from loops.models import Message
+    from loops.server import db
+    now = datetime.now(timezone.utc)
+
+    class FakeGmail:
+        name = "gmail"
+        calls = []
+        def fetch(self, since, known=frozenset()):
+            self.calls.append(set(known))
+            self.skipped = ["news1"]
+            return [Message("gmail", i, i, "a@x.com", "A", False, "hi", now, "s") for i in ("m1", "m2") if i not in known]
+
+    g = FakeGmail()
+    monkeypatch.setattr(engine, "SOURCES", {})
+    engine.sync(db(), [g], RuleDecisions())
+    engine.sync(db(), [g], RuleDecisions())
+    assert g.calls[1] >= {"m1", "m2", "news1"} and engine.SOURCES["gmail"]["count"] == 0
+
+    _mark("gmail")
+    engine.SOURCES["gmail"] = {"ok": False, "at": now.isoformat(), "error":
+                               "<HttpError 403 ... returned \"Quota exceeded for quota metric 'Total Query Cost'\">"}
+    src = {x["name"]: x for x in c.get("/api/state").json()["sources"]}["gmail"]
+    assert src["error"] == "Gmail is limiting how fast Loops can read." and "next check" in src["fix"]

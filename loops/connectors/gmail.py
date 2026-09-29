@@ -1,6 +1,7 @@
 """Gmail: read-only. Personal use runs as an unverified 'testing' app (you as a test user)."""
 import base64
 import os
+import time
 from datetime import datetime, timezone
 from email.utils import parseaddr
 
@@ -47,28 +48,40 @@ class GmailConnector:
         self._creds(interactive=True)
         print("Gmail connected.")
 
-    def fetch(self, since: datetime) -> list[Message]:
+    def fetch(self, since: datetime, known=frozenset()) -> list[Message]:
+        """Only downloads emails it hasn't seen before, and backs off if Gmail says slow down."""
         from googleapiclient.discovery import build
+        from googleapiclient.errors import HttpError
 
+        self.note, self.skipped = "", []
         svc = build("gmail", "v1", credentials=self._creds(), cache_discovery=False)
-        me = svc.users().getProfile(userId="me").execute()["emailAddress"].lower()
+        me = svc.users().getProfile(userId="me").execute(num_retries=2)["emailAddress"].lower()
         q = f"after:{int(since.timestamp())} -category:promotions -category:social -category:forums"
         ids, page = [], None
         while len(ids) < MAX_MESSAGES:
-            r = svc.users().messages().list(userId="me", q=q, pageToken=page, maxResults=100).execute()
-            ids += [m["id"] for m in r.get("messages", [])]
+            r = svc.users().messages().list(userId="me", q=q, pageToken=page, maxResults=100).execute(num_retries=2)
+            ids += [m["id"] for m in r.get("messages", []) if m["id"] not in known]
             page = r.get("nextPageToken")
             if not page:
                 break
 
         out = []
-        for mid in ids[:MAX_MESSAGES]:
-            m = svc.users().messages().get(userId="me", id=mid, format="full").execute()
+        for i, mid in enumerate(ids[:MAX_MESSAGES]):
+            try:
+                m = svc.users().messages().get(userId="me", id=mid, format="full").execute(num_retries=2)
+            except HttpError as e:
+                if e.resp.status in (403, 429):
+                    # Keep what we have; the rest comes on the next check
+                    self.note = f"Gmail asked Loops to slow down. Got {i} new emails; the rest come on the next check."
+                    break
+                raise
+            time.sleep(0.05)  # stay well under Gmail's per-second limit
             h = {x["name"].lower(): x["value"] for x in m["payload"].get("headers", [])}
             name, addr = parseaddr(h.get("from", ""))
             addr = addr.lower()
             if "list-unsubscribe" in h and addr != me and not is_job_alert(addr, name, h.get("subject", "")):
-                continue  # newsletters and bulk mail never create loops; job alerts become leads
+                self.skipped.append(mid)  # newsletters and bulk mail never create loops; job alerts become leads
+                continue
             out.append(Message(
                 source="gmail", msg_id=mid, thread_id=m["threadId"], sender=addr,
                 sender_name=name or addr, is_from_me=(addr == me),

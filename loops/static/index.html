@@ -190,6 +190,7 @@ details.closed[open] summary::after{content:" \2212"}
 @media (min-width:720px){.sheet{bottom:auto;top:50%;transform:translate(-50%,-50%);border-radius:26px}}
 .progress{height:4px;background:var(--raised);border-radius:4px;margin:0 0 18px;overflow:hidden}
 .progress i{display:block;height:100%;background:var(--accent);transition:width .35s var(--ease)}
+.sheet p{overflow-wrap:anywhere}
 .sheet .ctx{margin:0 0 4px;color:var(--muted);font-size:.9rem}
 .sheet h2{margin:0 0 18px;font-size:1.5rem;line-height:1.15;font-weight:720;letter-spacing:-.018em}
 .choices{display:grid;gap:8px}
@@ -444,8 +445,8 @@ async function connectFlow(name){
   ({gmail:gmailFlow,outlook:msFlow,teams:msFlow,slack:slackFlow,imessage:imessageFlow}[name])(st);
 }
 function manageFlow(st,src){
-  const line=src.state==='ok'?`Checked ${ago(src.at)} (${hm(src.at)}). ${src.count} message${src.count===1?'':'s'} from the last few days.`
-    :src.state==='error'?`It couldn't check: ${src.error}`:'Connected. The first check is on its way.';
+  const line=src.state==='ok'?`Checked ${ago(src.at)} (${hm(src.at)}). ${src.count} ${src.new_only?'new ':''}message${src.count===1?'':'s'}${src.new_only?' since the check before':' from the last few days'}.${src.note?' '+src.note:''}`
+    :src.state==='error'?src.error:'Connected. The first check is on its way.';
   const oauth=['gmail','outlook','teams'].includes(st.name);
   const d=frame(`<p class="ctx">${esc(st.label)}</p><h2>${src.state==='error'?`${esc(st.label)} needs attention`:`${esc(st.label)} is connected`}</h2>
     <p style="margin:0 0 6px">${esc(line)}</p>${src.fix?`<p class="note">${esc(src.fix)}</p>`:''}

@@ -272,9 +272,14 @@ def sync(store, connectors, decide, extract=default_extract):
     since = utcnow() - timedelta(days=LOOKBACK_DAYS + WAITING_DAYS)
     for c in connectors:
         try:
-            msgs = c.fetch(since)
+            import inspect
+            incremental = "known" in inspect.signature(c.fetch).parameters
+            msgs = c.fetch(since, known=store.known_ids(c.name)) if incremental else c.fetch(since)
             store.upsert_messages(msgs)
-            SOURCES[c.name] = {"ok": True, "at": utcnow().isoformat(), "count": len(msgs)}
+            for mid in getattr(c, "skipped", []):
+                store.mark_checked(f"seen:{c.name}:{mid}")
+            SOURCES[c.name] = {"ok": True, "at": utcnow().isoformat(), "count": len(msgs),
+                               "new_only": incremental, "note": getattr(c, "note", "")}
             print(f"{c.name}: {len(msgs)} messages")
         except Exception as e:
             SOURCES[c.name] = {"ok": False, "at": utcnow().isoformat(), "error": str(e)[:200]}

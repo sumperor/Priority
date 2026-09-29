@@ -59,11 +59,32 @@ def _sources():
         else:
             state = ("checking" if _sync_state["running"] and not st else "waiting" if not st
                      else "ok" if st["ok"] else "error")
-        err = (st or {}).get("error", "")
-        fix = ("Tap Reconnect to sign in again." if "authori" in err.lower() or "connect" in err.lower() else "")
+        err, fix = _plain_error((st or {}).get("error", ""), names.get(n, n))
         out.append({"name": n, "label": names.get(n, n), "state": state, "at": (st or {}).get("at"),
-                    "count": (st or {}).get("count"), "error": err, "fix": fix})
+                    "count": (st or {}).get("count"), "new_only": (st or {}).get("new_only"),
+                    "note": (st or {}).get("note", ""), "error": err, "fix": fix})
     return out
+
+
+def _plain_error(err, label):
+    """Turn a raw API error into (what happened, what to do), in plain words."""
+    e = err.lower()
+    if not err:
+        return "", ""
+    if "quota" in e or "rate limit" in e or "ratelimit" in e or " 429" in e or "too many" in e:
+        return (f"{label} is limiting how fast Loops can read.", "Nothing to do. It catches up on the next check.")
+    if "not connected" in e or "not set up" in e:
+        return (f"{label} isn't connected any more.", "Disconnect it, then connect it again.")
+    if "invalid_grant" in e or "expired" in e or "revoked" in e or "authori" in e or "connect it" in e:
+        return (f"The {label} sign-in has expired.", "Tap Reconnect to sign in again.")
+    if "has not been used" in e or "is disabled" in e or "accessnotconfigured" in e:
+        return (f"The {label} API isn't turned on for your Google Cloud project.",
+                "Turn on the Gmail API and Google Calendar API in Google Cloud, then tap Check now.")
+    if "full disk access" in e:
+        return (err, "")
+    if "connection" in e or "timed out" in e or "name resolution" in e:
+        return ("Couldn't reach it. Are you online?", "It tries again at the next check.")
+    return (err[:160], "")
 
 
 def _scheduler():
@@ -511,5 +532,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Loops v0.11 running at http://127.0.0.1:{C.PORT}")
+    print(f"Loops v0.12 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

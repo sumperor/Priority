@@ -127,7 +127,7 @@ def test_account_status_and_custom_focus(tmp_path, monkeypatch):
     engine.sync(db(), [Ok(), Broken()], __import__("loops.decisions", fromlist=["x"]).RuleDecisions())
     src = {x["name"]: x for x in c.get("/api/state").json()["sources"]}
     assert src["gmail"]["state"] == "ok" and src["gmail"]["count"] == 0 and src["gmail"]["at"]
-    assert src["slack"]["state"] == "error" and "Reconnect" in src["slack"]["fix"]
+    assert src["slack"]["state"] == "error" and "again" in src["slack"]["fix"]
     assert src["outlook"]["state"] == "off"
     monkeypatch.setattr(C, "CONNECTORS", [])  # the session view reads calendars; keep it offline
 
