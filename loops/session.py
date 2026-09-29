@@ -331,6 +331,16 @@ class Doc(BaseModel):
 
 @router.post("/docs/cv")
 def upload_cv(body: Doc):
+    return _upload(body, "cv")
+
+
+@router.post("/docs/linkedin")
+def upload_linkedin(body: Doc):
+    """LinkedIn: your profile, More, Save to PDF, then upload it here."""
+    return _upload(body, "linkedin")
+
+
+def _upload(body, kind):
     text = body.text or ""
     if body.b64:
         raw = base64.b64decode(body.b64.split(",")[-1])
@@ -345,7 +355,7 @@ def upload_cv(body: Doc):
     if len(text.strip()) < 100:
         raise HTTPException(400, "Couldn't read text from that file. Try a PDF exported from Word, or a .txt file.")
     s = db()
-    s.db.execute("INSERT INTO docs(kind,name,text,created) VALUES('cv',?,?,?)", (body.name, text[:30000], now_iso()))
+    s.db.execute("INSERT INTO docs(kind,name,text,created) VALUES(?,?,?,?)", (kind, body.name, text[:30000], now_iso()))
     s.db.commit()
     return {"ok": True, "chars": len(text)}
 

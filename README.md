@@ -69,6 +69,16 @@ Press **Focus** at the top of the page (or open http://127.0.0.1:8765/#focus).
 - Normal reminders pause during a session so you're not nagged while focused.
 - Calendar needs one re-connect after this update: `python run.py auth gmail` and/or `python run.py auth outlook`.
 
+## Jobs in your inbox
+Tap **Jobs in your inbox** at the top of the page.
+- **Scan the last 14 days:** finds job-alert and recruiter emails in every Gmail tab (including Social and Promotions).
+- **Check it:** Apply, Maybe or Skip, compared with your CV, your LinkedIn, or both. Shows where you fit, honest gaps,
+  how to apply (tests, interviews, deadline, CV format, cover letter) and, with an API key, research on the firm.
+- **Make my CV for this:** a CV aimed at that job, written only from your profile. Download as PDF (print page),
+  Word, or copy as text; the format the job asks for comes first.
+- **LinkedIn:** paste your profile link (needs an API key; LinkedIn often shows only part of a profile), or on LinkedIn
+  open your profile, More, Save to PDF, and upload that.
+
 ## Reminders
 Tap the bell at the top of the page:
 - **Mac notifications:** sent by Sparrow itself while it's running, even with the browser closed.

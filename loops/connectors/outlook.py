@@ -92,6 +92,10 @@ class OutlookConnector:
                 url, params = d.get("@odata.nextLink"), None
         return out
 
+    def fetch_jobs(self, since, known=frozenset()):
+        from ..leads import is_job_alert, is_recruiter
+        return [m for m in self.fetch(since) if m.msg_id not in known and (is_job_alert(m.sender, m.sender_name, m.subject) or is_recruiter(m))]
+
     def events(self, start: datetime, end: datetime) -> list[dict]:
         h = {"Authorization": f"Bearer {self._token()}", "Prefer": 'outlook.timezone="UTC"'}
         r = requests.get(f"{GRAPH}/me/calendarview", headers=h, timeout=30, params={

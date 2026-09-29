@@ -132,8 +132,8 @@ def _targets(store):
             roles.append(json.loads(r["answers"] or "{}").get("roles", ""))
         for r in store.db.execute("SELECT role FROM applications ORDER BY id DESC LIMIT 20"):
             roles.append(r["role"] or "")
-        r = store.db.execute("SELECT text FROM docs WHERE kind='cv' ORDER BY id DESC LIMIT 1").fetchone()
-        cv = r["text"] if r else ""
+        from .jobs import profile
+        cv = profile(store)[0]   # your CV, LinkedIn, or both, as you chose
     except Exception:
         pass  # session tables not created yet
     return " ".join(roles).lower(), cv.lower()
@@ -227,13 +227,17 @@ def shown(store, limit=5):
     """Leads worth your time: not suspicious, and a good fit (or fit unknown until you add a CV)."""
     rows = store.db.execute(
         "SELECT * FROM leads WHERE status='new' AND credible!='suspicious' AND (fit IS NULL OR fit>=?) "
-        "ORDER BY (credible='credible') DESC, COALESCE(fit, 0) DESC, id DESC LIMIT ?", (SHOW_FIT, limit)).fetchall()
+        "ORDER BY (credible='credible') DESC, COALESCE(fit, 0) DESC, id DESC LIMIT ?", (SHOW_FIT, limit * 3)).fetchall()
     out = []
     for r in rows:
         d = dict(r)
         d["flags"], d["reasons"] = json.loads(d["flags"] or "[]"), json.loads(d["reasons"] or "[]")
+        d["review"] = json.loads(d["review"]) if d.get("review") else None
+        d.pop("jd", None)
+        if (d["review"] or {}).get("verdict") == "skip":
+            continue
         out.append(d)
-    return out
+    return out[:limit]
 
 
 def accept(store, lead_id):

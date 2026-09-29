@@ -11,6 +11,11 @@ from ..models import Message
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/calendar.readonly"]
 MAX_MESSAGES = 500
+_BOARDS = ["linkedin.com", "indeed.com", "glassdoor.com", "glassdoor.co.uk", "totaljobs.com", "reed.co.uk", "cv-library.co.uk",
+           "gradcracker.com", "brightnetwork.co.uk", "targetjobs.co.uk", "prospects.ac.uk", "milkround.com", "otta.com",
+           "welcometothejungle.com", "efinancialcareers.com", "ratemyplacement.co.uk", "joinhandshake.com"]
+JOB_QUERY = ("{from:(" + " OR ".join(_BOARDS) + ") "
+             'subject:("job alert" OR "jobs for you" OR "new jobs" OR "is hiring" OR "recommended jobs" OR "jobs matching")}')
 
 
 def _body(payload) -> str:
@@ -51,21 +56,37 @@ class GmailConnector:
     def fetch(self, since: datetime, known=frozenset()) -> list[Message]:
         """Only downloads emails it hasn't seen before, and backs off if Gmail says slow down."""
         from googleapiclient.discovery import build
-        from googleapiclient.errors import HttpError
 
         self.note, self.skipped = "", []
         svc = build("gmail", "v1", credentials=self._creds(), cache_discovery=False)
         me = svc.users().getProfile(userId="me").execute(num_retries=2)["emailAddress"].lower()
         from ..config import write_secret
         write_secret("gmail_account.json", {"email": me})  # so "Open in Gmail" opens the right account
-        q = f"after:{int(since.timestamp())} -category:promotions -category:social -category:forums"
+        # Social and Promotions are skipped, except job alerts, which often land there
+        ids = self._list(svc, f"after:{int(since.timestamp())} -category:promotions -category:social -category:forums", known)
+        ids += [i for i in self._list(svc, f"after:{int(since.timestamp())} {JOB_QUERY}", known, 100) if i not in ids]
+        return self._get(svc, me, ids)
+
+    def fetch_jobs(self, since, known=frozenset()):
+        """Every job email in the window, whichever tab it landed in."""
+        from googleapiclient.discovery import build
+        self.note, self.skipped = "", []
+        svc = build("gmail", "v1", credentials=self._creds(), cache_discovery=False)
+        me = svc.users().getProfile(userId="me").execute(num_retries=2)["emailAddress"].lower()
+        return self._get(svc, me, self._list(svc, f"after:{int(since.timestamp())} {JOB_QUERY}", known, 300))
+
+    def _list(self, svc, q, known, cap=MAX_MESSAGES):
         ids, page = [], None
-        while len(ids) < MAX_MESSAGES:
+        while len(ids) < cap:
             r = svc.users().messages().list(userId="me", q=q, pageToken=page, maxResults=100).execute(num_retries=2)
             ids += [m["id"] for m in r.get("messages", []) if m["id"] not in known]
             page = r.get("nextPageToken")
             if not page:
                 break
+        return ids[:cap]
+
+    def _get(self, svc, me, ids):
+        from googleapiclient.errors import HttpError
 
         out = []
         for i, mid in enumerate(ids[:MAX_MESSAGES]):
@@ -87,7 +108,7 @@ class GmailConnector:
             out.append(Message(
                 source="gmail", msg_id=mid, thread_id=m["threadId"], sender=addr,
                 sender_name=name or addr, is_from_me=(addr == me),
-                text=(_body(m["payload"]) or m.get("snippet", ""))[:4000],
+                text=(_body(m["payload"]) or m.get("snippet", ""))[:15000 if is_job_alert(addr, name, h.get("subject", "")) else 4000],
                 ts=datetime.fromtimestamp(int(m["internalDate"]) / 1000, tz=timezone.utc),
                 subject=h.get("subject", "")))
         return out

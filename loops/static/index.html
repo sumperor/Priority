@@ -186,6 +186,20 @@ a.btn{color:inherit}
 .xp ul{margin:0;padding-left:18px}
 .xp .who{font-size:1.05rem;margin:0}
 .xp .src a{font-size:.84rem;color:var(--muted);overflow-wrap:anywhere}
+.verdict{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:750;border-radius:999px;padding:3px 10px;text-transform:uppercase;letter-spacing:.03em}
+.verdict.apply{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
+.verdict.maybe{background:color-mix(in srgb,var(--soon) 16%,transparent);color:var(--soon)}
+.verdict.skip{background:var(--raised);color:var(--muted)}
+.jobrow{padding:12px 0;border-top:1px solid var(--line)}
+.jobrow:first-child{border-top:0}
+.jobrow h3{margin:4px 0 0;font-size:1rem}
+.jobrow .acts{margin-top:8px}
+.cvprev{background:#fff;color:#111;border-radius:12px;padding:18px 20px;font:13px/1.4 Arial,sans-serif;max-height:46vh;overflow:auto;box-shadow:inset 0 0 0 1px var(--line)}
+.sheet .cvprev h1{font-size:19px;margin:0}.sheet .cvprev h2{font-weight:700;line-height:1.3;font-size:12px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #aaa;margin:10px 0 4px}
+.cvprev ul{margin:2px 0 6px;padding-left:16px}.cvprev .row{display:flex;gap:6px}.cvprev .row i{margin-left:auto;font-style:normal;color:#555}
+.fmt{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.fmt .rec{position:relative}
+.fmt .rec::after{content:"They ask for this";position:absolute;top:-9px;right:-6px;font-size:.62rem;background:var(--jobs);color:#fff;border-radius:999px;padding:1px 7px}
 .tag{font-size:.74rem;font-weight:650;border-radius:6px;padding:1px 7px;background:var(--raised);border:1px solid var(--line);color:var(--muted)}
 .more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s var(--ease)}
 .row.open .more{grid-template-rows:1fr}
@@ -551,12 +565,14 @@ function renderStatus(){
   const anyOn=(S.sources||[]).some(x=>x.state!=='off');
   const mail=(S.sources||[]).some(x=>x.name==='gmail'||x.name==='outlook');
   $('status').innerHTML=(chips?`${chips}${mail?'<button class="src-chip tip" data-tip="linkedin"><i class="d"></i>LinkedIn <span>via email</span></button>':''}${anyOn?`<span>${every}</span>`:''}`:'<span class="src-chip"><i class="d"></i>No accounts available</span>')
+    +((S.sources||[]).some(x=>['gmail','outlook'].includes(x.name)&&x.state!=='off')||S.leads.length?'<button class="src-chip" data-jobs="1"><i class="d" style="background:var(--jobs)"></i>Jobs in your inbox</button>':'')
     +(S.ai?'':'<span class="warn">Smart reading off, rules only</span>');
 }
 setInterval(renderStatus,30000);
 document.addEventListener('click',e=>{
   const c=e.target.closest('[data-src]');if(c&&S)return connectFlow(c.dataset.src);
   if(e.target.closest('[data-tip=linkedin]'))return linkedinTip();
+  if(e.target.closest('[data-jobs]'))return jobsFlow();
 });
 
 /* ---------- connecting accounts: click, sign in, done ---------- */
@@ -733,6 +749,99 @@ function tickClock(){
 $('csound').onclick=()=>{soundOn=!soundOn;try{localStorage.setItem('sparrow.sound',soundOn?'on':'off')}catch(e){}$('csound').textContent=soundOn?'Sound on':'Sound off';if(soundOn)chime()};
 requestAnimationFrame(tickClock);
 
+/* ---------- jobs from your inbox ---------- */
+const VLABEL={apply:'Apply',maybe:'Maybe',skip:'Skip'};
+let jobsPoll=null;
+async function jobsFlow(){
+  let J;try{J=await api('/api/jobs')}catch(e){return toast(e.message)}
+  const P=J.profile, sc=J.scan;
+  const cmp={cv:'your CV',linkedin:'your LinkedIn',both:'your CV and LinkedIn'}[P.compare_with];
+  const have=P.compare_with==='linkedin'?P.linkedin:P.compare_with==='both'?(P.cv||P.linkedin):P.cv;
+  const groups=[['apply','Apply'],['maybe','Maybe'],[null,'Not checked yet'],['skip','Skip']];
+  const item=x=>{const v=x.review&&x.review.verdict;return `<div class="jobrow">${v?`<span class="verdict ${v}">${VLABEL[v]}</span>`:''}
+    <h3>${esc(x.title)}</h3><p class="co" style="margin:0;color:var(--muted);font-size:.9rem">${esc([x.company,x.location].filter(Boolean).join(', '))}</p>
+    ${originLine(x.origin)}${v?`<p class="v" style="margin:6px 0 0;font-size:.92rem">${esc(x.review.why)}</p>`:''}
+    ${x.credible==='suspicious'?`<p class="note" style="color:var(--late)">Looks like a scam: ${esc((x.flags||[]).join('; '))}</p>`:''}
+    <div class="acts"><button class="btn pri" data-j="check" data-id="${x.id}">${v?'Full check':'Check it'}</button><button class="btn" data-j="cv" data-id="${x.id}">Make my CV for this</button>
+    ${x.url&&/^https?:/.test(x.url)?`<a class="btn ghost" href="${esc(x.url)}" target="_blank" rel="noopener" style="text-decoration:none">Open job</a>`:''}</div></div>`};
+  const list=J.jobs.length?groups.map(([k,t])=>{const xs=J.jobs.filter(x=>((x.review&&x.review.verdict)||null)===k);return xs.length?`<h4 style="margin:16px 0 0;font-size:.84rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em">${t} (${xs.length})</h4>${xs.map(item).join('')}`:''}).join('')
+    :'<p class="nums">No job emails found yet. Scan your inbox to start.</p>';
+  const d=frame(`<p class="ctx">Jobs in your inbox</p><h2>Which of these are worth your time?</h2>
+    <p class="note" style="margin:-8px 0 12px">Comparing with <b>${esc(cmp)}</b>${have?'':' (not added yet)'}. <button class="link" id="j-prof">Change</button>
+      ${P.ai?'':'<br>Without your API key, checks use word matching only. Add it for a real judgement and firm research.'}</p>
+    <div class="srow" style="margin-top:0"><button class="btn pri" id="j-scan"${sc.running?' disabled':''}>${sc.running?'Scanning your inbox…':'Scan the last 14 days'}</button>
+      <span class="nums">${sc.running?`Found ${sc.found} so far${sc.checked?`, checked ${sc.checked}`:''}`:sc.done_at?`Last scan ${ago(sc.done_at)}${sc.error?`. Problem: ${esc(sc.error)}`:''}`:''}</span></div>
+    <div id="j-list">${list}</div>`);
+  d.querySelector('#j-prof').onclick=()=>profileFlow();
+  d.querySelector('#j-scan').onclick=async()=>{try{await api('/api/jobs/scan',{method:'POST',body:{days:14}});jobsFlow()}catch(e){toast(e.message)}};
+  d.querySelectorAll('[data-j]').forEach(b=>b.onclick=()=>b.dataset.j==='check'?reviewFlow(+b.dataset.id):cvFlow(+b.dataset.id));
+  clearTimeout(jobsPoll);if(sc.running)jobsPoll=setTimeout(()=>{if($('j-list'))jobsFlow()},2500);
+}
+async function reviewFlow(id){
+  loading('Checking this job'+(S&&S.ai?': reading the posting and researching the firm. About 30 seconds.':''));
+  let r;try{r=await api(`/api/leads/${id}/review`,{method:'POST'})}catch(e){closeS();return toast(e.message)}
+  const li=a=>(a||[]).map(v=>`<li>${esc(v)}</li>`).join(''), p=r.process||{}, f=r.firm||{};
+  const fmt={pdf:'a PDF',word:'a Word file',form:'their own form (paste your CV in)',any:'any format'}[p.cv_format]||'any format';
+  const d=frame(`<div class="xp"><p class="ctx">Job check, compared with ${esc(r.compared_with||'nothing yet')}</p>
+    <h2><span class="verdict ${r.verdict}" style="font-size:.95rem;vertical-align:middle">${VLABEL[r.verdict]}</span></h2>
+    <p class="who">${esc(r.why)}</p>
+    ${r.match&&r.match.length?`<h4>Where you fit</h4><ul>${li(r.match)}</ul>`:''}
+    ${r.gaps&&r.gaps.length?`<h4>Gaps, and how to handle them</h4><ul>${li(r.gaps)}</ul>`:''}
+    <h4>How to apply</h4><ul>${li(p.steps)}${p.deadline?`<li><b>Deadline:</b> ${esc(p.deadline)}</li>`:''}<li>CV as ${fmt}${p.cover_letter?', plus a cover letter':''}</li></ul>
+    ${f.what?`<h4>The firm</h4><p style="margin:0">${esc(f.what)}</p><ul>${li(f.recent)}</ul>`:''}
+    ${f.why_them&&f.why_them.length?`<h4>For "why us?"</h4><ul>${li(f.why_them)}</ul>`:''}
+    ${r.watch_out?`<h4>Watch out</h4><p style="margin:0">${esc(r.watch_out)}</p>`:''}
+    ${r.sources&&r.sources.length?`<h4>Sources</h4><div class="src">${r.sources.map(u=>`<div><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//,'').slice(0,70))}</a></div>`).join('')}</div>`:''}
+    ${r.checked_by==='rules'?`<p class="note">${r.read_job_page?'':'The job site didn\'t let Sparrow read the full posting, so this is from the email. '}${S&&S.ai?'':'Add your API key for a proper judgement and firm research.'}</p>`:''}
+    <div class="srow"><button class="btn pri" id="r-cv">Make my CV for this</button><button class="btn" id="r-add">Add to my list</button><button class="btn ghost" id="r-back">Back to jobs</button></div></div>`);
+  d.querySelectorAll('.xp h4, .xp ul, .xp .who').forEach((el,i)=>motion(el,{opacity:[0,1],y:[10,0]},{bounce:.25,vd:.35,delay:i*.035}));
+  d.querySelector('#r-cv').onclick=()=>cvFlow(id);
+  d.querySelector('#r-back').onclick=()=>jobsFlow();
+  d.querySelector('#r-add').onclick=async()=>{await api(`/api/leads/${id}/apply`,{method:'POST'});closeS();toast('Added to Jobs. It will spot the confirmation email when you apply.');refresh()};
+}
+async function cvFlow(id){
+  loading('Tailoring your CV'+(S&&S.ai?' to this job. About 20 seconds.':''));
+  let cv;try{cv=await api(`/api/leads/${id}/cv`,{method:'POST'})}catch(e){closeS();toast(e.message);if(/CV or LinkedIn/.test(e.message))profileFlow();return}
+  const sec=(cv.sections||[]).map(s=>`<h2>${esc(s.title)}</h2>${(s.entries||[]).map(e=>`${e.title||e.org?`<div class="row"><b>${esc(e.title||'')}</b><span>${esc(e.org||'')}</span><i>${esc(e.dates||'')}</i></div>`:''}<ul>${(e.bullets||[]).map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`).join('')}`).join('');
+  const order={pdf:['pdf','word','text'],word:['word','pdf','text'],form:['text','pdf','word'],any:['pdf','word','text']}[cv.format]||['pdf','word','text'];
+  const asked=['pdf','word','form'].includes(cv.format);
+  const B={pdf:`<a class="btn${order[0]==='pdf'?(asked?' pri rec':' pri'):''}" href="/cv/${cv.id}?print=1" target="_blank" rel="noopener" style="text-decoration:none">Download PDF</a>`,
+    word:`<a class="btn${order[0]==='word'?(asked?' pri rec':' pri'):''}" href="/cv/${cv.id}.docx" style="text-decoration:none">Download Word</a>`,
+    text:`<button class="btn${order[0]==='text'?(asked?' pri rec':' pri'):''}" id="cv-copy">Copy as text</button>`};
+  const d=frame(`<p class="ctx">CV for ${esc(cv.for)}</p><h2>Your tailored CV</h2>
+    <div class="cvprev"><h1>${esc(cv.name||'')}</h1><div style="color:#444">${esc(cv.contact||'')}</div>${cv.headline?`<p style="font-weight:600;margin:6px 0 0">${esc(cv.headline)}</p>`:''}${cv.summary?`<p>${esc(cv.summary)}</p>`:''}${sec}${cv.skills&&cv.skills.length?`<h2>Skills</h2><p>${esc(cv.skills.join(', '))}</p>`:''}</div>
+    ${cv.notes&&cv.notes.length?`<ul class="note" style="padding-left:18px">${cv.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`:''}
+    <p class="note">${cv.made_by==='claude'?'Written only from your own profile. Check every line is true before you send it.':''}</p>
+    <div class="fmt">${order.map(k=>B[k]).join('')}</div>
+    <div class="srow"><button class="btn ghost" id="cv-back">Back</button></div>`);
+  const cp=d.querySelector('#cv-copy');if(cp)cp.onclick=async()=>{try{await navigator.clipboard.writeText(cv.text);toast('Copied. Paste it into their form.')}catch(e){toast('Couldn\'t copy.')}};
+  d.querySelector('#cv-back').onclick=()=>reviewFlow(id);
+}
+async function profileFlow(){
+  let P;try{P=await api('/api/profile')}catch(e){return toast(e.message)}
+  const opt=(v,t)=>`<label class="check"><input type="radio" name="cmp" value="${v}"${P.compare_with===v?' checked':''}> ${t}</label>`;
+  const d=frame(`<p class="ctx">Your profile</p><h2>What should jobs be compared with?</h2>
+    ${opt('cv','My CV')}${opt('linkedin','My LinkedIn profile')}${opt('both','Both')}
+    <h4 style="margin:14px 0 6px;font-size:.84rem;color:var(--muted)">CV</h4>
+    <p style="margin:0 0 8px">${P.cv?`Using <b>${esc(P.cv)}</b>`:'Not added yet.'} <button class="link" id="p-cv">${P.cv?'Replace':'Upload CV'}</button></p>
+    <h4 style="margin:14px 0 6px;font-size:.84rem;color:var(--muted)">LinkedIn</h4>
+    <p style="margin:0 0 8px">${P.linkedin?`Using <b>${esc(P.linkedin)}</b>`:'Not added yet.'}</p>
+    <div class="inrow"><textarea id="p-url" placeholder="Your profile link, e.g. linkedin.com/in/your-name" style="min-height:44px"></textarea></div>
+    <div class="srow"><button class="btn" id="p-read">Read my public profile</button><span class="nums">or</span><button class="link" id="p-pdf">Upload the LinkedIn PDF</button></div>
+    <p class="note">LinkedIn hides most profiles from apps, so reading the link often gets only part of it. For the full version: on LinkedIn, open your profile, tap More, then Save to PDF, and upload that.</p>
+    <div class="srow"><button class="btn pri" id="p-done">Done</button></div>
+    <input type="file" id="p-file" accept=".pdf,.txt,.md" hidden>`);
+  d.querySelectorAll('[name=cmp]').forEach(r=>r.onchange=()=>api('/api/profile',{method:'POST',body:{compare_with:r.value}}).then(()=>toast('Saved.')));
+  const file=d.querySelector('#p-file');let kind='cv';
+  d.querySelector('#p-cv').onclick=()=>{kind='cv';file.click()};
+  d.querySelector('#p-pdf').onclick=()=>{kind='linkedin';file.click()};
+  file.onchange=()=>{const f=file.files[0];if(!f)return;const rd=new FileReader();rd.onload=async()=>{try{await api(`/api/docs/${kind}`,{method:'POST',body:{name:f.name,b64:rd.result}});toast(kind==='cv'?'CV saved.':'LinkedIn profile saved.');profileFlow()}catch(e){toast(e.message)}};rd.readAsDataURL(f)};
+  d.querySelector('#p-read').onclick=async()=>{const url=d.querySelector('#p-url').value.trim();if(!url)return toast('Paste your profile link first.');
+    toast('Reading your public profile. About 20 seconds.');
+    try{const r=await api('/api/profile/linkedin-url',{method:'POST',body:{url:/^https?:/.test(url)?url:'https://'+url}});toast(r.warning||'LinkedIn profile saved.');profileFlow()}catch(e){toast(e.message)}};
+  d.querySelector('#p-done').onclick=()=>jobsFlow();
+}
+
 /* ---------- render ---------- */
 function render(){
   const before=snap(), newbies=[];
@@ -812,8 +921,8 @@ function render(){
     reconcile(sec.querySelector('.rows'),[...rowItems,...leadItems],newbies);
     const work=items.filter(l=>l.type!=='waiting').reduce((t,l)=>t+(l.effort_adj||0),0)+0.75*leadItems.length;
     const mins=Math.round(work*60/5)*5;
-    sec.querySelector('.cta').innerHTML=a==='Jobs'&&!S.session&&work>=0.75
-      ?`<div class="focuscta"><span>About ${mins>=60?`${Math.floor(mins/60)}h${mins%60?' '+mins%60+' min':''}`:mins+' min'} of job work here. Get through it in a focus session.</span><button class="btn dark" data-act="focus">Start focus</button></div>`:'';
+    sec.querySelector('.cta').innerHTML=(a==='Jobs'?`<div class="links" style="margin:0 12px 10px"><button class="link" data-jobs="1">See all jobs from your inbox</button></div>`:'')+(a==='Jobs'&&!S.session&&work>=0.75
+      ?`<div class="focuscta"><span>About ${mins>=60?`${Math.floor(mins/60)}h${mins%60?' '+mins%60+' min':''}`:mins+' min'} of job work here. Get through it in a focus session.</span><button class="btn dark" data-act="focus">Start focus</button></div>`:'');
     const ref=prev?prev.nextSibling:areas.firstChild;
     if(sec!==ref)areas.insertBefore(sec,ref);
     prev=sec;
@@ -850,12 +959,13 @@ function row(l){
 }
 function leadCard(x){
   const reasons=(x.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join('')+(x.flags||[]).map(f=>`<li class="flag">${esc(f)}</li>`).join('');
-  const eyebrow=x.credible==='credible'?(x.fit!=null?'Worth applying':'New role for you'):'New role, not verified';
+  const v=x.review&&x.review.verdict;
+  const eyebrow=v?`<span class="verdict ${v}">${{apply:'Apply',maybe:'Maybe',skip:'Skip'}[v]}</span>`:x.credible==='credible'?(x.fit!=null?'Worth a look':'New role for you'):'New role, not verified';
   return `<li class="lead-card"><p class="eyebrow">${eyebrow}</p><h3>${esc(x.title)}</h3>
     <p class="co">${esc([x.company,x.location].filter(Boolean).join(', '))}</p>${originLine(x.origin)}
-    ${x.verdict?`<p class="v">${esc(x.verdict)}</p>`:''}${x.fit==null?'<p class="v nums">Upload your CV in Focus so I can judge fit.</p>':''}
+    ${v?`<p class="v">${esc(x.review.why)}</p>`:x.verdict?`<p class="v">${esc(x.verdict)}</p>`:''}${x.fit==null?'<p class="v nums">Upload your CV in Focus so I can judge fit.</p>':''}
     ${reasons?`<ul>${reasons}</ul>`:''}
-    <div class="acts"><button class="btn pri" data-act="lead-apply" data-id="${x.id}">Apply</button>
+    <div class="acts"><button class="btn pri" data-act="lead-check" data-id="${x.id}">${v?'See the full check':'Check this job'}</button><button class="btn" data-act="lead-apply" data-id="${x.id}">Add to my list</button>
     ${x.url&&/^https?:/.test(x.url)?`<a class="btn" href="${esc(x.url)}" target="_blank" rel="noopener" style="text-decoration:none">Open job</a>`:''}
     <button class="btn ghost" data-act="lead-skip" data-id="${x.id}">Skip</button></div></li>`;
 }
@@ -1062,6 +1172,8 @@ document.addEventListener('click',async e=>{
     if(act==='explore')return exploreFlow(l);
     if(act==='notdone')return notDoneFlow(l);
     if(act==='writeup')return writeUpFlow(l);
+    if(act==='lead-check')return reviewFlow(id);
+    if(act==='lead-cv')return cvFlow(id);
     if(act==='lead-apply'){const r=await api(`/api/leads/${id}/apply`,{method:'POST'});toast('Added to Jobs. It will spot the confirmation email when you apply.');return refresh()}
     if(act==='lead-skip'){await api(`/api/leads/${id}/skip`,{method:'POST'});toast('Skipped.');return refresh()}
     if(act==='ack'){celebrate(lastTap.x,lastTap.y);await api(`/api/loops/${id}/ack`,{method:'POST'});return refresh()}

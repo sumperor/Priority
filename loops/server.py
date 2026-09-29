@@ -599,6 +599,111 @@ def explore_loop(loop_id: int, fresh: bool = False):
     return (None if fresh else cached(s, loop_id)) or explore(s, l, use_ai=_ai())
 
 
+# ---------------------------------------------------------------- jobs from your inbox
+@app.get("/api/profile")
+def get_profile():
+    from . import jobs
+    s = _session_db()
+    cv, li = jobs._doc(s, "cv"), jobs._doc(s, "linkedin")
+    return {"compare_with": jobs.prefs()["compare_with"], "cv": cv[0], "linkedin": li[0], "ai": _ai()}
+
+
+class Compare(BaseModel):
+    compare_with: str
+
+
+@app.post("/api/profile")
+def set_profile(body: Compare):
+    from . import jobs
+    jobs.set_compare(body.compare_with)
+    return get_profile()
+
+
+class Url(BaseModel):
+    url: str
+
+
+@app.post("/api/profile/linkedin-url")
+def linkedin_url(body: Url):
+    from . import jobs
+    import re
+    if not re.match(r"^https?://(www\.)?linkedin\.com/in/[^/\s]+", body.url.strip()):
+        raise HTTPException(400, "Paste your profile link. It looks like linkedin.com/in/your-name.")
+    if not _ai():
+        raise HTTPException(400, "Reading LinkedIn needs your Claude API key. Or upload the LinkedIn PDF instead.")
+    text, warn = jobs.linkedin_from_url(_session_db(), body.url.strip())
+    if not text:
+        raise HTTPException(400, warn)
+    return {"ok": True, "chars": len(text), "warning": warn}
+
+
+class Scan(BaseModel):
+    days: int = 14
+
+
+@app.post("/api/jobs/scan")
+def jobs_scan(body: Scan):
+    from . import jobs
+    if not _connect.connected():
+        raise HTTPException(400, "Connect Gmail or Outlook first, so there's an inbox to look through.")
+    jobs.start_scan(_session_db, max(1, min(90, body.days)))
+    return jobs.scan_state
+
+
+@app.get("/api/jobs")
+def jobs_list():
+    from . import jobs
+    s = _session_db()
+    out = jobs.all_jobs(s)
+    for x in out:
+        m = s.db.execute("SELECT * FROM messages WHERE source=? AND msg_id=?", (x["source"], x["msg_id"])).fetchone()
+        x["origin"] = _msg_info(m) if m else None
+    return {"jobs": out, "scan": jobs.scan_state, "profile": get_profile()}
+
+
+@app.post("/api/leads/{lead_id}/review")
+def lead_review(lead_id: int):
+    from . import jobs
+    r = jobs.review(_session_db(), lead_id)
+    if r is None:
+        raise HTTPException(404, "No such job")
+    return r
+
+
+@app.post("/api/leads/{lead_id}/cv")
+def lead_cv(lead_id: int):
+    from . import jobs
+    try:
+        return jobs.tailor_cv(_session_db(), lead_id)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+def _cv(sid):
+    import json
+    r = _session_db().db.execute("SELECT body FROM summaries WHERE id=? AND kind='cv'", (sid,)).fetchone()
+    if not r:
+        raise HTTPException(404, "No such CV")
+    return json.loads(r["body"])
+
+
+@app.get("/cv/{sid}.docx")
+def cv_word(sid: int):
+    from fastapi.responses import Response
+    from . import jobs
+    cv = _cv(sid)
+    name = (cv.get("name") or "CV").replace(" ", "_")
+    return Response(jobs.cv_docx(cv), media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    headers={"Content-Disposition": f'attachment; filename="{name}_CV.docx"'})
+
+
+@app.get("/cv/{sid}")
+def cv_page(sid: int):
+    from fastapi.responses import HTMLResponse
+    from . import jobs
+    return HTMLResponse(jobs.cv_html(_cv(sid)))
+
+
 @app.post("/api/leads/{lead_id}/apply")
 def lead_apply(lead_id: int):
     from .leads import accept
@@ -713,5 +818,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.18 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.19 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

@@ -21,6 +21,7 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - `loops/evidence.py` proof in the inbox that a loop is done (checked after sync and before every nudge)
 - `loops/leads.py` job-alert and recruiter emails: credibility, fit, "worth applying"; `loops/interviews.py` write-ups
 - `loops/areas.py` which section a loop lives in (rules only); `loops/explore.py` "Explore": who someone is, why you are meeting; `loops/invites.py` calendar invites become meetings
+- `loops/jobs.py` jobs from the inbox: scan 14 days, verdict vs CV/LinkedIn, firm research, tailored CV (PDF page, Word, text)
 - `loops/errands.py` errands ask when, how you travel and how far; minutes computed in code
 - `tests/test_scenarios.py` 20 end-to-end edge cases; run them before shipping
 - `loops/notify.py` reminders to Mac notifications and phone (ntfy), sent by a server timer
