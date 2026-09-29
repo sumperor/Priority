@@ -37,14 +37,50 @@ def test_walk_20_each_way_and_15_shopping_is_55_minutes(app):
     assert "20 min each way + 15 min there = 55 min" in l["note"]
 
 
-def test_failed_lookup_says_why(app, monkeypatch):
+def test_your_screenshot_case(app, monkeypatch):
+    """'it is Currys in Farnborough' as the start, 'Aldershot Tesco' as the shop."""
     from loops import maps
-    monkeypatch.setattr(maps, "_search", lambda q, near=None, bounded=False: [(51.5, -0.12, "x")] if q == "SW1A 1AA" else [])
-    i = app.post("/api/capture", json={"text": "Buy groceries tomorrow"}).json()["id"]
-    app.patch(f"/api/loops/{i}", json={"home": "SW1A 1AA"})
-    app.patch(f"/api/loops/{i}", json={"travel_mode": "walk"})
-    p = app.patch(f"/api/loops/{i}", json={"place": "Tesco on the high street"}).json()
-    assert p["route_error"] == "couldn't find \"Tesco on the high street\" near you on the map"
+    asked = []
+
+    def search(q, near=None, bounded=False):
+        asked.append(q)
+        return {"Currys, Farnborough": [(51.29, -0.76, "Currys, Farnborough")],
+                "Tesco, Aldershot": [(51.25, -0.76, "Tesco Extra, Aldershot, Hampshire")]}.get(q, [])
+    monkeypatch.setattr(maps, "_search", search)
+
+    class R:
+        def raise_for_status(self): pass
+        def json(self): return {"routes": [{"duration": 900, "distance": 5000}]}
+    monkeypatch.setattr(maps.requests, "get", lambda url, **kw: R())
+    i = app.post("/api/capture", json={"text": "Buy groceries at Aldershot Tesco tomorrow at 10am"}).json()["id"]
+    q = app.get(f"/api/loops/{i}/next").json()
+    assert q["field"] == "here" and q["question"] == "Where are you right now?"
+    assert q["extra"][0]["value"] == "__locate"
+    app.patch(f"/api/loops/{i}", json={"here": "it is Currys in Farnborough"})
+    q = app.get(f"/api/loops/{i}/next").json()
+    assert q["kind"] == "place" and "Tesco Extra, Aldershot" in q["question"]
+    assert "Currys, Farnborough" in asked and "Tesco, Aldershot" in asked
+
+
+def test_start_not_found_asks_where_you_are_again(app, monkeypatch):
+    from loops import maps
+    monkeypatch.setattr(maps, "_search", lambda q, near=None, bounded=False: [])
+    i = app.post("/api/capture", json={"text": "Buy groceries at Tesco tomorrow at 10am"}).json()["id"]
+    app.patch(f"/api/loops/{i}", json={"here": "somewhere odd"})
+    q = app.get(f"/api/loops/{i}/next").json()
+    assert q["field"] == "here" and q["question"].startswith('I couldn\'t find "somewhere odd" on the map.')
+
+
+def test_shop_not_found_asks_the_shop_again_or_skips_the_map(app, monkeypatch):
+    from loops import maps
+    monkeypatch.setattr(maps, "_search", lambda q, near=None, bounded=False: [(51.3, -0.75, "x")] if "Farnborough" in q else [])
+    i = app.post("/api/capture", json={"text": "Buy groceries at Nowhere Shop tomorrow at 10am"}).json()["id"]
+    app.patch(f"/api/loops/{i}", json={"here": "Farnborough"})
+    q = app.get(f"/api/loops/{i}/next").json()
+    assert q["field"] == "place" and q["extra"][0]["value"] == "__skipmap"
+    app.patch(f"/api/loops/{i}", json={"place": "__skipmap"})
+    q = app.get(f"/api/loops/{i}/next").json()
+    assert q["field"] == "travel_mode"
 
 
 def _fake_map(monkeypatch, seen):
@@ -83,7 +119,7 @@ def test_one_question_at_a_time_then_the_estimate(app, monkeypatch):
     ten = next(o for o in q["options"] if o["label"] == "10:00")
     app.patch(f"/api/loops/{i}", json={"start_at": ten["value"]})
 
-    q = nxt(); assert q["field"] == "home" and q["locate"]            # the page sends your location here
+    q = nxt(); assert q["field"] == "here"                             # "Where are you right now?"
     app.patch(f"/api/loops/{i}", json={"here": "51.30,-0.75"})
     q = nxt()
     assert q["kind"] == "place" and "Farnborough Gate" in q["question"] and q["map"] == {"lat": 51.29, "lon": -0.755}

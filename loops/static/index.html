@@ -1297,8 +1297,13 @@ async function notDoneFlow(l){
   closeS();
   try{await api(`/api/loops/${l.id}/not-done`,{method:'POST',body:{left,due}});toast('Got it. It\'s back on your list.');refresh()}catch(e){toast(e.message)}
 }
-function whereAmI(){return new Promise(ok=>{if(!navigator.geolocation)return ok(null);
-  navigator.geolocation.getCurrentPosition(p=>ok(p.coords.latitude.toFixed(5)+','+p.coords.longitude.toFixed(5)),()=>ok(null),{timeout:10000,maximumAge:600000})})}
+let locWhy='';
+function whereAmI(){return new Promise(ok=>{
+  if(!window.isSecureContext){locWhy='Location only works at http://127.0.0.1:8765, not this address.';return ok(null)}
+  if(!navigator.geolocation){locWhy='This browser has no location.';return ok(null)}
+  navigator.geolocation.getCurrentPosition(p=>ok(p.coords.latitude.toFixed(5)+','+p.coords.longitude.toFixed(5)),
+    e=>{locWhy=e.code===1?'Location is blocked for this page. Allow it in the browser, and for the browser in Mac System Settings, Privacy and Security, Location Services.':"Your Mac couldn't work out where you are.";ok(null)},
+    {timeout:12000,maximumAge:600000})})}
 function mapBox(m){if(!m||m.lat==null)return '';const b=[m.lon-.008,m.lat-.005,m.lon+.008,m.lat+.005].map(x=>x.toFixed(5)).join(',');
   return `<div class="mapbox"><iframe loading="lazy" title="Map" src="https://www.openstreetmap.org/export/embed.html?bbox=${b}&layer=mapnik&marker=${m.lat},${m.lon}"></iframe>
   <div class="maplinks"><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${m.lat},${m.lon}">Open in Google Maps</a><a target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${m.lat}&mlon=${m.lon}#map=17/${m.lat}/${m.lon}">OpenStreetMap</a></div></div>`}
@@ -1312,12 +1317,13 @@ async function errandFlow(c){
       if(v==='time'){await api(`/api/loops/${c.id}`,{method:'PATCH',body:{start_at:'__day'}});continue}
       break}
     let v;
-    if(q.locate){loading('Finding where you are');const at=await whereAmI();
-      if(at){await api(`/api/loops/${c.id}`,{method:'PATCH',body:{here:at}});loading('Looking it up on the map');continue}}
     if(q.kind==='text'){
       const ex=(q.extra||[])[0];
       v=await step({ctx:q.ctx,q:q.question,kind:'text',placeholder:q.placeholder||'',skip:!!ex,skipLabel:ex?ex.label:''});
       if(v==='')v=ex?ex.value:'';
+      if(v==='__locate'){loading('Finding where you are');const at=await whereAmI();
+        if(!at){toast(locWhy+' Type where you are instead.');continue}
+        v=at}
     }else{
       v=await step({ctx:q.ctx,q:q.question,options:q.options,grid:q.kind==='calendar',extra:q.kind==='place'?mapBox(q.map):''});
     }

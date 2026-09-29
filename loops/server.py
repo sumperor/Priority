@@ -590,6 +590,9 @@ def _apply(s, loop_id, f):
     if f.get("start_at") == "__day":         # "Another day": back to the calendar
         f.pop("start_at")
         f.update(errand_day=None, commit_at=None)
+    if f.get("place") == "__skipmap":       # couldn't find it: carry on without the map
+        f.pop("place")
+        f["place_ok"] = 1
     if f.get("travel_mode") == "__wrong":    # "Wrong place": ask where again
         f.pop("travel_mode")
         f.update(place=None, place_ok=0, travel_min=None)
@@ -1048,5 +1051,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.26 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.27 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

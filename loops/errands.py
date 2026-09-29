@@ -146,6 +146,11 @@ def _times(day, busy, need, now):
     return [{"label": f"{t:%H:%M}", "value": t.astimezone(timezone.utc).isoformat()} for t in starts[:14]]
 
 
+def _where_now(ctx, why=""):
+    return {"field": "here", "kind": "text", "ctx": ctx, "question": why + "Where are you right now?",
+            "placeholder": "e.g. Queensmead, Farnborough", "extra": [{"label": "Use my current location", "value": "__locate"}]}
+
+
 def trip_h(loop):
     """Hours for the whole trip: there and back plus the time there."""
     if loop.get("travel_mode") == "delivery":
@@ -180,11 +185,16 @@ def next_step(loop, start, events, now=None, lookup=None):
                     "placeholder": "e.g. Halfords, Farnborough", "extra": [{"label": "I'll get it delivered", "value": "delivery"}]}
         if not loop.get("place_ok"):
             if not start:
-                return {"field": "home", "kind": "text", "ctx": ctx, "locate": True,
-                        "question": "Where are you setting off from? A street, station or landmark is fine.",
-                        "placeholder": "e.g. Farnborough Main station"}
+                return _where_now(ctx)
             routes = {m: lookup(place, m, start) for m in ("walk", "cycle", "drive")} if lookup else {}
             found = next((r for r in routes.values() if r), None)
+            from .maps import last
+            if not found and last.get("kind") == "start":
+                return _where_now(ctx, f"I couldn't find \"{start}\" on the map. ")
+            if not found and last.get("kind") == "dest":
+                return {"field": "place", "kind": "text", "ctx": ctx, "placeholder": "e.g. Tesco, Aldershot",
+                        "question": f"I couldn't find \"{place}\" on the map. Try the shop and the town, like \"Tesco, Aldershot\".",
+                        "extra": [{"label": "Skip the map", "value": "__skipmap"}]}
             opts = []
             for m, label in (("walk", "Walk"), ("cycle", "Cycle"), ("drive", "Drive")):
                 r = routes.get(m)
@@ -195,10 +205,13 @@ def next_step(loop, start, events, now=None, lookup=None):
                 q = f"Found it: {found.get('to') or place}, {found['km']} km away. How are you getting there?"
                 return {"field": "travel_mode", "kind": "place", "ctx": ctx, "question": q, "options": opts,
                         "map": {k: found[k] for k in ("lat", "lon") if k in found}}
-            from .maps import last
-            why = last.get("error") or "no match"
             return {"field": "travel_mode", "kind": "choice", "ctx": ctx, "options": opts,
-                    "question": f"I couldn't find \"{place}\" on the map ({why}). How are you getting there?"}
+                    "question": f"I couldn't reach the map ({last.get('error') or 'no answer'}). How are you getting there?"}
+        if not mode:
+            return {"field": "travel_mode", "kind": "choice", "ctx": ctx, "question": "How are you getting there?",
+                    "options": [{"label": "Walk", "value": "walk"}, {"label": "Cycle", "value": "cycle"},
+                                {"label": "Drive", "value": "drive"}, {"label": "Bus or train", "value": "transit"},
+                                {"label": "Get it delivered", "value": "delivery"}]}
         if loop.get("travel_min") is None:
             return {"field": "travel_min", "kind": "choice", "ctx": ctx, "question": "How long does it take to get there, one way?",
                     "options": [{"label": f"{m} min", "value": m} for m in (5, 10, 15, 20, 30, 45, 60)]}

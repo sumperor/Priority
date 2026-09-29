@@ -19,9 +19,12 @@ from . import config as C
 MODES = {"walk": "foot", "cycle": "bike", "drive": "car"}
 UA = {"User-Agent": "Sparrow/1.0 (local task app)"}
 HERE_FRESH_S = 6 * 3600
-last = {"error": ""}
+last = {"error": "", "kind": ""}   # kind: start | dest | net | mode
 _geo_memo, _clock = {}, {"t": 0.0}
 FILLER = re.compile(r"\b(on|in|at|near|by|the|my|local|nearest|closest|one)\b", re.I)
+# what people say before the place: "it is Currys in Farnborough", "I'm at the station", "going to Tesco"
+CHATTER = re.compile(r"^\s*((it'?s|it is|i'?m|i am|we'?re|we are|currently|right now|now|just|at|from|near|in|"
+                     r"going to|go to|heading to|setting off from|starting from|leaving from)\s+)+", re.I)
 COORDS = re.compile(r"^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$")
 
 
@@ -39,12 +42,16 @@ def set_home(address):
     C.write_secret("places.json", d)
 
 
-def set_here(latlon):
-    m = COORDS.match(latlon or "")
-    if not m:
+def set_here(at):
+    """Where you are right now: browser coordinates "lat,lon", or what you typed. Good for a few hours."""
+    at = (at or "").strip()
+    m = COORDS.match(at)
+    if m:
+        at = f"{float(m.group(1)):.5f},{float(m.group(2)):.5f}"
+    if not at:
         return
     d = _places()
-    d["here"] = {"at": f"{float(m.group(1)):.5f},{float(m.group(2)):.5f}", "ts": time.time()}
+    d["here"] = {"at": at[:120], "ts": time.time()}
     C.write_secret("places.json", d)
 
 
@@ -54,8 +61,8 @@ def here():
 
 
 def origin():
-    """Where an errand sets off from: where you are now, else the place you gave."""
-    return here() or home()
+    """Where an errand sets off from: where you said you are, in the last few hours."""
+    return here()
 
 
 def _km(a, b):
@@ -85,16 +92,32 @@ def _search(q, near=None, bounded=False):
     return out
 
 
+def variants(q):
+    """Ways to write a place that OpenStreetMap's search is likely to understand, best first.
+    "it is Currys in Farnborough" -> "Currys, Farnborough"; "Aldershot Tesco" -> "Tesco, Aldershot"."""
+    q = CHATTER.sub("", (q or "").strip()).strip(" .,")
+    town = re.sub(r"\s+in\s+", ", ", q)
+    clean = re.sub(r"\s+", " ", FILLER.sub(" ", town.replace("'", "").replace("\u2019", ""))).strip(" ,")
+    clean = re.sub(r"\s*,\s*", ", ", clean)
+    out = [town, clean]
+    words = clean.replace(",", "").split()
+    if "," not in clean and len(words) == 2:
+        out += [f"{words[1]}, {words[0]}", f"{words[0]}, {words[1]}"]
+    elif "," not in clean and len(words) > 2:
+        out += [f"{' '.join(words[1:])}, {words[0]}", f"{' '.join(words[:-1])}, {words[-1]}"]
+    return [x for x in dict.fromkeys(out) if x]
+
+
 def _geocode(q, near=None):
-    """(lat, lon, name). Coordinates pass straight through. Otherwise try the words as typed, then without
-    filler or apostrophes, then just the first word, taking the match closest to you."""
+    """(lat, lon, name). Coordinates pass straight through. Otherwise try the ways of writing it,
+    then just the first word ("Currys"), taking the match closest to you."""
     m = COORDS.match(q or "")
     if m:
         return float(m.group(1)), float(m.group(2)), "where you are"
-    town = re.sub(r"\s+in\s+", ", ", q)   # "Halfords in Farnborough" -> "Halfords, Farnborough"
-    clean = re.sub(r"\s+", " ", FILLER.sub(" ", town.replace("'", "").replace("\u2019", ""))).strip(" ,")
-    tries = [q, town, clean] + ([clean.split(" ")[0].strip(",")] if near and clean else [])
-    for t in dict.fromkeys(x for x in tries if x):
+    tries = variants(q)
+    if near and tries:
+        tries.append(tries[-1].split(",")[0].split(" ")[0])
+    for t in dict.fromkeys(tries):
         for bounded in ((True, False) if near else (False,)):
             hits = _search(t, near, bounded)
             if hits:
@@ -122,14 +145,16 @@ def _web_address(dest, near):
 def _osm(start, dest, mode):
     a = _geocode(start)
     if not a:
-        raise LookupError(f"couldn't find your starting point \"{start}\" on the map")
+        last["kind"] = "start"
+        raise LookupError(f"couldn't find \"{start}\" on the map")
     b = None
     addr = _web_address(dest, a)
     if addr:
         b = _geocode(addr, near=a)
     b = b or _geocode(dest, near=a)
     if not b:
-        raise LookupError(f"couldn't find \"{dest}\" near you on the map")
+        last["kind"] = "dest"
+        raise LookupError(f"couldn't find \"{dest}\" on the map")
     # this server names every profile "driving" in the path; the host picks foot, bike or car
     r = requests.get(f"https://routing.openstreetmap.de/routed-{MODES[mode]}/route/v1/driving/"
                      f"{a[1]},{a[0]};{b[1]},{b[0]}", params={"overview": "false"}, headers=UA, timeout=15)
@@ -144,11 +169,12 @@ def travel(dest, mode, origin_=None):
     """One-way travel: {"minutes", "km", "to", "via"} or None (reason in last["error"]).
     The minutes come from the route, rounded up, never guessed."""
     start = origin_ or origin()
-    last["error"] = ""
+    last.update(error="", kind="")
     if mode not in MODES:
-        last["error"] = "bus and train times aren't on OpenStreetMap"
+        last.update(error="bus and train times aren't on OpenStreetMap", kind="mode")
         return None
     if not start:
+        last["kind"] = "start"
         last["error"] = "I don't know where you are. Allow location in the browser, or type where you're setting off from"
         return None
     if not dest:
@@ -163,6 +189,7 @@ def travel(dest, mode, origin_=None):
         last["error"] = str(e)
         return None
     except requests.RequestException as e:
+        last["kind"] = "net"
         last["error"] = f"couldn't reach OpenStreetMap ({type(e).__name__}: {str(e)[:120]})"
         return None
     if not found:
