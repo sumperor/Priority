@@ -138,6 +138,11 @@ a.btn{color:inherit}
 .meta{margin:3px 0 0;font-size:.86rem;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .when{font-weight:650;color:var(--ink)}
 .lvl-late .when{color:var(--late)} .lvl-soon .when{color:var(--soon)}
+.origin{margin:4px 0 0;font-size:.84rem;color:var(--muted);display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.origin b{color:var(--ink);font-weight:600}
+.origin a{color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.hero .origin{margin-top:12px;font-size:.92rem}
+.quote{margin:8px 0 0;padding:8px 12px;border-left:3px solid var(--line);color:var(--muted);font-size:.9rem;max-width:60ch;overflow-wrap:anywhere}
 .tag{font-size:.74rem;font-weight:650;border-radius:6px;padding:1px 7px;background:var(--raised);border:1px solid var(--line);color:var(--muted)}
 .more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s var(--ease)}
 .row.open .more{grid-template-rows:1fr}
@@ -545,6 +550,15 @@ function linkedinTip(){
   if(ok||bad)history.replaceState(null,'',location.pathname+location.hash);
 })();
 
+/* ---------- where a task came from ---------- */
+const SRC_NAME={gmail:'Gmail',outlook:'Outlook',teams:'Teams',slack:'Slack',imessage:'Messages'};
+const stamp=ts=>{const d=new Date(ts);return d.toLocaleString([], {weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).replace(',', '')};
+function originLine(o,{quote=false}={}){
+  if(!o)return '';
+  const link=o.link?` <a href="${esc(o.link)}" target="_blank" rel="noopener">Open in ${SRC_NAME[o.source]||o.source}</a>`:o.source==='imessage'?' <span>in Messages</span>':'';
+  return `<p class="origin"><span>From <b>${esc(o.from)}</b>${o.subject?`, “${esc(o.subject)}”`:''}, ${esc(stamp(o.ts))}</span>${link}</p>${quote&&o.preview?`<p class="quote">${esc(o.preview)}</p>`:''}`;
+}
+
 /* ---------- render ---------- */
 function render(){
   const before=snap(), newbies=[];
@@ -563,7 +577,7 @@ function render(){
   reconcile($('wins'),wins.map(({l,strong})=>{
     const ev=l.evidence||{};
     const head=strong?(ev.headline||`Done: ${l.summary}`):(ev.headline||`Looks like this is done: ${l.summary}`);
-    const src=ev.from?`${esc(ev.from)}: “${esc(ev.subject)}”, ${dayName(ev.ts)} ${hm(ev.ts)}`:esc(l.summary);
+    const src=ev.from?`From <b>${esc(ev.from)}</b>: “${esc(ev.subject)}”, ${esc(stamp(ev.ts))}${ev.link?` <a href="${esc(ev.link)}" target="_blank" rel="noopener" style="color:inherit;font-weight:600">Open in ${SRC_NAME[ev.source]||ev.source}</a>`:''}`:esc(l.summary);
     const writeup=strong&&ev.kind==='interview'?`<button class="btn" data-act="writeup" data-id="${l.id}">Write it up</button>`:'';
     return {key:'w'+l.id,html:`<article class="win"><div class="badge${strong?'':' q'}">${BIGTICK}</div><div>
       <p class="eyebrow">${strong?'Done, spotted in your inbox':'Looks done'}</p><h3>${esc(head)}</h3><p class="src">${src}</p>
@@ -576,6 +590,7 @@ function render(){
   const heroHTML=top?`<article class="hero" style="--c:${AREA_C[top.area]||AREA_C.Other}">
       <p class="lead"><span>Do this next</span><span class="chip">${esc(top.area||'Other')}</span></p>
       <h1>${esc(top.summary)}</h1>
+      ${originLine(top.origin,{quote:true})}
       <p class="why${top.forecast.level==='late'?' late':''}">${esc(top.why||top.forecast.headline)}</p>
       <div class="heroacts"><button class="closer" data-act="close" data-id="${top.id}"><span class="ring">${TICK}</span>Done</button>
         <button class="btn ghost" data-act="later" data-id="${top.id}">Not now</button>
@@ -634,8 +649,8 @@ function render(){
 }
 function details(l){
   const f=l.forecast;
-  return `<div class="in"><p><b>If missed:</b> ${esc(f.if_missed)}</p><p><b>If it slips a day:</b> ${esc(f.slip_1d)}</p>
-    <p class="nums">${Math.round(100*f.p_miss)}% chance of missing it. Takes about ${l.effort_adj}h. From ${esc(l.source==='manual'?'your notes':l.source)}.</p>
+  return `<div class="in">${l.origin&&l.origin.preview?`<p class="quote" style="margin:0 0 10px">${esc(l.origin.preview)}</p>`:''}<p><b>If missed:</b> ${esc(f.if_missed)}</p><p><b>If it slips a day:</b> ${esc(f.slip_1d)}</p>
+    <p class="nums">${Math.round(100*f.p_miss)}% chance of missing it. Takes about ${l.effort_adj}h. From ${esc(l.source==='manual'?'your notes':SRC_NAME[l.source]||l.source)}.</p>
     ${l.note?`<p class="nums">${esc(l.note)}</p>`:''}
     <div class="links"><button class="link" data-act="talk" data-id="${l.id}">Talk about it</button><button class="link" data-act="focus-this" data-id="${l.id}">Focus on this</button><button class="link" data-act="later" data-id="${l.id}">Move it</button><button class="link" data-act="dismiss" data-id="${l.id}">Not a task</button></div></div>`;
 }
@@ -645,6 +660,7 @@ function row(l){
     <button class="tick" data-act="close" data-id="${l.id}" aria-label="Done: ${esc(l.summary)}">${TICK}</button>
     <div class="body" data-act="toggle" data-id="${l.id}"><p class="title">${esc(l.summary)}</p>
       <p class="meta"><span class="when">${esc(whenText(l))}</span>${l.type==='waiting'?'<span class="tag">Waiting</span>':''}<span>${esc(why)}</span></p>
+      ${originLine(l.origin)}
       <div class="more"><div>${details(l)}</div></div></div>
     <button class="pen" data-act="edit" data-id="${l.id}" aria-label="Edit: ${esc(l.summary)}">${PEN}</button></li>`;
 }
@@ -652,7 +668,7 @@ function leadCard(x){
   const reasons=(x.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join('')+(x.flags||[]).map(f=>`<li class="flag">${esc(f)}</li>`).join('');
   const eyebrow=x.credible==='credible'?(x.fit!=null?'Worth applying':'New role for you'):'New role, not verified';
   return `<li class="lead-card"><p class="eyebrow">${eyebrow}</p><h3>${esc(x.title)}</h3>
-    <p class="co">${esc([x.company,x.location].filter(Boolean).join(', '))}</p>
+    <p class="co">${esc([x.company,x.location].filter(Boolean).join(', '))}</p>${originLine(x.origin)}
     ${x.verdict?`<p class="v">${esc(x.verdict)}</p>`:''}${x.fit==null?'<p class="v nums">Upload your CV in Focus so I can judge fit.</p>':''}
     ${reasons?`<ul>${reasons}</ul>`:''}
     <div class="acts"><button class="btn pri" data-act="lead-apply" data-id="${x.id}">Apply</button>

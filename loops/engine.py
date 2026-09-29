@@ -78,6 +78,9 @@ def is_assessment(text):
 def _create_assessment(store, source, thread_id, msgs, m):
     from .extract import rule_parse
     company = (m.sender_name or m.sender or "").split("<")[0].strip() or "the employer"
+    behalf = re.search(r"on behalf of\s+(.+)", company, re.I)   # "SHL on behalf of Shell" -> Shell
+    if behalf:
+        company = behalf.group(1).strip()
     kind = ASSESS.search(f"{m.subject} {m.text}").group(1)
     due = None
     try:
@@ -118,6 +121,8 @@ def detect(store, decide, source, thread_id, msgs, extract=default_extract):
             store.mark_checked(key)
             if is_assessment(f"{m.subject} {m.text}"):
                 created.append(_create_assessment(store, source, thread_id, msgs, m))
+                if m is last:
+                    store.mark_checked(f"detect:reply:{source}:{last.msg_id}")  # the assessment is the task, not a reply
 
     from .leads import is_job_alert, looks_like_scam
     if not last.is_from_me:

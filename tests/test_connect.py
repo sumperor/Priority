@@ -124,3 +124,25 @@ def test_gmail_only_fetches_new_and_errors_are_plain(tmp_path, monkeypatch):
                                "<HttpError 403 ... returned \"Quota exceeded for quota metric 'Total Query Cost'\">"}
     src = {x["name"]: x for x in c.get("/api/state").json()["sources"]}["gmail"]
     assert src["error"] == "Gmail is limiting how fast Loops can read." and "next check" in src["fix"]
+
+
+def test_tasks_show_the_email_they_came_from(tmp_path, monkeypatch):
+    c = client(tmp_path, monkeypatch)
+    from datetime import datetime, timedelta, timezone
+    from loops import config as C
+    from loops.decisions import RuleDecisions
+    from loops.engine import sync
+    from loops.models import Message
+    from loops.server import db
+    C.write_secret("gmail_account.json", {"email": "me@gmail.com"})
+    t = datetime(2026, 9, 29, 14, 32, tzinfo=timezone.utc)
+
+    class Fake:
+        name = "gmail"
+        def fetch(self, since): return [Message("gmail", "18f3a", "18f3a", "priya@deloitte.com", "Priya Shah", False,
+                                                "Hi, could you send me your availability for a call next week?",
+                                                datetime.now(timezone.utc) - timedelta(hours=1), "Next steps")]
+    sync(db(), [Fake()], RuleDecisions())
+    o = c.get("/api/state").json()["loops"][0]["origin"]
+    assert o["from"] == "Priya Shah" and o["subject"] == "Next steps" and o["ts"]
+    assert "availability" in o["preview"] and o["link"] == "https://mail.google.com/mail/?authuser=me%40gmail.com#all/18f3a"

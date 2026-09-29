@@ -56,6 +56,8 @@ class GmailConnector:
         self.note, self.skipped = "", []
         svc = build("gmail", "v1", credentials=self._creds(), cache_discovery=False)
         me = svc.users().getProfile(userId="me").execute(num_retries=2)["emailAddress"].lower()
+        from ..config import write_secret
+        write_secret("gmail_account.json", {"email": me})  # so "Open in Gmail" opens the right account
         q = f"after:{int(since.timestamp())} -category:promotions -category:social -category:forums"
         ids, page = [], None
         while len(ids) < MAX_MESSAGES:

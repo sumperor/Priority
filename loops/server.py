@@ -119,14 +119,60 @@ def state():
     loops = ranked(s)
     for l in loops + closed:
         l["evidence"] = json.loads(l["evidence"]) if l.get("evidence") else None
+        if l["evidence"]:
+            l["evidence"]["link"] = open_link(l["evidence"].get("source"), l["evidence"].get("msg_id"))
+    for l in loops:
+        l["origin"] = _origin(s, l)
+    leads = shown(s)
+    for x in leads:
+        m = s.db.execute("SELECT * FROM messages WHERE source=? AND msg_id=?", (x["source"], x["msg_id"])).fetchone()
+        x["origin"] = _msg_info(m) if m else None
     celebrate = [l for l in closed if l["outcome"] == "evidence" and not l.get("acked")]
-    return {"loops": loops, "closed": closed, "celebrate": celebrate, "leads": shown(s), "areas": AREAS,
+    return {"loops": loops, "closed": closed, "celebrate": celebrate, "leads": leads, "areas": AREAS,
             "sync_every": C.AUTO_SYNC_MINUTES, "sources": _sources(), "accuracy": s.accuracy(), "sync": _sync_state,
             "connectors": _connect.connected(), "ai": bool(os.getenv("ANTHROPIC_API_KEY")),
             "last_msg": {str(r["loop_id"]): r["text"] for r in s.db.execute(
                 "SELECT loop_id, text FROM chat WHERE id IN (SELECT MAX(id) FROM chat WHERE role='agent' GROUP BY loop_id)")},
             "chase_every": C.CHASE_EVERY_MINUTES,
             "session": (lambda a: a["title"] if a else None)(_active_session(_session_db()))}
+
+
+def open_link(source, msg_id, thread_id=None):
+    """A link that opens the original message, where the service allows it."""
+    if source == "gmail" and (thread_id or msg_id):
+        acct = C.read_secret("gmail_account.json").get("email")
+        from urllib.parse import quote
+        return f"https://mail.google.com/mail/?authuser={quote(acct)}#all/{thread_id or msg_id}" if acct \
+            else f"https://mail.google.com/mail/u/0/#all/{thread_id or msg_id}"
+    if source == "outlook":
+        return "https://outlook.live.com/mail/"
+    if source == "teams":
+        return "https://teams.microsoft.com/"
+    if source == "slack":
+        return "https://app.slack.com/client"
+    return None
+
+
+def _msg_info(m):
+    import re
+    text = re.sub(r"\s+", " ", m["text"] or "").strip()
+    return {"source": m["source"], "from": m["sender_name"] or m["sender"], "address": m["sender"],
+            "subject": m["subject"] or "", "ts": m["ts"], "preview": text[:220] + ("\u2026" if len(text) > 220 else ""),
+            "link": open_link(m["source"], m["msg_id"], m["thread_id"])}
+
+
+def _origin(s, loop):
+    """The message a loop came from: who sent it, the subject, when it arrived, and a preview."""
+    if loop.get("source") in (None, "", "manual") or not loop.get("thread_id"):
+        return None
+    rows = s.db.execute("SELECT * FROM messages WHERE source=? AND thread_id=? ORDER BY ts",
+                        (loop["source"], loop["thread_id"])).fetchall()
+    if not rows:
+        return None
+    t = loop.get("trigger_ts")
+    m = next((r for r in rows if r["ts"] == t), None) or \
+        next((r for r in reversed(rows) if not t or r["ts"] <= t), rows[-1])
+    return _msg_info(m)
 
 
 class Capture(BaseModel):
@@ -532,5 +578,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Loops v0.12 running at http://127.0.0.1:{C.PORT}")
+    print(f"Loops v0.13 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")
