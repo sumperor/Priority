@@ -547,7 +547,7 @@ def edit(loop_id: int, body: Edit):
     s = db(); _loop(s, loop_id)
     f = _apply(s, loop_id, {k: v for k, v in body.model_dump().items() if v is not None})
     l = s.get_loop(loop_id)
-    return {"ok": True, "set": {k: l[k] for k in ("travel_min",) if l[k] is not None}, "route": f.get("_route")}
+    return {"ok": True, "set": {k: l[k] for k in ("travel_min",) if l[k] is not None}, "route": f.get("_route"), "route_error": f.get("_route_error")}
 
 
 def _apply(s, loop_id, f):
@@ -584,6 +584,9 @@ def _apply(s, loop_id, f):
             and "travel_min" not in f and (cur.get("travel_min") is None or "travel_mode" in f):
         from .maps import travel
         route = travel(cur["place"], cur["travel_mode"])  # looked up, not guessed
+        if not route:
+            from .maps import last as maps_last
+            f["_route_error"] = maps_last["error"]
         if route:
             s.update_loop(loop_id, travel_min=route["minutes"])
             cur["travel_min"] = f["travel_min"] = route["minutes"]
@@ -1007,5 +1010,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.23 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.24 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

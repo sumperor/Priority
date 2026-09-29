@@ -69,3 +69,13 @@ def test_falls_back_to_asking_when_lookup_fails(app, monkeypatch):
     app.patch(f"/api/loops/{i}", json={"travel_mode": "walk"})
     p = app.patch(f"/api/loops/{i}", json={"place": "Somewhere unknown"}).json()
     assert p["set"] == {} and p["route"] is None       # the UI then asks "how long one way?"
+
+
+def test_failed_lookup_says_why(app, monkeypatch):
+    from loops import maps
+    monkeypatch.setattr(maps, "_search", lambda q, near=None, bounded=False: (51.5, -0.12) if q == "SW1A 1AA" else None)
+    i = app.post("/api/capture", json={"text": "Buy groceries tomorrow"}).json()["id"]
+    app.patch(f"/api/loops/{i}", json={"home": "SW1A 1AA"})
+    app.patch(f"/api/loops/{i}", json={"travel_mode": "walk"})
+    p = app.patch(f"/api/loops/{i}", json={"place": "Tesco on the high street"}).json()
+    assert p["route_error"] == "couldn't find \"Tesco on the high street\" near you on the map"

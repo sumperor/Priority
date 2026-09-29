@@ -29,6 +29,8 @@ def main():
     c.add_argument("--outcome", default="well", choices=["well", "partly", "no"]); c.add_argument("--hours", type=float)
     for name in ("confirm", "reject", "snooze"):
         sub.add_parser(name).add_argument("id", type=int)
+    rt = sub.add_parser("route", help="test a travel-time lookup")
+    rt.add_argument("origin"); rt.add_argument("dest"); rt.add_argument("mode", nargs="?", default="walk", choices=["walk", "cycle", "drive"])
     b = sub.add_parser("brief"); b.add_argument("--voice", action="store_true"); b.add_argument("--send", action="store_true")
     args = ap.parse_args()
 
@@ -73,6 +75,11 @@ def main():
         due = max(datetime.fromisoformat(loop["due"]), datetime.now(datetime.fromisoformat(loop["due"]).tzinfo))
         store.update_loop(args.id, due=(due + timedelta(days=1)).isoformat(), snoozes=(loop["snoozes"] or 0) + 1)
         print("Pushed back a day.")
+
+    elif args.cmd == "route":
+        from loops import maps
+        r = maps.travel(args.dest, args.mode, origin=args.origin)
+        print(f"{r['minutes']} min one way, {r['km']} km" if r else f"Failed: {maps.last['error']}")
 
     elif args.cmd == "brief":
         from loops.brief import send_telegram, tts, write_brief

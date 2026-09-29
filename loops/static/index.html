@@ -1300,7 +1300,8 @@ async function askMissing(c){
     got[q.field]=v;
     if(v!==''){const r=await api(`/api/loops/${c.id}`,{method:'PATCH',body:{[q.field]:v}});
       Object.assign(got,(r&&r.set)||{});
-      if(r&&r.route)toast(`${r.route.minutes} min each way (${r.route.km} km), from ${r.route.via}.`)}
+      if(r&&r.route)toast(`${r.route.minutes} min each way (${r.route.km} km), from ${r.route.via}.`);
+      else if(r&&r.route_error)toast(`Couldn't look up the route: ${r.route_error}.`)}
   }
   closeS();toast('Got it. Plan updated.');refresh();
 }
