@@ -283,10 +283,10 @@ def capture(body: Capture):
                             stakes=d.get("stakes", ""), base_h=known.get("base_h", d["effort_h"]) if errand else None)
     if not errand:
         return {"id": loop_id, "questions": followups(d)}
-    from .maps import home
+    from .maps import origin
     if known:
         _apply(s, loop_id, dict(known))
-    return {"id": loop_id, "questions": errand_questions(body.text, due, known, home())}
+    return {"id": loop_id, "questions": errand_questions(body.text, due, known, origin())}
 
 
 _WHEN_TAIL = __import__("re").compile(
@@ -540,6 +540,7 @@ class Edit(BaseModel):
     place: str | None = None
     there_min: int | None = None     # errands: time at the place
     home: str | None = None          # where errands set off from (saved once, not on the loop)
+    here: str | None = None          # "lat,lon" from the browser's location, used as the starting point
 
 
 @app.patch("/api/loops/{loop_id}")
@@ -575,6 +576,9 @@ def _apply(s, loop_id, f):
     if "home" in f:
         from .maps import set_home
         set_home(f.pop("home"))
+    if "here" in f:
+        from .maps import set_here
+        set_here(f.pop("here"))
     if "there_min" in f:
         f["base_h"] = round(max(1, min(600, int(f.pop("there_min")))) / 60, 3)
     if f:
@@ -1010,5 +1014,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.24 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.25 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

@@ -23,7 +23,7 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - `loops/areas.py` which section a loop lives in (rules only); `loops/explore.py` "Explore": who someone is, why you are meeting; `loops/invites.py` calendar invites become meetings
 - `loops/jobs.py` jobs from the inbox: scan 14 days, verdict vs CV/LinkedIn, firm research, tailored CV (PDF page, Word, text)
 - `loops/planner.py` the calendar: events, meetings, deadlines and planned task blocks in free time (08:00 to 22:00); drag keeps a time
-- `loops/errands.py` errands: reads "walking 20 min each way" from the note, asks only what is missing; `loops/maps.py` looks up travel time with free OpenStreetMap (walk, cycle, drive); asks for bus/train or if the lookup fails
+- `loops/errands.py` errands: reads "walking 20 min each way" from the note, asks only what is missing; `loops/maps.py` travel time from where you are (browser location) to the nearest match on OpenStreetMap (walk, cycle, drive); Claude web search tidies misheard names if a key is set; asks for bus/train or if the lookup fails
 - `tests/test_scenarios.py` 20 end-to-end edge cases; run them before shipping
 - `loops/caller.py` last-resort phone call (ElevenLabs agent + Twilio): deadline close, 2 reminders ignored, not in an event/focus/quiet hours; transcript read back as a reply
 - `loops/notify.py` reminders to Mac notifications and phone (ntfy), sent by a server timer

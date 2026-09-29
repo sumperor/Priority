@@ -73,8 +73,9 @@ def questions(text, due_iso, known=None, home=""):
         return qs
     away = {"travel_mode": "delivery"}
     if "travel_min" not in known and not home:
-        qs.append({"field": "home", "kind": "text", "question": "Where are you setting off from? I'll remember it.",
-                   "placeholder": "e.g. your postcode", "skip_if": away})
+        # the page sends your location first; this is only asked if you say no to that
+        qs.append({"field": "home", "kind": "text", "question": "Where are you setting off from? A street, station or landmark is fine.",
+                   "placeholder": "e.g. Wembley Park station", "skip_if": away, "skip_if_set": "here", "locate": True})
     qs.append({"field": "place", "kind": "text", "question": "Where are you going?", "placeholder": "e.g. Tesco on the high street",
                "skip_if": away})
     if "base_h" not in known:

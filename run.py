@@ -78,8 +78,8 @@ def main():
 
     elif args.cmd == "route":
         from loops import maps
-        r = maps.travel(args.dest, args.mode, origin=args.origin)
-        print(f"{r['minutes']} min one way, {r['km']} km" if r else f"Failed: {maps.last['error']}")
+        r = maps.travel(args.dest, args.mode, origin_=args.origin)
+        print(f"{r['minutes']} min one way, {r['km']} km, to {r['to']}" if r else f"Failed: {maps.last['error']}")
 
     elif args.cmd == "brief":
         from loops.brief import send_telegram, tts, write_brief

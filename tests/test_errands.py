@@ -73,9 +73,41 @@ def test_falls_back_to_asking_when_lookup_fails(app, monkeypatch):
 
 def test_failed_lookup_says_why(app, monkeypatch):
     from loops import maps
-    monkeypatch.setattr(maps, "_search", lambda q, near=None, bounded=False: (51.5, -0.12) if q == "SW1A 1AA" else None)
+    monkeypatch.setattr(maps, "_search", lambda q, near=None, bounded=False: [(51.5, -0.12, "x")] if q == "SW1A 1AA" else [])
     i = app.post("/api/capture", json={"text": "Buy groceries tomorrow"}).json()["id"]
     app.patch(f"/api/loops/{i}", json={"home": "SW1A 1AA"})
     app.patch(f"/api/loops/{i}", json={"travel_mode": "walk"})
     p = app.patch(f"/api/loops/{i}", json={"place": "Tesco on the high street"}).json()
     assert p["route_error"] == "couldn't find \"Tesco on the high street\" near you on the map"
+
+
+def test_uses_where_you_are_and_the_nearest_branch(app, monkeypatch):
+    from loops import maps
+    seen = {}
+
+    def search(q, near=None, bounded=False):
+        seen.setdefault("q", []).append(q)
+        if q == "Currys Vonbra":
+            return []
+        if q == "Currys":   # two branches: the far one first, like a real search might return
+            return [(51.75, -0.34, "Currys, St Albans, Hertfordshire"), (51.556, -0.281, "Currys, Wembley, London")]
+        return []
+    monkeypatch.setattr(maps, "_search", search)
+
+    class R:
+        def raise_for_status(self): pass
+        def json(self): return {"routes": [{"duration": 725, "distance": 950}]}
+    monkeypatch.setattr(maps.requests, "get", lambda url, **kw: seen.update(url=url) or R())
+
+    r = app.post("/api/capture", json={"text": "Buy a charger from Curry's Vonbra"}).json()
+    home_q = next(q for q in r["questions"] if q["field"] == "home")
+    assert home_q["locate"] and home_q["skip_if_set"] == "here"      # the page tries your location first
+    i = r["id"]
+    app.patch(f"/api/loops/{i}", json={"here": "51.5601,-0.2795"})
+    app.patch(f"/api/loops/{i}", json={"travel_mode": "walk"})
+    p = app.patch(f"/api/loops/{i}", json={"place": "Curry's Vonbra"}).json()
+    assert p["route"]["minutes"] == 13 and p["route"]["to"] == "Currys, Wembley"
+    assert "-0.2795,51.5601;-0.281,51.556" in seen["url"] and "routed-foot" in seen["url"]
+    # once it knows where you are, the next errand doesn't ask
+    r2 = app.post("/api/capture", json={"text": "Pick up parcel from the post office"}).json()
+    assert "home" not in [q["field"] for q in r2["questions"]]

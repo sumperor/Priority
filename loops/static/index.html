@@ -1288,19 +1288,23 @@ async function notDoneFlow(l){
   closeS();
   try{await api(`/api/loops/${l.id}/not-done`,{method:'POST',body:{left,due}});toast('Got it. It\'s back on your list.');refresh()}catch(e){toast(e.message)}
 }
+function whereAmI(){return new Promise(ok=>{if(!navigator.geolocation)return ok(null);
+  navigator.geolocation.getCurrentPosition(p=>ok(p.coords.latitude.toFixed(5)+','+p.coords.longitude.toFixed(5)),()=>ok(null),{timeout:10000,maximumAge:600000})})}
 async function askMissing(c){
   const got={};
   const qs=c.questions;
   for(let i=0;i<qs.length;i++){
     const q=qs[i];
     if(q.skip_if&&Object.entries(q.skip_if).every(([k,v])=>got[k]===v))continue;
+    if(q.locate&&got.here==null){const at=await whereAmI();
+      if(at){got.here=at;await api(`/api/loops/${c.id}`,{method:'PATCH',body:{here:at}})}}
     if(q.skip_if_set&&got[q.skip_if_set]!=null)continue;
     const v=await step({ctx:c.summary,q:q.question,kind:q.kind||'choice',options:q.options||[],n:i+1,of:qs.length,skip:true,placeholder:q.placeholder||''});
     if(v===null)return;
     got[q.field]=v;
     if(v!==''){const r=await api(`/api/loops/${c.id}`,{method:'PATCH',body:{[q.field]:v}});
       Object.assign(got,(r&&r.set)||{});
-      if(r&&r.route)toast(`${r.route.minutes} min each way (${r.route.km} km), from ${r.route.via}.`);
+      if(r&&r.route)toast(`${r.route.minutes} min each way (${r.route.km} km)${r.route.to?' to '+r.route.to:''}.`);
       else if(r&&r.route_error)toast(`Couldn't look up the route: ${r.route_error}.`)}
   }
   closeS();toast('Got it. Plan updated.');refresh();
