@@ -44,8 +44,19 @@ Slack restricts history access and AI use of data for apps outside its Marketpla
 ## 3. Open the app
     python run.py serve        # then open http://127.0.0.1:8765
 
-Runs only on your machine (bound to 127.0.0.1). It syncs your accounts every 15 minutes
+Runs only on your machine (bound to 127.0.0.1). It checks your accounts every 5 minutes
 (`AUTO_SYNC_MINUTES`, 0 to turn off) and gives you:
+- **One page.** "Do this next" at the top, then a section per area (Jobs, Study, Work, Money and admin,
+  Personal, Other). Areas are decided by code. A section appears when it has something in it and folds away when empty.
+- **Check before chasing.** Before any reminder, it looks for proof in your inbox: an application confirmation,
+  an assessment completion email, a next-round invite, a reply you sent. If it finds it, the task is ticked off
+  and you get a "Nice one" card with the email it saw, plus **Not done yet** (tell it what's left and by when).
+- **Job leads.** Job-alert and recruiter emails are checked for scam signs (fees, WhatsApp, personal email
+  addresses, hidden links) and scored against your CV and the roles you've gone for. Good fits show up in Jobs
+  with **Apply** and **Skip**. With an API key, Claude reads the job and the company for up to 3 new leads per check.
+- **Interview write-ups.** When you close an interview, give rough notes and it writes a summary, the most
+  interesting part, follow-ups and a thank-you note, and adds "Send a thank-you note" to your list.
+- **No API key?** Everything above still works on rules; Claude makes it sharper.
 - **Open / Waiting / To confirm / Closed** lists, ranked by value per hour
 - **A forecast on every loop:** when to start to be safe, what happens if it's missed,
   what a 1-day slip means, and anything else it holds up (set "Missing this holds up" in Edit)
@@ -53,14 +64,14 @@ Runs only on your machine (bound to 127.0.0.1). It syncs your accounts every 15 
 - **Accuracy tab:** your on-time rate and how often detection and auto-close were right (with Brier scores)
 - **Capture** by typing or dictating, and **Hear brief** read aloud
 
-## Job-hunt sessions
-Open **Start a job-hunt session** (or go to http://127.0.0.1:8765/session).
+## Focus sessions (job hunting)
+Press **Focus** at the top of the page (or open http://127.0.0.1:8765/#focus).
 - **Set objectives:** a few one-tap questions (goal, how many, which roles, how long, work rhythm).
 - **Focus blocks:** 25/5 or 50/10 timer with breaks, water and food reminders, and a check-in after each block
   ("Good", "Stuck", "Tired", "Done for today").
 - **Applications:** paste a job link or description. With your API key it reads the job, researches the company
   on the web, and shows what they want most, where your CV matches, gaps, and points for "why this company".
-  Mark it submitted and it's added to Waiting on others, with a reminder to chase in 10 days.
+  Mark it submitted and it's added to your Jobs list as waiting to hear back; their reply closes it.
 - **Helper:** ask anything mid-session, typed or spoken. Upload your CV once so answers are tailored.
 - **Around you:** assessment emails become high-stakes loops (HireVue, SHL, numerical reasoning and so on);
   your calendar shows what's coming; after a good block it offers to slot an assessment in next.

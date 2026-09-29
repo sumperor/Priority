@@ -31,7 +31,7 @@ ELEVENLABS_MODEL = os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2")
 
 # Default hours until a loop is due, by type, when the message gives no date
 DEFAULT_DUE_HOURS = {"reply": 24, "promise": 72, "waiting": 72, "task": 48, "call": 24, "assessment": 120}
-AUTO_SYNC_MINUTES = int(os.getenv("AUTO_SYNC_MINUTES", "15"))
+AUTO_SYNC_MINUTES = int(os.getenv("AUTO_SYNC_MINUTES", "5"))
 PORT = int(os.getenv("PORT", "8765"))
 
 # Chasing: how often to nag once a loop should have started, and how early to give a heads-up

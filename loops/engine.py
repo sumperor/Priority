@@ -1,4 +1,5 @@
 """The core loop: detect -> auto-close -> prioritise."""
+import os
 import re
 from datetime import datetime, timedelta, timezone
 
@@ -30,8 +31,24 @@ QUESTIONS = {
 }
 
 
+def _rules_extract(msgs, type_):
+    """No API key (or Claude failed): build the loop from the last message with rules."""
+    from .extract import rule_parse
+    last = msgs[-1]
+    other = next((m.sender_name for m in reversed(msgs) if not m.is_from_me), "")
+    r = rule_parse(f"{last.subject}. {last.text[:600]}" if last.subject else last.text[:600])
+    subj = (last.subject or r["summary"] or "the message").strip()
+    summary = {"reply": f"Reply to {other or 'them'} about {subj}", "promise": f"Do what you promised: {subj}",
+               "waiting": f"Hear back from {other or 'them'} about {subj}"}.get(type_, r["summary"])
+    return {**r, "summary": summary[:90], "person": other, "done_when": ""}
+
+
 def _create(store, decide, extract, source, thread_id, msgs, type_, p):
-    d = extract(thread_state(msgs), type_)
+    try:
+        d = extract(thread_state(msgs), type_)
+    except Exception as e:
+        print(f"[loops] extraction fell back to rules: {e}")
+        d = _rules_extract(msgs, type_)
     due = d.get("due")
     if not due:
         due = (utcnow() + timedelta(hours=DEFAULT_DUE_HOURS[type_])).isoformat()
@@ -102,8 +119,11 @@ def detect(store, decide, source, thread_id, msgs, extract=default_extract):
             if is_assessment(f"{m.subject} {m.text}"):
                 created.append(_create_assessment(store, source, thread_id, msgs, m))
 
+    from .leads import is_job_alert, looks_like_scam
     if not last.is_from_me:
-        ask("reply")
+        # Job alerts become leads, not replies; recruiter emails with scam signs are never chased
+        if not is_job_alert(last.sender, last.sender_name, last.subject) and not looks_like_scam(last):
+            ask("reply")
     else:
         ask("promise")
         if utcnow() - last.ts >= timedelta(days=WAITING_DAYS):
@@ -161,6 +181,11 @@ def ranked(store):
     Cost is adjusted by what you've told it mattered more or less than expected."""
     from .forecast import forecast
     loops = [dict(l) for l in store.loops()]
+    from .areas import classify
+    for l in loops:
+        if not l.get("area"):  # loops made before areas existed
+            l["area"] = classify(l["summary"], l["stakes"] or "", l["person"] or "", l["source"] or "", l["type"])
+            store.update_loop(l["id"], area=l["area"])
     by_id = {l["id"]: l for l in loops}
     # A loop that holds others up carries part of their cost
     rows = []
@@ -254,6 +279,15 @@ def sync(store, connectors, decide, extract=default_extract):
     for source, thread_id in store.recent_threads(since):
         new += detect(store, decide, source, thread_id, store.thread_messages(source, thread_id), extract)
     closed = autoclose(store, decide)
+    # Proof in your inbox (confirmation emails, next-stage invites) closes loops before anyone asks you
+    from .evidence import sweep
+    closed += [(i, r) for i, r, _ in sweep(store)]
+    from .leads import scan
+    try:
+        leads = scan(store, since, use_ai=bool(os.getenv("ANTHROPIC_API_KEY")))
+    except Exception as e:
+        leads = 0
+        print(f"leads: skipped ({e})")
     print(f"New loops: {len(new)}. Auto-closed: {sum(1 for r in closed if r[1] == 'closed')}. "
-          f"Need your confirm: {sum(1 for r in closed if r[1] == 'confirm')}.")
+          f"Need your confirm: {sum(1 for r in closed if r[1] == 'confirm')}. New job leads: {leads}.")
     return new, closed

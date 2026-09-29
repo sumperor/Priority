@@ -5,7 +5,7 @@ Slack, turns messages and notes into "loops" (tasks), plans them by deadline and
 user until they're done, and runs focused job-hunt sessions with a Claude-backed helper.
 
 ## Run and test
-- Run: `python run.py serve` then open http://127.0.0.1:8765 (session page: /session)
+- Run: `python run.py serve` then open http://127.0.0.1:8765 (focus mode: /#focus)
 - Test: `python -m pytest -q tests` (must pass before you finish any change)
 - Python 3.10+, deps in `requirements.txt`. Secrets live in `.env` (never read it aloud, print it, or commit it)
 - After a user-visible change, bump the version string in `loops/server.py` ("Loops vX.Y running")
@@ -18,7 +18,10 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - `loops/closing.py` task-specific close questions; `loops/extract.py` Claude extraction + `rule_parse` fallback
 - `loops/decisions.py` yes/no decisions (Claude now, Jev stub); `loops/llm.py` Claude wrappers (incl. web search)
 - `loops/store.py` SQLite schema, migrations in `_migrate()`, accuracy stats
-- `loops/connectors/` gmail, outlook, slack (mail + calendar); `loops/static/` index.html, session.html (no build step)
+- `loops/evidence.py` proof in the inbox that a loop is done (checked after sync and before every nudge)
+- `loops/leads.py` job-alert and recruiter emails: credibility, fit, "worth applying"; `loops/interviews.py` write-ups
+- `loops/areas.py` which section a loop lives in (rules only)
+- `loops/connectors/` gmail, outlook, slack (mail + calendar); `loops/static/index.html` the whole UI, incl. focus mode (no build step)
 
 ## Rules
 - Every Claude call must have a non-AI fallback; the app must work with no API key

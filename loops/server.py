@@ -62,15 +62,22 @@ def index():
 
 @app.get("/session")
 def session_page():
-    return FileResponse(STATIC / "session.html")
+    return FileResponse(STATIC / "index.html")  # focus mode now lives on the main page
 
 
 @app.get("/api/state")
 def state():
     s = db()
+    import json, os
+    from .areas import AREAS
+    from .leads import shown
     closed = [dict(r) for r in s.closed_loops()]
-    import os
-    return {"loops": ranked(s), "closed": closed, "accuracy": s.accuracy(), "sync": _sync_state,
+    loops = ranked(s)
+    for l in loops + closed:
+        l["evidence"] = json.loads(l["evidence"]) if l.get("evidence") else None
+    celebrate = [l for l in closed if l["outcome"] == "evidence" and not l.get("acked")]
+    return {"loops": loops, "closed": closed, "celebrate": celebrate, "leads": shown(s), "areas": AREAS,
+            "sync_every": C.AUTO_SYNC_MINUTES, "accuracy": s.accuracy(), "sync": _sync_state,
             "connectors": C.CONNECTORS, "ai": bool(os.getenv("ANTHROPIC_API_KEY")),
             "last_msg": {str(r["loop_id"]): r["text"] for r in s.db.execute(
                 "SELECT loop_id, text FROM chat WHERE id IN (SELECT MAX(id) FROM chat WHERE role='agent' GROUP BY loop_id)")},
@@ -189,7 +196,7 @@ def finish(loop_id: int, body: Finish):
         s.close_loop(loop_id, outcome="dropped")
         s.label_decision(loop_id, "detect", True)
         return {"created": []}
-    outcome, actual, notes, created = "done", None, [], []
+    outcome, actual, notes, created, interview_notes = "done", None, [], [], ""
     for a in body.answers:
         v = a.value.strip()
         if not v:
@@ -201,13 +208,32 @@ def finish(loop_id: int, body: Finish):
             actual = est * {"Quicker than planned": 0.7, "About as planned": 1.0, "Longer than planned": 1.5}.get(v, 1.0)
         elif a.use == "next_loop" and v.lower() not in ("no", "nothing", "none", "n/a"):
             created.append(_create_from_text(s, v))
+        elif a.use == "interview_notes":
+            interview_notes = v
         else:
             notes.append(f"{a.question} {v}")
     s.close_loop(loop_id, outcome=outcome, actual_h=actual)
     if notes:
         s.update_loop(loop_id, note=" | ".join(notes))
     s.label_decision(loop_id, "detect", True)
-    return {"created": created}
+    from .interviews import is_interview
+    write_up = None
+    if is_interview(l):
+        from .interviews import draft
+        write_up = draft(s, l, interview_notes, use_ai=_ai())
+        created.append(_thank_you_loop(s, l))
+    return {"created": created, "write_up": write_up}
+
+
+def _thank_you_loop(s, l):
+    from .evidence import org_of
+    who = org_of(dict(l)) or "them"
+    due = (datetime.now().astimezone() + timedelta(days=1)).replace(hour=10, minute=0, second=0, microsecond=0)
+    i = s.create_loop(source="manual", thread_id="", type="task", person=l["person"] or "", area="Jobs",
+                      summary=f"Send a thank-you note to {who}", done_when="Thank-you email sent",
+                      due=due.astimezone(timezone.utc).isoformat(), cost=35, consequence="relationship", reversible=1,
+                      hard_deadline=0, effort_h=0.15, stakes="A short thank-you within a day keeps you front of mind.")
+    return {"id": i, "summary": f"Send a thank-you note to {who}", "questions": []}
 
 
 class Reschedule(BaseModel):
@@ -342,6 +368,85 @@ def revise_loop(loop_id: int, body: Text):
     return {"changed": sorted(applied)}
 
 
+@app.post("/api/loops/{loop_id}/ack")
+def ack(loop_id: int):
+    """'Nice' on a well-done card: the evidence was right."""
+    s = db(); _loop(s, loop_id)
+    s.update_loop(loop_id, acked=1)
+    s.label_decision(loop_id, "close", True); s.label_decision(loop_id, "detect", True)
+    return {"ok": True}
+
+
+class NotDone(BaseModel):
+    left: str = ""        # what's still to do, in your words
+    due: str | None = None
+
+
+@app.post("/api/loops/{loop_id}/not-done")
+def not_done(loop_id: int, body: NotDone):
+    """'Not done yet': reopen, narrow the task to what's left, and set when it's due."""
+    s = db(); l = _loop(s, loop_id)
+    import json
+    ev = json.loads(l["evidence"]) if l["evidence"] else {}
+    if l["status"] in ("closed", "pending_close"):
+        s.label_decision(loop_id, "close", False)
+    f = {"status": "open", "outcome": None, "closed_at": None, "on_time": None, "acked": 1, "evidence": None,
+         "close_confidence": None, "last_nudge": None}
+    left = body.left.strip().rstrip(".")
+    import re
+    task = re.sub(r"^(that was only (the )?(first )?part[.,]?\s*)?(i('ve)? )?(still )?(need|have|got) to\s+|^still to do:?\s*", "", left, flags=re.I)
+    if left:
+        task = task or left
+        f["summary"] = (task[:1].upper() + task[1:])[:120]
+        seen = f"Saw \u201c{ev.get('subject')}\u201d from {ev.get('from')}. " if ev else ""
+        f["note"] = f"{seen}Was: {l['summary']}. Still to do: {left}."
+    if body.due:
+        from .extract import norm_due
+        f["due"] = norm_due(body.due) or l["due"]
+    s.update_loop(loop_id, **f)
+    s.add_chat(loop_id, "you", f"Not done yet. {left}".strip())
+    return {"ok": True}
+
+
+@app.get("/api/days-options")
+def days_options():
+    now = datetime.now().astimezone()
+    out = []
+    for n in range(1, 6):
+        d = (now + timedelta(days=n)).replace(hour=17, minute=0, second=0, microsecond=0)
+        out.append({"label": "Tomorrow" if n == 1 else f"{d:%A}" if n < 7 else f"In {n} days",
+                    "value": d.astimezone(timezone.utc).isoformat()})
+    return out
+
+
+class Notes(BaseModel):
+    notes: str
+
+
+@app.post("/api/loops/{loop_id}/write-up")
+def write_up(loop_id: int, body: Notes):
+    from .interviews import draft
+    s = db(); l = _loop(s, loop_id)
+    return draft(s, l, body.notes, use_ai=_ai())
+
+
+@app.post("/api/leads/{lead_id}/apply")
+def lead_apply(lead_id: int):
+    from .leads import accept
+    s = db()
+    i = accept(s, lead_id)
+    if not i:
+        raise HTTPException(404, "No such lead")
+    return {"id": i}
+
+
+@app.post("/api/leads/{lead_id}/skip")
+def lead_skip(lead_id: int):
+    s = db()
+    s.db.execute("UPDATE leads SET status='skipped' WHERE id=?", (lead_id,)); s.db.commit()
+    return {"ok": True}
+
+
 @app.post("/api/nudges/tick")
 def nudges_tick():
     from .agent import due_nudges
@@ -383,5 +488,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Loops v0.8 running at http://127.0.0.1:{C.PORT}")
+    print(f"Loops v0.9 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

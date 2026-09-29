@@ -48,6 +48,13 @@ def due_nudges(store, rows):
         n = store.nudge_count(r["id"])
         if now < ls - timedelta(minutes=C.HEADS_UP_MINUTES):
             continue
+        # Before chasing, look for proof it's already done (a confirmation email, a reply you sent)
+        from .evidence import apply, check_loop
+        ev = check_loop(store, r)
+        if ev:
+            if apply(store, r, ev) == "closed":
+                out.append({"id": r["id"], "summary": r["summary"], "text": ev["headline"], "kind": "done"})
+            continue
         if now < ls:
             if last:
                 continue  # one heads-up only

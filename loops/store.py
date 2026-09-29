@@ -24,6 +24,12 @@ CREATE TABLE IF NOT EXISTS chat(
 CREATE TABLE IF NOT EXISTS decisions(
   id INTEGER PRIMARY KEY AUTOINCREMENT, loop_id INTEGER, question TEXT,
   p REAL, backend TEXT, ts TEXT, confirmed INTEGER, kind TEXT);
+CREATE TABLE IF NOT EXISTS leads(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT, msg_id TEXT, title TEXT, company TEXT, location TEXT,
+  url TEXT, snippet TEXT, credible TEXT, flags TEXT, fit INTEGER, verdict TEXT, reasons TEXT,
+  status TEXT DEFAULT 'new', loop_id INTEGER, created TEXT, UNIQUE(source, msg_id, url));
+CREATE TABLE IF NOT EXISTS summaries(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, loop_id INTEGER, kind TEXT, body TEXT, created TEXT);
 """
 
 def now_iso():
@@ -42,13 +48,21 @@ class Store:
         for table, col, typ in [("loops", "blocks", "INTEGER"), ("loops", "mattered", "TEXT"),
                                 ("loops", "trigger_ts", "TEXT"), ("decisions", "kind", "TEXT"),
                                 ("loops", "note", "TEXT"), ("loops", "started_at", "TEXT"),
-                                ("loops", "commit_at", "TEXT"), ("loops", "last_nudge", "TEXT")]:
+                                ("loops", "commit_at", "TEXT"), ("loops", "last_nudge", "TEXT"),
+                                ("loops", "area", "TEXT"), ("loops", "evidence", "TEXT"),
+                                ("loops", "acked", "INTEGER")]:
             cols = {r["name"] for r in self.db.execute(f"PRAGMA table_info({table})")}
             if col not in cols:
                 self.db.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
         self.db.commit()
 
     # ---------- messages ----------
+    def messages_since(self, since: datetime, incoming_only=True):
+        q = "SELECT * FROM messages WHERE ts >= ?" + (" AND is_from_me=0" if incoming_only else "") + " ORDER BY ts"
+        return [Message(r["source"], r["msg_id"], r["thread_id"], r["sender"], r["sender_name"],
+                        bool(r["is_from_me"]), r["text"], datetime.fromisoformat(r["ts"]), r["subject"])
+                for r in self.db.execute(q, (since.isoformat(),))]
+
     def upsert_messages(self, msgs: list[Message]):
         self.db.executemany(
             "INSERT OR REPLACE INTO messages VALUES(?,?,?,?,?,?,?,?,?)",
@@ -83,7 +97,10 @@ class Store:
             (source, thread_id, type_)).fetchone()
 
     def create_loop(self, **f):
+        from .areas import classify
         f.setdefault("created", now_iso())
+        f.setdefault("area", classify(f.get("summary", ""), f.get("stakes", ""), f.get("person", ""),
+                                      f.get("source", ""), f.get("type", "")))
         cols = ",".join(f)
         cur = self.db.execute(f"INSERT INTO loops({cols}) VALUES({','.join('?' * len(f))})", tuple(f.values()))
         self.db.commit()

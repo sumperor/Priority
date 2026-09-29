@@ -9,122 +9,177 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#EEF1F5;--surface:#FFFFFF;--ink:#14213D;--muted:#5B6478;--line:#D9DEE7;
-  --close:#0F7B6C;--close-ink:#FFFFFF;--late:#C2410C;--soon:#A86B0C;--ok:#0F7B6C;--soft:#E3E8EF;
+  --bg:#F4F2EE;--surface:#FFFFFF;--raised:#FBFAF8;--ink:#17181C;--muted:#62656E;--faint:#9A9CA3;--line:#E4E1DB;
+  --accent:#0E7C66;--accent-ink:#FFFFFF;--accent-soft:#DDF1EA;--late:#C2410C;--soon:#A16207;
+  --shadow:0 1px 2px rgba(23,24,28,.04),0 6px 24px rgba(23,24,28,.06);
+  --jobs:#4F46E5;--study:#B45309;--work:#0369A1;--money:#BE185D;--personal:#15803D;--other:#57534E;
   --font:"Bricolage Grotesque",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:env(safe-area-inset-bottom,0px);
+  --ease:cubic-bezier(.2,.8,.2,1);
 }
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#0E1626;--surface:#16213A;--ink:#E8ECF4;--muted:#98A2B8;--line:#26324D;
-    --close:#3CC4AE;--close-ink:#07201C;--late:#F07A4A;--soon:#E0B04A;--ok:#3CC4AE;--soft:#1D2A45;
-  }
-}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#101114;--surface:#191A1F;--raised:#1E2026;--ink:#ECEDEF;--muted:#A2A5AD;--faint:#6E717A;--line:#2A2C33;
+  --accent:#34C6A5;--accent-ink:#06201A;--accent-soft:#12332B;--late:#F2804E;--soon:#E4B650;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.35);
+  --jobs:#8B85FF;--study:#F0A04B;--work:#4FB3E8;--money:#F06AA8;--personal:#4ACB7A;--other:#A8A29E}}
 :root[data-theme="dark"]{
-  --bg:#0E1626;--surface:#16213A;--ink:#E8ECF4;--muted:#98A2B8;--line:#26324D;
-  --close:#3CC4AE;--close-ink:#07201C;--late:#F07A4A;--soon:#E0B04A;--ok:#3CC4AE;--soft:#1D2A45;
-}
-*,*::before,*::after{box-sizing:inherit}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
+  --bg:#101114;--surface:#191A1F;--raised:#1E2026;--ink:#ECEDEF;--muted:#A2A5AD;--faint:#6E717A;--line:#2A2C33;
+  --accent:#34C6A5;--accent-ink:#06201A;--accent-soft:#12332B;--late:#F2804E;--soon:#E4B650;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.35);
+  --jobs:#8B85FF;--study:#F0A04B;--work:#4FB3E8;--money:#F06AA8;--personal:#4ACB7A;--other:#A8A29E}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;
-  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;font-optical-sizing:auto}
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 button,input,textarea,select{font:inherit;color:inherit}
 button{cursor:pointer}
-:focus-visible{outline:2px solid var(--close);outline-offset:2px;border-radius:6px}
-.wrap{max-width:680px;margin:0 auto;padding:22px 20px 170px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+.wrap{max-width:720px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top,0px)) 16px 190px}
 
-/* top bar */
-.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
-.date{font-size:.95rem;color:var(--muted)}
-.tools{display:flex;gap:14px;align-items:baseline;font-size:.88rem;color:var(--muted);flex-wrap:wrap}
-.link{border:0;background:none;padding:0;color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
-.link:hover{text-decoration-color:var(--ink)}
+/* top */
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.hello{margin:0;font-size:.95rem;color:var(--muted)}
+.icons{display:flex;gap:4px;align-items:center}
+.ib{width:38px;height:38px;border-radius:12px;border:0;background:transparent;display:grid;place-items:center;color:var(--muted);transition:background .2s,color .2s}
+.ib:hover{background:var(--surface);color:var(--ink)}
+.ib.on{color:var(--accent)}
+.status{display:flex;align-items:center;gap:8px;margin:14px 0 0;font-size:.84rem;color:var(--muted);flex-wrap:wrap}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 var(--accent)}
+.pulse.run{animation:pulse 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 60%,transparent)}100%{box-shadow:0 0 0 8px transparent}}
 .warn{color:var(--soon)}
+.focusbtn{display:inline-flex;align-items:center;gap:8px;border:0;background:var(--ink);color:var(--bg);border-radius:999px;padding:9px 16px 9px 12px;font-weight:650;font-size:.92rem;transition:transform .2s var(--ease)}
+.focusbtn:hover{transform:translateY(-1px)}
+.focusbtn .live{width:8px;height:8px;border-radius:50%;background:var(--accent)}
 
-/* the one next action */
-.next{margin:34px 0 8px}
-.next .lead{margin:0 0 6px;color:var(--muted);font-size:.95rem}
-.next h1{margin:0;font-size:clamp(2rem,6vw,3.1rem);line-height:1.04;font-weight:750;letter-spacing:-.025em;max-width:18ch;font-variation-settings:"opsz" 96}
-.next .why{margin:14px 0 0;font-size:1.06rem;max-width:52ch;color:var(--ink)}
-.next .why.lvl-late{color:var(--late)}
-.nextActs{display:flex;align-items:center;gap:18px;margin-top:22px;flex-wrap:wrap}
-.closer{display:inline-flex;align-items:center;gap:12px;border:0;background:var(--close);color:var(--close-ink);
-  padding:10px 22px 10px 10px;border-radius:999px;font-weight:650;font-size:1.02rem}
-.closer .ring{width:34px;height:34px;border-radius:50%;border:3px solid currentColor;opacity:.9;display:grid;place-items:center}
-.closer .ring::after{content:"";width:12px;height:12px;border-radius:50%;background:currentColor;transform:scale(0);transition:transform .2s}
-.closer:hover .ring::after{transform:scale(1)}
-.textbtn{border:0;background:none;padding:6px 2px;color:var(--muted);font-weight:600}
-.textbtn:hover{color:var(--ink)}
-.empty-next h1{color:var(--muted)}
+/* wins */
+#wins{display:grid;gap:12px;margin-top:22px}
+#wins:empty{display:none}
+.win{position:relative;display:grid;grid-template-columns:48px 1fr;gap:14px;padding:18px;border-radius:20px;background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
+.win::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,var(--accent-soft),transparent 60%);opacity:.9;pointer-events:none}
+.win>*{position:relative}
+.badge{width:48px;height:48px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;position:relative}
+.badge.q{background:var(--raised);color:var(--accent);border:2px solid var(--accent)}
+.badge svg path{stroke-dasharray:24;stroke-dashoffset:0}
+.eyebrow{margin:0;font-size:.8rem;font-weight:650;letter-spacing:.02em;color:var(--accent);text-transform:uppercase}
+.win h3{margin:2px 0 4px;font-size:1.22rem;line-height:1.2;letter-spacing:-.01em}
+.src{margin:0;color:var(--muted);font-size:.88rem;overflow-wrap:anywhere}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 16px;font-weight:600;font-size:.92rem;transition:border-color .2s,transform .15s}
+.btn:hover{border-color:var(--ink)}
+.btn:active{transform:scale(.97)}
+a.btn{color:inherit}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink)}
+.spark{position:absolute;width:6px;height:6px;border-radius:50%;left:21px;top:21px;pointer-events:none}
 
-/* plan timeline */
-.sec{margin-top:44px}
-.sec h2{margin:0 0 10px;font-size:1.02rem;font-weight:650;letter-spacing:-.005em}
-.sec h2 small{font-weight:400;color:var(--muted);margin-left:6px;font-size:.9rem}
-ol.plan,ul.list{list-style:none;margin:0;padding:0}
-.row{display:grid;grid-template-columns:62px 18px 1fr auto;column-gap:12px;align-items:start;padding:12px 0}
-.row .when{text-align:right;font-weight:600;font-size:.95rem;padding-top:1px}
-.row .when small{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
-.rail{position:relative;height:100%;min-height:44px}
-.rail::before{content:"";position:absolute;left:8px;top:-12px;bottom:-12px;width:2px;background:var(--line)}
-.plan .row:first-child .rail::before{top:9px}
-.plan .row:last-child .rail::before{bottom:auto;height:21px}
-.rail .dot{position:absolute;left:3px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--surface);border:3px solid var(--muted)}
-.lvl-late .dot{border-color:var(--late)} .lvl-soon .dot{border-color:var(--soon)} .lvl-ok .dot{border-color:var(--ok)}
-.lvl-late .when{color:var(--late)} .lvl-soon .when{color:var(--soon)}
+/* hero */
+.hero{margin-top:26px;padding:26px 24px 22px;border-radius:26px;background:var(--surface);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.hero .lead{margin:0 0 8px;color:var(--muted);font-size:.9rem;display:flex;gap:8px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:650;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--c,var(--other)) 13%,transparent);color:var(--c,var(--other))}
+.hero h1{margin:0;font-size:clamp(1.85rem,6vw,2.9rem);line-height:1.04;font-weight:760;letter-spacing:-.028em;max-width:20ch;font-variation-settings:"opsz" 96;overflow-wrap:anywhere}
+.hero .why{margin:12px 0 0;font-size:1.04rem;max-width:52ch}
+.hero .why.late{color:var(--late)}
+.heroacts{display:flex;align-items:center;gap:8px;margin-top:20px;flex-wrap:wrap}
+.closer{display:inline-flex;align-items:center;gap:10px;border:0;background:var(--accent);color:var(--accent-ink);padding:8px 20px 8px 8px;border-radius:999px;font-weight:650;font-size:1rem;transition:transform .2s var(--ease)}
+.closer:hover{transform:translateY(-1px)}
+.closer .ring{width:30px;height:30px;border-radius:50%;border:2.5px solid currentColor;display:grid;place-items:center}
+.closer .ring svg{opacity:0;transform:scale(.5);transition:all .25s var(--ease)}
+.closer:hover .ring svg{opacity:1;transform:none}
+.say{margin:18px 0 0;padding:12px 14px;border-radius:14px;background:var(--raised);border:1px solid var(--line);max-width:58ch;font-size:.95rem}
+.say p{margin:0}
+.empty{margin-top:26px;padding:34px 24px;border-radius:26px;border:1.5px dashed var(--line);text-align:center;color:var(--muted)}
+.empty h1{margin:6px 0 0;font-size:1.6rem;letter-spacing:-.02em;color:var(--ink)}
+
+/* area sections */
+#areas{margin-top:14px}
+.area{margin-top:14px;border-radius:22px;background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
+.ahead{width:100%;display:flex;align-items:center;gap:10px;border:0;background:none;padding:16px 18px;text-align:left}
+.ahead .dot{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.ahead h2{margin:0;font-size:1.02rem;font-weight:700;letter-spacing:-.01em;flex:1}
+.count{font-size:.82rem;font-weight:650;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);border-radius:999px;padding:2px 9px;min-width:26px;text-align:center}
+.chev{color:var(--faint);transition:transform .3s var(--ease)}
+.area.shut .chev{transform:rotate(-90deg)}
+.abody{display:grid;grid-template-rows:1fr;transition:grid-template-rows .35s var(--ease)}
+.area.shut .abody{grid-template-rows:0fr}
+.ainner{overflow:hidden;min-height:0}
+.rows{list-style:none;margin:0;padding:0 8px 8px}
+.row{display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:start;padding:10px;border-radius:14px;transition:background .2s}
+.row:hover{background:var(--raised)}
+.tick{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:transparent;display:grid;place-items:center;color:var(--accent-ink);margin-top:1px;transition:border-color .2s,background .25s var(--ease),transform .2s var(--ease)}
+.tick:hover{border-color:var(--accent)}
+.tick svg{opacity:0}
+.tick svg path{stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset .35s var(--ease) .05s}
+.row.ticking .tick{background:var(--accent);border-color:var(--accent);transform:scale(1.08)}
+.row.ticking .tick svg{opacity:1}
+.row.ticking .tick svg path{stroke-dashoffset:0}
+.row.ticking .title{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--faint)}
 .body{min-width:0;cursor:pointer}
-.title{margin:0;font-weight:600;font-size:1.02rem;overflow-wrap:anywhere}
-.whyline{margin:2px 0 0;color:var(--muted);font-size:.9rem}
-.more{display:none;margin-top:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;font-size:.9rem}
-.open .more{display:block}
+.title{margin:3px 0 0;font-weight:600;font-size:1rem;line-height:1.3;overflow-wrap:anywhere;transition:color .3s}
+.meta{margin:3px 0 0;font-size:.86rem;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.when{font-weight:650;color:var(--ink)}
+.lvl-late .when{color:var(--late)} .lvl-soon .when{color:var(--soon)}
+.tag{font-size:.74rem;font-weight:650;border-radius:6px;padding:1px 7px;background:var(--raised);border:1px solid var(--line);color:var(--muted)}
+.more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s var(--ease)}
+.row.open .more{grid-template-rows:1fr}
+.more>div{overflow:hidden;min-height:0}
+.more .in{margin-top:10px;padding:12px 14px;border-radius:12px;background:var(--bg);font-size:.9rem}
 .more p{margin:0 0 6px}
-.more .nums{color:var(--muted);font-size:.84rem}
-.more .acts{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
-.tick{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:var(--surface);margin-top:2px;display:grid;place-items:center;color:var(--close)}
-.tick:hover{border-color:var(--close)}
-.tick svg{opacity:0;transition:opacity .15s}
-.tick:hover svg,.tick:focus-visible svg{opacity:1}
-.plain .row{grid-template-columns:62px 1fr auto}
-.plain .rail{display:none}
-.plain .row + .row{border-top:1px solid var(--line)}
-.muted-note{color:var(--muted);font-size:.92rem;margin:4px 0 0}
-details.closed{margin-top:44px}
-details.closed summary{cursor:pointer;font-weight:650;list-style:none}
+.nums{color:var(--muted);font-size:.84rem}
+.links{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+.link{border:0;background:none;padding:0;color:var(--ink);font-weight:600;font-size:.9rem;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.link:hover{text-decoration-color:var(--ink)}
+.pen{width:32px;height:32px;border-radius:10px;border:0;background:none;display:grid;place-items:center;color:var(--faint);opacity:.0;transition:opacity .2s,color .2s}
+.row:hover .pen,.pen:focus-visible{opacity:1}
+.pen:hover{color:var(--ink)}
+@media (hover:none){.pen{opacity:1}}
+.lead-card{margin:4px 2px 8px;padding:14px 16px;border-radius:16px;border:1px solid color-mix(in srgb,var(--jobs) 30%,var(--line));background:color-mix(in srgb,var(--jobs) 5%,var(--surface))}
+.lead-card .eyebrow{color:var(--jobs)}
+.lead-card h3{margin:2px 0 0;font-size:1.05rem;line-height:1.25}
+.lead-card .co{margin:0;color:var(--muted);font-size:.9rem}
+.lead-card p.v{margin:8px 0 0;font-size:.93rem}
+.lead-card ul{margin:6px 0 0;padding-left:18px;font-size:.88rem;color:var(--muted)}
+.lead-card .flag{color:var(--soon)}
+.focuscta{margin:0 10px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--raised);font-size:.9rem;color:var(--muted);flex-wrap:wrap}
+
+details.closed{margin-top:28px;padding:0 4px}
+details.closed summary{cursor:pointer;font-weight:650;color:var(--muted);list-style:none;font-size:.95rem}
 details.closed summary::-webkit-details-marker{display:none}
-details.closed summary::after{content:" +";color:var(--muted)}
+details.closed summary::after{content:" +"}
 details.closed[open] summary::after{content:" \2212"}
-.done .title{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+.crow{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:.93rem}
+.crow:first-of-type{border-top:0}
+.crow .t{text-decoration:line-through;text-decoration-color:var(--faint);color:var(--muted)}
+.crow small{display:block;color:var(--faint)}
 
 /* composer */
 .composer{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
-  background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line)}
-.composer .in{max-width:680px;margin:0 auto;display:flex;gap:10px;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:8px 8px 8px 16px}
-.composer textarea{flex:1;border:0;background:transparent;resize:none;outline:none;font-size:1.02rem;line-height:1.4;padding:7px 0;max-height:120px}
-.composer textarea::placeholder{color:var(--muted)}
-.mic{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:transparent;display:grid;place-items:center;flex:none}
-.mic.on{background:var(--late);border-color:var(--late);color:#fff}
-.add{border:0;background:var(--ink);color:var(--bg);border-radius:999px;padding:0 18px;height:40px;font-weight:650;flex:none}
-.add:disabled{opacity:.35;cursor:default}
-.composer .state{max-width:680px;margin:6px auto 0;font-size:.82rem;color:var(--muted);min-height:1.1em;padding-left:16px}
+  background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.composer .in{max-width:720px;margin:0 auto;display:flex;gap:8px;align-items:flex-end;background:var(--surface);border-radius:24px;padding:8px 8px 8px 18px;box-shadow:var(--shadow),0 0 0 1px var(--line)}
+.composer textarea{flex:1;border:0;background:transparent;resize:none;outline:none;font-size:1rem;line-height:1.4;padding:8px 0;max-height:120px}
+.composer textarea::placeholder{color:var(--faint)}
+.mic{width:40px;height:40px;border-radius:50%;border:0;background:var(--raised);display:grid;place-items:center;flex:none;color:var(--muted)}
+.mic.on{background:var(--late);color:#fff;animation:pulse 1.2s infinite}
+.add{border:0;background:var(--ink);color:var(--bg);border-radius:999px;padding:0 18px;height:40px;font-weight:650;flex:none;transition:opacity .2s}
+.add:disabled{opacity:.3;cursor:default}
+.cstate{max-width:720px;margin:6px auto 0;font-size:.8rem;color:var(--muted);min-height:1.1em;padding-left:18px}
 
-/* step sheet */
-.scrim{position:fixed;inset:0;background:rgba(8,14,28,.42);z-index:10}
-.sheet{position:fixed;z-index:11;left:50%;bottom:0;transform:translateX(-50%);width:min(520px,100%);max-height:90vh;overflow-y:auto;
-  background:var(--surface);border-radius:22px 22px 0 0;padding:22px 22px calc(24px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(8,14,28,.18)}
-@media (min-width:720px){.sheet{bottom:auto;top:50%;transform:translate(-50%,-50%);border-radius:22px}}
-.progress{height:3px;background:var(--soft);border-radius:3px;margin:0 0 18px;overflow:hidden}
-.progress i{display:block;height:100%;background:var(--close);transition:width .25s}
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(10,11,14,.45);z-index:40;backdrop-filter:blur(3px)}
+.sheet{position:fixed;z-index:41;left:50%;bottom:0;transform:translateX(-50%);width:min(540px,100%);max-height:90vh;overflow-y:auto;
+  background:var(--surface);border-radius:26px 26px 0 0;padding:24px 22px calc(24px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.2)}
+@media (min-width:720px){.sheet{bottom:auto;top:50%;transform:translate(-50%,-50%);border-radius:26px}}
+.progress{height:4px;background:var(--raised);border-radius:4px;margin:0 0 18px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);transition:width .35s var(--ease)}
 .sheet .ctx{margin:0 0 4px;color:var(--muted);font-size:.9rem}
-.sheet h2{margin:0 0 18px;font-size:1.55rem;line-height:1.15;font-weight:700;letter-spacing:-.015em}
+.sheet h2{margin:0 0 18px;font-size:1.5rem;line-height:1.15;font-weight:720;letter-spacing:-.018em}
 .choices{display:grid;gap:8px}
-.choices button{text-align:left;border:1px solid var(--line);background:var(--bg);padding:14px 16px;border-radius:14px;font-weight:550;font-size:1rem}
-.choices button:hover{border-color:var(--ink)}
-.sheet textarea,.field input,.field select{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:12px;font-size:1rem}
+.choices button{text-align:left;border:1px solid var(--line);background:var(--raised);padding:14px 16px;border-radius:14px;font-weight:560;transition:border-color .2s,transform .15s}
+.choices button:hover{border-color:var(--ink);transform:translateX(2px)}
+.sheet textarea,.field input,.field select{width:100%;border:1px solid var(--line);background:var(--raised);border-radius:12px;padding:12px;font-size:1rem}
 .sheet textarea{min-height:92px;resize:vertical}
-.srow{display:flex;gap:12px;align-items:center;margin-top:14px;flex-wrap:wrap}
-.primary{border:0;background:var(--close);color:var(--close-ink);padding:11px 22px;border-radius:999px;font-weight:650}
+.srow{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
 .field{display:block;margin:0 0 12px}
 .field span{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
 .check{display:flex;gap:8px;align-items:center;margin:0 0 12px}
@@ -132,149 +187,326 @@ details.closed[open] summary::after{content:" \2212"}
 .stat b{font-size:1.6rem;display:block;letter-spacing:-.02em}
 .stat span{color:var(--muted);font-size:.9rem}
 .loading{color:var(--muted)}
-
-.say{margin:18px 0 0;padding:12px 14px;border-left:3px solid var(--close);background:var(--surface);border-radius:0 12px 12px 0;max-width:56ch}
-.say p{margin:0}
-.say .srow{margin-top:8px}
-.explain{margin:-4px 0 10px;color:var(--muted);font-size:.88rem;max-width:60ch}
-.rowbtns{display:flex;gap:8px;margin-top:2px}
-.pen{width:30px;height:30px;border-radius:50%;border:1px solid transparent;background:none;display:grid;place-items:center;color:var(--muted)}
-.pen:hover{border-color:var(--line);color:var(--ink)}
 .msgs{display:flex;flex-direction:column;gap:8px;margin:0 0 14px;max-height:46vh;overflow-y:auto}
-.msg{max-width:85%;padding:10px 13px;border-radius:16px;font-size:.96rem;line-height:1.4}
-.msg.agent{background:var(--bg);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px}
+.msg{max-width:85%;padding:10px 13px;border-radius:16px;font-size:.95rem;line-height:1.4;white-space:pre-wrap}
+.msg.agent,.msg.coach{background:var(--raised);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px}
 .msg.you{background:var(--ink);color:var(--bg);align-self:flex-end;border-bottom-right-radius:4px}
 .quick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.quick button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:7px 12px;font-size:.88rem;font-weight:550}
-.quick button:hover{border-color:var(--ink)}
+.quick button{border:1px solid var(--line);background:var(--raised);border-radius:999px;padding:7px 12px;font-size:.88rem;font-weight:560}
 .inrow{display:flex;gap:8px;align-items:flex-end}
 .inrow textarea{min-height:48px;flex:1}
-.fix{padding:14px;border:1px solid var(--line);border-radius:14px;margin:0 0 18px;background:var(--bg)}
+.fix{padding:14px;border-radius:14px;margin:0 0 18px;background:var(--raised)}
 .fix textarea{background:var(--surface);min-height:60px}
 .fix .note{margin:0 0 8px;font-size:.9rem;color:var(--muted)}
-#toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);background:var(--ink);color:var(--bg);
-  padding:10px 16px;border-radius:999px;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20;max-width:90vw;text-align:center}
+.wu h4{margin:14px 0 4px;font-size:.84rem;color:var(--muted);font-weight:650;text-transform:uppercase;letter-spacing:.03em}
+.wu ul{margin:0;padding-left:18px}
+.wu .mail{white-space:pre-wrap;background:var(--raised);border-radius:12px;padding:12px 14px;font-size:.93rem}
+#toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);background:var(--ink);color:var(--bg);
+  padding:10px 16px;border-radius:999px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s var(--ease);z-index:60;max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
-@media (max-width:480px){.row{grid-template-columns:50px 16px 1fr auto;column-gap:10px}.plain .row{grid-template-columns:50px 1fr auto}}
+
+/* focus mode */
+#focus{position:fixed;inset:0;z-index:30;background:var(--bg);overflow-y:auto}
+#focus[hidden]{display:none}
+.fwrap{max-width:1120px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top,0px)) 16px 60px}
+.ftop{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.intake{max-width:560px;margin:9vh auto 0}
+.intake h1{font-size:clamp(1.8rem,5vw,2.5rem);line-height:1.08;letter-spacing:-.022em;margin:4px 0 22px;font-weight:760}
+.intake textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px;font-size:1.05rem;min-height:90px}
+.intake .ctx{color:var(--muted);margin:0}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:32px;margin-top:18px}
+@media (max-width:960px){.grid{grid-template-columns:1fr}}
+.shead h1{margin:4px 0 0;font-size:clamp(1.6rem,4.4vw,2.3rem);line-height:1.08;letter-spacing:-.022em;font-weight:760;max-width:24ch}
+.objs{margin:12px 0 0;padding:0;list-style:none}
+.objs li{padding:3px 0 3px 22px;position:relative;font-size:.97rem}
+.objs li::before{content:"";position:absolute;left:2px;top:.6em;width:10px;height:10px;border-radius:50%;border:2px solid var(--accent)}
+.clock{margin-top:22px;display:flex;align-items:center;gap:26px;flex-wrap:wrap;padding:22px;border-radius:26px;background:var(--surface);box-shadow:var(--shadow)}
+.dial{position:relative;width:190px;height:190px;flex:none}
+.dial svg{width:100%;height:100%;transform:rotate(-90deg)}
+.dial .trk{stroke:var(--raised)}
+.dial .arc{stroke:var(--ink);transition:stroke-dashoffset 1s linear}
+.clock.brk .arc{stroke:var(--accent)}
+.dial .num{position:absolute;inset:0;display:grid;place-items:center;font-size:2.6rem;font-weight:760;letter-spacing:-.04em}
+.clock .phase{font-weight:700;font-size:1.1rem;margin:0}
+.clock .sub{color:var(--muted);margin:2px 0 12px;font-size:.92rem}
+.focusnow{margin:14px 0 0;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,var(--soon) 12%,var(--surface))}
+.tally{display:flex;gap:6px;align-items:center;margin-top:20px;flex-wrap:wrap}
+.tally span{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);transition:all .4s var(--ease)}
+.tally span.on{background:var(--accent);border-color:var(--accent);transform:scale(1.1)}
+.tally b{margin-left:8px}
+.tally em{font-style:normal;color:var(--muted);margin-left:6px;font-size:.92rem}
+.panel{margin-top:18px;padding:16px 18px;border-radius:20px;background:var(--surface);box-shadow:var(--shadow)}
+.panel h2{margin:0 0 8px;font-size:1rem}
+.panel .explain{margin:0 0 10px;color:var(--muted);font-size:.88rem}
+.around li{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:9px 0;border-top:1px solid var(--line)}
+.around li:first-child{border-top:0}
+.around ul{list-style:none;margin:0;padding:0}
+.around .w{color:var(--muted);font-size:.86rem}
+.addapp textarea{width:100%;border:1px solid var(--line);background:var(--raised);border-radius:14px;padding:12px;min-height:74px;font-size:.97rem}
+.app{border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-top:12px}
+.app.sub{opacity:.7}
+.app h3{margin:0;font-size:1.08rem}
+.app .co{color:var(--muted);margin:2px 0 0;font-size:.9rem}
+.app .rs{margin-top:10px;display:grid;gap:10px;font-size:.92rem}
+.app .rs h4{margin:0 0 3px;font-size:.84rem;color:var(--muted);font-weight:650}
+.app .rs ul{margin:0;padding-left:18px}
+.app .rs p{margin:0}
+.stag{font-size:.84rem;font-weight:650;color:var(--accent);margin:8px 0 0}
+.helper{position:sticky;top:18px;align-self:start;border-radius:22px;background:var(--surface);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;max-height:calc(100vh - 36px)}
+.helper h2{margin:0;font-size:1.05rem}
+.helper .hint{color:var(--muted);font-size:.86rem;margin:2px 0 10px}
+.helper .msgs{flex:1;max-height:none;min-height:160px}
+.helper textarea{border:1px solid var(--line);background:var(--raised);border-radius:12px;padding:10px 12px;font-size:.97rem;resize:vertical;min-height:52px}
+.pchip{display:inline-flex;gap:6px;align-items:center;font-size:.82rem;background:var(--raised);border-radius:999px;padding:3px 10px;margin-bottom:8px}
+.pchip button{border:0;background:none;padding:0;color:var(--muted)}
+#fx{position:fixed;inset:0;z-index:35;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+#fx[hidden]{display:none}
+#fx .box{max-width:560px;width:100%}
+#fx .big{font-size:clamp(4rem,16vw,7.5rem);font-weight:780;letter-spacing:-.045em;line-height:.9;color:var(--accent)}
+#fx h2{font-size:clamp(1.5rem,4vw,2.1rem);letter-spacing:-.02em;margin:18px 0 8px;line-height:1.1}
+#fx p{font-size:1.06rem;max-width:48ch}
+#fx .choices{margin-top:18px}
+@media (max-width:480px){.hero{padding:22px 18px 18px}.dial{width:150px;height:150px}.dial .num{font-size:2.1rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 <main class="wrap">
   <header class="top">
-    <div class="date" id="date"></div>
-    <div class="tools"><a class="link" id="sess" href="/session" style="color:var(--close)">Start a job-hunt session</a><span id="syncinfo"></span><button class="link" id="sync">Sync</button><button class="link" id="rem">Reminders</button><button class="link" id="acc">Accuracy</button><button class="link" id="hear">Hear brief</button></div>
+    <p class="hello" id="hello"></p>
+    <div class="icons">
+      <button class="focusbtn" id="focusbtn"><span class="live" id="focuslive" hidden></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span id="focuslabel">Focus</span></button>
+      <button class="ib" id="sync" aria-label="Check now" title="Check now"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg></button>
+      <button class="ib" id="rem" aria-label="Reminders" title="Reminders"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></button>
+      <button class="ib" id="hear" aria-label="Hear brief" title="Hear brief"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg></button>
+      <button class="ib" id="acc" aria-label="Accuracy" title="How well it's working"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
+    </div>
   </header>
-
-  <section class="next" id="next" aria-live="polite"></section>
-
-  <section class="sec" id="planSec" hidden><h2>Then</h2><p class="explain">The rest of your plan, in the order it suggests doing them.</p><ol class="plan" id="plan"></ol></section>
-  <section class="sec" id="confirmSec" hidden><h2>Probably done</h2><p class="explain">It saw a sign these are finished, like a reply you sent. Confirm, or keep them open.</p><ul class="list plain" id="confirm"></ul></section>
-  <section class="sec" id="waitSec" hidden><h2>Waiting on others</h2><p class="explain">People who owe you something. It tells you when to chase them.</p><ul class="list plain" id="wait"></ul></section>
-  <details class="closed" id="closedSec" hidden><summary id="closedSum">Closed recently</summary><p class="explain" style="margin-top:8px">Finished or dropped loops, with what you told it when you closed them.</p><ul class="list plain" id="closed"></ul></details>
+  <p class="status" id="status"></p>
+  <section id="wins" aria-live="polite"></section>
+  <section id="hero" aria-live="polite"></section>
+  <div id="areas"></div>
+  <details class="closed" id="closedSec" hidden><summary id="closedSum">Done recently</summary><div id="closed" style="margin-top:8px"></div></details>
 </main>
 
 <div class="composer">
   <div class="in">
     <textarea id="cap" rows="1" placeholder="What do you need to remember?"></textarea>
-    <button class="mic" id="mic" aria-label="Dictate">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
-    </button>
+    <button class="mic" id="mic" aria-label="Dictate"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
     <button class="add" id="add" disabled>Add</button>
   </div>
-  <p class="state" id="capstate"></p>
+  <p class="cstate" id="capstate"></p>
 </div>
+
+<div id="focus" hidden><div class="fwrap">
+  <div class="ftop"><button class="btn ghost" id="fback">← Back to your list</button><div id="faiwarn" class="warn" style="font-size:.85rem"></div></div>
+  <div id="fview"></div>
+</div></div>
+<div id="fx" hidden><div class="box" id="fxbox"></div></div>
+<input type="file" id="cvfile" accept=".pdf,.txt,.md" hidden>
 <div id="toast" role="status"></div>
 
 <script>
 (function(){
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const OUT={done:'Done',dropped:'Not needed',dismissed:'Not a task',auto:'Closed automatically',auto_confirmed:'Confirmed done',well:'Went well',partly:'Partly done',no:"Didn't happen"};
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE='cubic-bezier(.2,.8,.2,1)';
+const AREA_C={'Jobs':'var(--jobs)','Study':'var(--study)','Work':'var(--work)','Money and admin':'var(--money)','Personal':'var(--personal)','Other':'var(--other)'};
+const OUT={done:'Done',dropped:'Not needed',dismissed:'Not a task',auto:'Closed automatically',auto_confirmed:'Confirmed done',evidence:'Spotted in your inbox',well:'Went well',partly:'Partly done',no:"Didn't happen",Well:'Went well',Okay:'Went okay','Not great':'Not great'};
 const TICK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
+const BIGTICK='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
 const PEN='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 const MIC='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
-let S=null, expanded=new Set(), pollT=null;
+const CHEV='<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+let S=null, expanded=new Set(), pollT=null, shut=new Set();
+try{shut=new Set(JSON.parse(localStorage.getItem('loops.shut')||'[]'))}catch(e){}
 
-function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3000)}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3200)}
 async function api(path,opts={}){
   const r=await fetch(path,{headers:{'Content-Type':'application/json'},...opts,body:opts.body?JSON.stringify(opts.body):undefined});
   if(!r.ok){let m='That didn\'t work. Check the Terminal window running Loops.';try{m=(await r.json()).detail||m}catch(e){}throw new Error(m)}
   return r.json();
 }
+const hm=d=>new Date(d).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+const sameDay=(a,b)=>a.toDateString()===b.toDateString();
+const dayName=d=>{const n=new Date();d=new Date(d);return sameDay(d,n)?'today':sameDay(d,new Date(n.getTime()+864e5))?'tomorrow':d.toLocaleDateString([], {weekday:'long'})};
+
+/* ---------- motion ---------- */
+const anim=(el,kf,o)=>RM||!el.animate?{finished:Promise.resolve()}:el.animate(kf,{duration:280,easing:EASE,fill:'none',...o});
+function enter(el,i=0){anim(el,[{opacity:0,transform:'translateY(10px) scale(.985)'},{opacity:1,transform:'none'}],{duration:340,delay:Math.min(i,8)*40,fill:'backwards'})}
+function leave(el){
+  if(el.classList.contains('leaving'))return;
+  el.classList.add('leaving');el.style.pointerEvents='none';
+  const h=el.offsetHeight;el.style.overflow='hidden';
+  anim(el,[{height:h+'px',opacity:1,transform:'none'},{height:h+'px',opacity:0,transform:'translateX(18px)',offset:.5},{height:'0px',opacity:0,paddingTop:'0px',paddingBottom:'0px',marginTop:'0px',marginBottom:'0px'}],{duration:420}).finished.then(()=>el.remove());
+}
+function snap(){const m=new Map();document.querySelectorAll('main [data-key]').forEach(el=>{if(!el.classList.contains('leaving'))m.set(el,el.getBoundingClientRect())});return m}
+function flip(before){
+  if(RM)return;
+  before.forEach((r,el)=>{
+    if(!el.isConnected||el.classList.contains('leaving'))return;
+    const n=el.getBoundingClientRect();let dy=r.top-n.top;
+    const p=el.parentElement&&el.parentElement.closest('[data-key]');
+    if(p&&before.has(p)){dy-=before.get(p).top-p.getBoundingClientRect().top}
+    if(Math.abs(dy)>1)el.animate([{transform:`translateY(${dy}px)`},{transform:'none'}],{duration:380,easing:EASE});
+  });
+}
+const frag=h=>{const t=document.createElement('template');t.innerHTML=h.trim();return t.content.firstElementChild};
+/* keep elements with the same key, patch changed ones, animate the rest in and out */
+function reconcile(parent,items,newbies){
+  const have=new Map([...parent.children].filter(e=>e.dataset.key).map(e=>[e.dataset.key,e]));
+  const want=new Set(items.map(i=>i.key));
+  have.forEach((el,k)=>{if(!want.has(k))leave(el)});
+  let prev=null;
+  items.forEach(it=>{
+    let el=have.get(it.key);
+    if(el&&el.classList.contains('leaving')){el.getAnimations().forEach(a=>a.cancel());el.classList.remove('leaving');el.style.cssText=''}
+    if(!el){el=frag(it.html);el.dataset.key=it.key;el.dataset.sig=it.html;newbies.push(el)}
+    else if(el.dataset.sig!==it.html){const n=frag(it.html);el.className=n.className;el.innerHTML=n.innerHTML;if(n.getAttribute('style'))el.setAttribute('style',n.getAttribute('style'));el.dataset.sig=it.html}
+    const ref=prev?prev.nextSibling:parent.firstChild;
+    if(el!==ref)parent.insertBefore(el,ref);
+    prev=el;
+  });
+}
+function sparkle(host){
+  if(RM)return;
+  const cols=['var(--accent)','var(--jobs)','var(--study)','var(--money)','var(--personal)'];
+  for(let i=0;i<14;i++){
+    const s=document.createElement('span');s.className='spark';s.style.background=cols[i%cols.length];host.appendChild(s);
+    const a=(Math.PI*2*i)/14+Math.random()*.4, d=34+Math.random()*26;
+    s.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) scale(.2)`,opacity:0}],{duration:700+Math.random()*300,easing:'cubic-bezier(.1,.7,.3,1)'}).finished.then(()=>s.remove());
+  }
+}
+
+/* ---------- data ---------- */
 async function refresh(){
   try{S=await api('/api/state');render()}
-  catch(e){$('next').innerHTML='<p class="lead">Loops isn\'t running</p><h1>Start it in Terminal with python run.py serve</h1>'}
+  catch(e){$('hero').innerHTML='<div class="empty"><p>Loops isn\'t running</p><h1>Start it in Terminal with python run.py serve</h1></div>'}
   clearTimeout(pollT);pollT=setTimeout(refresh,S&&S.sync.running?3000:30000);
 }
-const local=iso=>new Date(iso);
-const sameDay=(a,b)=>a.toDateString()===b.toDateString();
-function whenCell(l){
-  if(l.type==='waiting'){const d=local(l.due);return `${d.toLocaleDateString([], {weekday:'short'})}<small>chase</small>`}
-  const pressing=l.bucket!=='Later';
-  const d=local(pressing?l.forecast.latest_start:l.due), now=new Date();
-  if(l.forecast.level==='late')return `Now<small>${l.forecast.hours_left<0?'overdue':'tight'}</small>`;
-  const t=d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
-  const day=sameDay(d,now)?'':(sameDay(d,new Date(now.getTime()+864e5))?'Tomorrow':d.toLocaleDateString([], {weekday:'short'}));
-  return pressing?`${day?day:t}<small>${day?t:'start by'}</small>`:`${d.toLocaleDateString([], {weekday:'short'})}<small>due</small>`;
+function whenText(l){
+  if(l.type==='waiting')return `Chase ${dayName(l.due)}`;
+  if(l.forecast.level==='late')return l.forecast.hours_left<0?'Overdue':'Start now';
+  if(l.bucket==='Later')return `Due ${dayName(l.due)}`;
+  const d=new Date(l.forecast.latest_start);
+  return sameDay(d,new Date())?`Start by ${hm(d)}`:`Start ${dayName(d)} ${hm(d)}`;
 }
 
+/* ---------- render ---------- */
 function render(){
-  const L=S.loops;
-  const active=L.filter(l=>l.status==='open'&&l.type!=='waiting');
-  const wait=L.filter(l=>l.status==='open'&&l.type==='waiting');
-  const conf=L.filter(l=>l.status==='pending_close');
-  const hr=new Date().getHours();
-  $('date').textContent=(hr<12?'Good morning':hr<18?'Good afternoon':'Good evening')+', '+new Date().toLocaleDateString([], {weekday:'long',day:'numeric',month:'long'});
-  const sy=S.sync;
-  $('syncinfo').innerHTML=!S.ai?'<span class="warn">Smart parsing off: add your API key</span>':sy.running?'Syncing':sy.last?`Synced ${local(sy.last).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`:'';
-  $('sync').hidden=!S.connectors.length;
-  $('sess').textContent=S.session?'Resume session: '+S.session:'Start a job-hunt session';
-
+  const before=snap(), newbies=[];
+  const L=S.loops, open=L.filter(l=>l.status==='open');
+  const active=open.filter(l=>l.type!=='waiting');
   const top=active[0];
-  if(!top){
-    $('next').className='next empty-next';
-    $('next').innerHTML=`<p class="lead">Nothing waiting on you</p><h1>Add anything you need to remember below.</h1>`;
-  }else{
-    $('next').className='next';
-    $('next').innerHTML=`<p class="lead">Do this next</p><h1>${esc(top.summary)}</h1>
-      <p class="why lvl-${top.forecast.level}">${esc(top.why||top.forecast.headline)}</p>
-      <div class="nextActs"><button class="closer" data-act="close" data-id="${top.id}"><span class="ring"></span>Close loop</button>
-      <button class="textbtn" data-act="edit" data-id="${top.id}">Edit</button>
-      <button class="textbtn" data-act="later" data-id="${top.id}">Not now</button>
-      <button class="textbtn" data-act="toggle" data-id="${top.id}">${expanded.has(top.id)?'Hide details':'Details'}</button></div>
-      ${S.last_msg[top.id]?`<div class="say"><p>${esc(S.last_msg[top.id])}</p><div class="srow"><button class="link" data-act="talk" data-id="${top.id}">Reply</button></div></div>`:''}
-      ${expanded.has(top.id)?`<div class="more" style="display:block;margin-top:16px">${details(top)}</div>`:''}`;
-  }
-  const rest=active.slice(1);
-  $('planSec').hidden=!rest.length;
-  $('plan').innerHTML=rest.map(l=>row(l,true)).join('');
-  $('confirmSec').hidden=!conf.length;
-  $('confirm').innerHTML=conf.map(l=>`<li class="row"><div class="when">${Math.round(100*(l.close_confidence||0))}%<small>sure</small></div>
-    <div class="body"><p class="title">${esc(l.summary)}</p><div class="more" style="display:block;background:none;border:0;padding:0;margin-top:6px"><div class="acts" style="margin:0">
-    <button class="link" data-act="confirm" data-id="${l.id}">Yes, it's done</button><button class="link" data-act="reject" data-id="${l.id}">Still open</button></div></div></div><span></span></li>`).join('');
-  $('waitSec').hidden=!wait.length;
-  $('wait').innerHTML=wait.map(l=>row(l,false)).join('');
+  const hr=new Date().getHours();
+  $('hello').textContent=(hr<12?'Good morning':hr<18?'Good afternoon':'Good evening')+'. '+new Date().toLocaleDateString([], {weekday:'long',day:'numeric',month:'long'});
+  const sy=S.sync, run=sy.running;
+  const every=S.sync_every>0?`checks every ${S.sync_every} min`:'checks when you press refresh';
+  $('status').innerHTML=S.connectors.length
+    ?`<span class="pulse${run?' run':''}"></span>${run?'Checking your inbox and calendar':sy.last?`Checked ${hm(sy.last)}, ${every}`:`Connected, ${every}`}${S.ai?'':' <span class="warn">· Smart reading off, rules only. Add your API key for more.</span>'}`
+    :`<span class="pulse" style="background:var(--faint)"></span>No accounts connected yet${S.ai?'':' <span class="warn">· Smart reading off</span>'}`;
+  $('sync').hidden=!S.connectors.length;
+  $('focuslabel').textContent=S.session?'Resume focus':'Focus';$('focuslive').hidden=!S.session;
+
+  /* wins: spotted in your inbox, or looks done */
+  const wins=[...S.celebrate.map(l=>({l,strong:true})),...L.filter(l=>l.status==='pending_close').map(l=>({l,strong:false}))];
+  const oldWins=new Set([...$('wins').children].map(e=>e.dataset.key));
+  reconcile($('wins'),wins.map(({l,strong})=>{
+    const ev=l.evidence||{};
+    const head=strong?(ev.headline||`Done: ${l.summary}`):(ev.headline||`Looks like this is done: ${l.summary}`);
+    const src=ev.from?`${esc(ev.from)}: “${esc(ev.subject)}”, ${dayName(ev.ts)} ${hm(ev.ts)}`:esc(l.summary);
+    const writeup=strong&&ev.kind==='interview'?`<button class="btn" data-act="writeup" data-id="${l.id}">Write it up</button>`:'';
+    return {key:'w'+l.id,html:`<article class="win"><div class="badge${strong?'':' q'}">${BIGTICK}</div><div>
+      <p class="eyebrow">${strong?'Done, spotted in your inbox':'Looks done'}</p><h3>${esc(head)}</h3><p class="src">${src}</p>
+      <div class="acts">${strong?`<button class="btn pri" data-act="ack" data-id="${l.id}">Nice</button>`:`<button class="btn pri" data-act="confirm" data-id="${l.id}">Yes, it's done</button>`}
+      ${writeup}<button class="btn ghost" data-act="notdone" data-id="${l.id}">Not done yet</button></div></div></article>`};
+  }),newbies);
+
+  /* hero: the one next action */
+  const hk=top?'h'+top.id:'empty';
+  const heroHTML=top?`<article class="hero" style="--c:${AREA_C[top.area]||AREA_C.Other}">
+      <p class="lead"><span>Do this next</span><span class="chip">${esc(top.area||'Other')}</span></p>
+      <h1>${esc(top.summary)}</h1>
+      <p class="why${top.forecast.level==='late'?' late':''}">${esc(top.why||top.forecast.headline)}</p>
+      <div class="heroacts"><button class="closer" data-act="close" data-id="${top.id}"><span class="ring">${TICK}</span>Done</button>
+        <button class="btn ghost" data-act="later" data-id="${top.id}">Not now</button>
+        <button class="btn ghost" data-act="edit" data-id="${top.id}">Edit</button>
+        <button class="btn ghost" data-act="toggle" data-id="${top.id}">${expanded.has(top.id)?'Less':'Why this?'}</button></div>
+      ${S.last_msg[top.id]?`<div class="say"><p>${esc(S.last_msg[top.id])}</p><div class="links"><button class="link" data-act="talk" data-id="${top.id}">Reply</button></div></div>`:''}
+      ${expanded.has(top.id)?`<div class="more" style="grid-template-rows:1fr"><div>${details(top)}</div></div>`:''}</article>`
+    :`<div class="empty"><p>${wins.length?'That\'s everything on your plate for now':'Nothing waiting on you'}</p><h1>Add anything you need to remember below.</h1></div>`;
+  const hero=$('hero'), cur=hero.firstElementChild;
+  if(!cur||cur.dataset.key!==hk){hero.innerHTML=heroHTML;const el=hero.firstElementChild;el.dataset.key=hk;el.dataset.sig=heroHTML;if(cur)anim(el,[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{duration:420})}
+  else if(cur.dataset.sig!==heroHTML){const n=frag(heroHTML);cur.innerHTML=n.innerHTML;cur.dataset.sig=heroHTML}
+
+  /* area sections: one per area that has something in it, in plan order */
+  const rest=open.filter(l=>!top||l.id!==top.id);
+  const groups=new Map();
+  rest.forEach(l=>{const a=l.area||'Other';if(!groups.has(a))groups.set(a,[]);groups.get(a).push(l)});
+  if(S.leads.length&&!groups.has('Jobs'))groups.set('Jobs',[]);
+  // Sections holding something pressing come first, then in plan order
+  const rank={'Do now':0,'Today':1,'Later':2};
+  const best=a=>Math.min(3,...groups.get(a).map(l=>rank[l.bucket]??2));
+  const firstIx=a=>{const i=rest.findIndex(l=>(l.area||'Other')===a);return i<0?1e9:i};
+  const order=[...groups.keys()].sort((x,y)=>best(x)-best(y)||firstIx(x)-firstIx(y));
+  const areas=$('areas');
+  const have=new Map([...areas.children].map(e=>[e.dataset.key,e]));
+  have.forEach((el,k)=>{if(!groups.has(k))leave(el)});
+  let prev=null;
+  order.forEach(a=>{
+    let sec=have.get(a);
+    if(sec&&sec.classList.contains('leaving')){sec.getAnimations().forEach(x=>x.cancel());sec.classList.remove('leaving');sec.style.cssText=`--c:${AREA_C[a]||AREA_C.Other}`}
+    if(!sec){
+      sec=frag(`<section class="area${shut.has(a)?' shut':''}" style="--c:${AREA_C[a]||AREA_C.Other}"><button class="ahead" data-area="${esc(a)}" aria-expanded="${!shut.has(a)}"><span class="dot"></span><h2>${esc(a)}</h2><span class="count"></span>${CHEV}</button>
+        <div class="abody"><div class="ainner"><ul class="rows"></ul><div class="cta"></div></div></div></section>`);
+      sec.dataset.key=a;newbies.push(sec);
+    }
+    const items=groups.get(a);
+    const leadItems=a==='Jobs'?S.leads.map(x=>({key:'lead'+x.id,html:leadCard(x)})):[];
+    const rowItems=items.map(l=>({key:'r'+l.id,html:row(l)}));
+    sec.querySelector('.count').textContent=items.length+leadItems.length;
+    reconcile(sec.querySelector('.rows'),[...rowItems,...leadItems],newbies);
+    sec.querySelector('.cta').innerHTML=a==='Jobs'&&!S.session?`<div class="focuscta"><span>Got an hour? Work through these in a focus session.</span><button class="btn dark" data-act="focus">Start focus</button></div>`:'';
+    const ref=prev?prev.nextSibling:areas.firstChild;
+    if(sec!==ref)areas.insertBefore(sec,ref);
+    prev=sec;
+  });
+
   $('closedSec').hidden=!S.closed.length;
-  $('closedSum').textContent=`Closed recently (${S.closed.length})`;
-  $('closed').innerHTML=S.closed.map(l=>`<li class="row done"><div class="when">${l.closed_at?local(l.closed_at).toLocaleDateString([], {weekday:'short'}):''}</div>
-    <div class="body"><p class="title">${esc(l.summary)}</p><p class="whyline">${esc(OUT[l.outcome]||l.outcome||'Closed')}${l.note?'. '+esc(l.note):''}</p></div>
-    <button class="textbtn" data-act="reopen" data-id="${l.id}">Reopen</button></li>`).join('');
+  $('closedSum').textContent=`Done recently (${S.closed.length})`;
+  $('closed').innerHTML=S.closed.map(l=>`<div class="crow"><div><span class="t">${esc(l.summary)}</span><small>${esc(OUT[l.outcome]||l.outcome||'Closed')}${l.note?'. '+esc(l.note):''}</small></div>
+    <button class="link" data-act="reopen" data-id="${l.id}">Reopen</button></div>`).join('');
+
+  flip(before);
+  newbies.forEach((el,i)=>{enter(el,i);if(el.classList.contains('win')&&!oldWins.has(el.dataset.key)&&el.querySelector('.badge:not(.q)')){const b=el.querySelector('.badge');anim(b,[{transform:'scale(.4)'},{transform:'scale(1.12)'},{transform:'none'}],{duration:520,delay:120});setTimeout(()=>sparkle(b),200)}});
 }
 function details(l){
   const f=l.forecast;
-  return `<p><b>If missed:</b> ${esc(f.if_missed)}</p><p><b>If it slips a day:</b> ${esc(f.slip_1d)}</p>
+  return `<div class="in"><p><b>If missed:</b> ${esc(f.if_missed)}</p><p><b>If it slips a day:</b> ${esc(f.slip_1d)}</p>
     <p class="nums">${Math.round(100*f.p_miss)}% chance of missing it. Takes about ${l.effort_adj}h. From ${esc(l.source==='manual'?'your notes':l.source)}.</p>
-    <div class="acts"><button class="link" data-act="talk" data-id="${l.id}">Talk about it</button><button class="link" data-act="dismiss" data-id="${l.id}">Not a task</button></div>`;
+    ${l.note?`<p class="nums">${esc(l.note)}</p>`:''}
+    <div class="links"><button class="link" data-act="talk" data-id="${l.id}">Talk about it</button><button class="link" data-act="later" data-id="${l.id}">Move it</button><button class="link" data-act="dismiss" data-id="${l.id}">Not a task</button></div></div>`;
 }
-function row(l,rail){
+function row(l){
+  const why=l.type==='waiting'?`waiting on ${l.person||'them'}`:l.bucket==='Later'?'when you have a gap':(l.why||'');
   return `<li class="row lvl-${l.forecast.level}${expanded.has(l.id)?' open':''}">
-    <div class="when">${whenCell(l)}</div>${rail?'<div class="rail"><span class="dot"></span></div>':''}
+    <button class="tick" data-act="close" data-id="${l.id}" aria-label="Done: ${esc(l.summary)}">${TICK}</button>
     <div class="body" data-act="toggle" data-id="${l.id}"><p class="title">${esc(l.summary)}</p>
-      <p class="whyline">${esc(l.type==='waiting'?`Chase ${l.person||'them'} if nothing by ${local(l.due).toLocaleDateString([], {weekday:'long'})}`:l.bucket==='Later'?'When you have a gap':(l.why||''))}</p>
-      <div class="more">${details(l)}</div></div>
-    <div class="rowbtns"><button class="pen" data-act="edit" data-id="${l.id}" aria-label="Edit: ${esc(l.summary)}">${PEN}</button>
-    <button class="tick" data-act="close" data-id="${l.id}" aria-label="Close loop: ${esc(l.summary)}">${TICK}</button></div></li>`;
+      <p class="meta"><span class="when">${esc(whenText(l))}</span>${l.type==='waiting'?'<span class="tag">Waiting</span>':''}<span>${esc(why)}</span></p>
+      <div class="more"><div>${details(l)}</div></div></div>
+    <button class="pen" data-act="edit" data-id="${l.id}" aria-label="Edit: ${esc(l.summary)}">${PEN}</button></li>`;
+}
+function leadCard(x){
+  const reasons=(x.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join('')+(x.flags||[]).map(f=>`<li class="flag">${esc(f)}</li>`).join('');
+  const eyebrow=x.credible==='credible'?(x.fit!=null?'Worth applying':'New role for you'):'New role, not verified';
+  return `<li class="lead-card"><p class="eyebrow">${eyebrow}</p><h3>${esc(x.title)}</h3>
+    <p class="co">${esc([x.company,x.location].filter(Boolean).join(', '))}</p>
+    ${x.verdict?`<p class="v">${esc(x.verdict)}</p>`:''}${x.fit==null?'<p class="v nums">Upload your CV in Focus so I can judge fit.</p>':''}
+    ${reasons?`<ul>${reasons}</ul>`:''}
+    <div class="acts"><button class="btn pri" data-act="lead-apply" data-id="${x.id}">Apply</button>
+    ${x.url&&/^https?:/.test(x.url)?`<a class="btn" href="${esc(x.url)}" target="_blank" rel="noopener" style="text-decoration:none">Open job</a>`:''}
+    <button class="btn ghost" data-act="lead-skip" data-id="${x.id}">Skip</button></div></li>`;
 }
 
 /* ---------- one question at a time ---------- */
@@ -282,22 +514,27 @@ let pending=null;
 function closeS(){['scrim','sheet'].forEach(i=>{const x=$(i);if(x)x.remove()});if(pending){const p=pending;pending=null;p(null)}}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeS()});
 function frame(html){
+  const had=!!$('sheet');
   ['scrim','sheet'].forEach(i=>{const x=$(i);if(x)x.remove()});
   const s=document.createElement('div');s.className='scrim';s.id='scrim';s.onclick=closeS;
   const d=document.createElement('div');d.className='sheet';d.id='sheet';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.innerHTML=html;
-  document.body.append(s,d);return d;
+  document.body.append(s,d);
+  if(!had){anim(s,[{opacity:0},{opacity:1}],{duration:220});anim(d,[{opacity:0,translate:'0 24px'},{opacity:1,translate:'0 0'}],{duration:340})}
+  else anim(d.firstElementChild?d:d,[{opacity:.4},{opacity:1}],{duration:200});
+  return d;
 }
-function step({ctx,q,kind='choice',options=[],n=1,of=1,skip=false,placeholder=''}){
+function step({ctx,q,kind='choice',options=[],n=1,of=1,skip=false,skipLabel='',placeholder=''}){
   return new Promise(res=>{
     pending=res;
-    const bar=`<div class="progress"><i style="width:${Math.round(100*n/of)}%"></i></div>`;
+    const bar=`<div class="progress"><i style="width:${Math.round(100*(n-1)/of)}%"></i></div>`;
     const body=kind==='choice'
-      ?`<div class="choices">${options.map((o,k)=>`<button data-k="${k}">${esc(o.label)}</button>`).join('')}</div>${skip?'<div class="srow"><button class="textbtn" id="s-skip">Skip</button></div>':''}`
-      :`<textarea id="s-text" placeholder="${esc(placeholder)}"></textarea><div class="srow"><button class="primary" id="s-save">Save</button>${skip?'<button class="textbtn" id="s-skip">Nothing to add</button>':''}</div>`;
+      ?`<div class="choices">${options.map((o,k)=>`<button data-k="${k}">${esc(o.label)}</button>`).join('')}</div>${skip?`<div class="srow"><button class="btn ghost" id="s-skip">${skipLabel||'Skip'}</button></div>`:''}`
+      :`<div class="inrow"><textarea id="s-text" placeholder="${esc(placeholder)}"></textarea><button class="mic" id="s-mic" aria-label="Dictate">${MIC}</button></div><div class="srow"><button class="btn pri" id="s-save">Next</button>${skip?`<button class="btn ghost" id="s-skip">${skipLabel||'Nothing to add'}</button>`:''}</div>`;
     const d=frame(`${of>1?bar:''}${ctx?`<p class="ctx">${esc(ctx)}</p>`:''}<h2>${esc(q)}</h2>${body}`);
-    const done=v=>{pending=null;res(v)};
+    if(of>1)requestAnimationFrame(()=>{const i=d.querySelector('.progress i');if(i)i.style.width=Math.round(100*n/of)+'%'});
+    const done=v=>{stopAllMics();pending=null;res(v)};
     if(kind==='choice'){d.querySelector('.choices').onclick=e=>{const b=e.target.closest('button');if(b)done(options[+b.dataset.k].value)};d.querySelector('.choices button').focus()}
-    else{const t=d.querySelector('#s-text');t.focus();d.querySelector('#s-save').onclick=()=>done(t.value.trim());
+    else{const t=d.querySelector('#s-text');t.focus();attachMic(d.querySelector('#s-mic'),t);d.querySelector('#s-save').onclick=()=>done(t.value.trim());
       t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();done(t.value.trim())}})}
     const sk=d.querySelector('#s-skip');if(sk)sk.onclick=()=>done('');
   });
@@ -310,27 +547,59 @@ async function laterFlow(l){
   closeS(); if(!v)return;
   await api(`/api/loops/${l.id}/reschedule`,{method:'POST',body:{due:v}});toast('Moved. It will come back then.');refresh();
 }
+function unTick(id){document.querySelectorAll(`[data-key="r${id}"]`).forEach(e=>e.classList.remove('ticking'))}
 async function closeFlow(l){
   loading('One moment');
-  let Q;try{Q=await api(`/api/loops/${l.id}/closing`)}catch(e){closeS();toast(e.message);return}
+  let Q;try{Q=await api(`/api/loops/${l.id}/closing`)}catch(e){closeS();unTick(l.id);toast(e.message);return}
   const of=1+Q.followups.length;
   const h=await step({ctx:l.summary,q:Q.happened,options:Q.happened_options,n:1,of});
-  if(h===null)return;
-  if(h==='not_yet')return laterFlow(l);
+  if(h===null)return unTick(l.id);
+  if(h==='not_yet'){unTick(l.id);return laterFlow(l)}
   if(h==='no'){closeS();await api(`/api/loops/${l.id}/finish`,{method:'POST',body:{happened:'no'}});toast('Closed as not needed.');return refresh()}
   const answers=[];
   for(let i=0;i<Q.followups.length;i++){
     const f=Q.followups[i];
     const v=await step({ctx:l.summary,q:f.question,kind:f.kind,options:(f.options||[]).map(o=>({label:o,value:o})),n:i+2,of,skip:true,
-      placeholder:f.use==='next_loop'?'e.g. Send a thank-you email tomorrow morning':''});
-    if(v===null)return;
+      placeholder:f.use==='next_loop'?'e.g. Send a thank-you email tomorrow morning':f.use==='interview_notes'?'Who you met, what you talked about, anything they asked, next steps':''});
+    if(v===null)return unTick(l.id);
     answers.push({question:f.question,use:f.use,value:v});
   }
-  closeS();
+  if(answers.some(a=>a.use==='interview_notes'))loading('Writing it up');else closeS();
   const r=await api(`/api/loops/${l.id}/finish`,{method:'POST',body:{happened:'yes',answers}});
-  toast(r.created.length?`Closed. Added: ${r.created.map(c=>c.summary).join(', ')}`:'Loop closed.');
   await refresh();
+  if(r.write_up)return writeUpSheet(r.write_up,r.created);
+  closeS();
+  toast(r.created.length?`Done. Added: ${r.created.map(c=>c.summary).join(', ')}`:'Nice. Done.');
   if(r.created[0]&&r.created[0].questions.length)askMissing(r.created[0]);
+}
+function writeUpSheet(w,created){
+  const li=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join('');
+  const d=frame(`<div class="wu"><p class="ctx">Write-up</p><h2>${esc(w.title)}</h2>
+    ${w.summary&&w.summary.length?`<h4>What you covered</h4><ul>${li(w.summary)}</ul>`:''}
+    ${w.highlight?`<h4>Most interesting part</h4><p style="margin:0">${esc(w.highlight)}</p>`:''}
+    ${w.follow_ups&&w.follow_ups.length?`<h4>Follow up</h4><ul>${li(w.follow_ups)}</ul>`:''}
+    <h4>Thank-you note</h4><div class="mail" id="wu-mail">${esc(w.thank_you)}</div>
+    ${created&&created.length?`<p class="nums" style="margin-top:10px">Added to your list: ${esc(created.map(c=>c.summary).join(', '))}</p>`:''}
+    <div class="srow"><button class="btn pri" id="wu-copy">Copy the note</button><button class="btn ghost" id="wu-x">Close</button></div></div>`);
+  d.querySelector('#wu-x').onclick=closeS;
+  d.querySelector('#wu-copy').onclick=async()=>{try{await navigator.clipboard.writeText(w.thank_you);toast('Copied. Paste it into your email.')}catch(e){toast('Couldn\'t copy. Select the text instead.')}};
+}
+async function writeUpFlow(l){
+  const notes=await step({ctx:l.summary,q:'What did you talk about?',kind:'text',placeholder:'Who you met, what you talked about, anything they asked, next steps'});
+  if(notes===null)return;
+  loading('Writing it up');
+  try{const w=await api(`/api/loops/${l.id}/write-up`,{method:'POST',body:{notes}});writeUpSheet(w)}catch(e){closeS();toast(e.message)}
+}
+async function notDoneFlow(l){
+  const ev=l.evidence||{};
+  const left=await step({ctx:ev.from?`It saw “${ev.subject}” from ${ev.from}`:l.summary,q:'What\'s still left to do?',kind:'text',
+    placeholder:'e.g. That was only the first part. I still need to do the video interview.',skip:true,skipLabel:'Same task, not done yet'});
+  if(left===null)return;
+  const opts=await api('/api/days-options');
+  const due=await step({ctx:left||l.summary,q:'When does it need to be done by?',options:opts,n:2,of:2});
+  if(due===null)return;
+  closeS();
+  try{await api(`/api/loops/${l.id}/not-done`,{method:'POST',body:{left,due}});toast('Got it. It\'s back on your list.');refresh()}catch(e){toast(e.message)}
 }
 async function askMissing(c){
   for(let i=0;i<c.questions.length;i++){
@@ -347,16 +616,14 @@ async function talkFlow(l){
     const d=frame(`<p class="ctx">${esc(l.summary)}</p><h2>Check-in</h2>
       <div class="msgs" id="t-msgs">${msgs.length?msgs.map(m=>`<div class="msg ${m.role}">${esc(m.text)}</div>`).join(''):'<div class="msg agent">When will you start this? Tell me and I\'ll hold you to it.</div>'}</div>
       <div class="quick">${['Starting now','In 10 minutes','In 30 minutes','Done','Not today'].map(q=>`<button>${q}</button>`).join('')}</div>
-      <div class="inrow"><textarea id="t-in" placeholder="Reply"></textarea><button class="mic" id="t-mic" aria-label="Dictate a reply">${MIC}</button><button class="add" id="t-send">Send</button></div>
-      <p class="state" id="t-state" style="margin:6px 0 0;color:var(--muted);font-size:.82rem"></p>`);
+      <div class="inrow"><textarea id="t-in" placeholder="Reply"></textarea><button class="mic" id="t-mic" aria-label="Dictate a reply">${MIC}</button><button class="add" id="t-send">Send</button></div>`);
     const box=d.querySelector('#t-msgs');box.scrollTop=box.scrollHeight;
     const inp=d.querySelector('#t-in');inp.focus();
-    attachMic(d.querySelector('#t-mic'),inp,d.querySelector('#t-state'));
+    attachMic(d.querySelector('#t-mic'),inp);
     const send=async text=>{
       text=(text||'').trim();if(!text)return;stopAllMics();
       try{const r=await api(`/api/loops/${l.id}/reply`,{method:'POST',body:{text}});msgs=r.messages;refresh();
         if(r.action==='close'){closeS();return closeFlow(l)}
-        if(r.action==='later'){draw();return}
         draw()}catch(e){toast(e.message)}
     };
     d.querySelector('.quick').onclick=e=>{const b=e.target.closest('button');if(b)send(b.textContent)};
@@ -365,15 +632,85 @@ async function talkFlow(l){
   };
   draw();
 }
-
-/* ---------- reminders: it chases you ---------- */
-function remLabel(){
-  const on=('Notification' in window)&&Notification.permission==='granted';
-  $('rem').textContent=on?`Reminders on`:'Turn on reminders';
+function toLocal(iso){const d=new Date(iso),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}
+function editFlow(l){
+  const others=S.loops.filter(o=>o.id!==l.id);
+  const d=frame(`<p class="ctx">Edit</p><h2>${esc(l.summary)}</h2>
+    <div class="fix"><p class="note">Say or type what to change, like “no, I meant tomorrow at 10” or “it only takes 20 minutes”.</p>
+      <div class="inrow"><textarea id="e-fix" placeholder="What should change?"></textarea><button class="mic" id="e-mic" aria-label="Dictate a change">${MIC}</button></div>
+      <div class="srow"><button class="btn pri" id="e-apply">Apply change</button><span class="nums" id="e-state"></span></div></div>
+    <label class="field"><span>Task</span><input id="e-s" value="${esc(l.summary)}"></label>
+    <label class="field"><span>Who</span><input id="e-p" value="${esc(l.person)}"></label>
+    <label class="field"><span>Due</span><input id="e-d" type="datetime-local" value="${toLocal(l.due)}"></label>
+    <label class="field"><span>Takes about (hours)</span><input id="e-h" type="number" min="0.05" step="0.25" value="${Math.round(l.effort_h*100)/100}"></label>
+    <label class="field"><span>What happens if it's missed</span><input id="e-k" value="${esc(l.stakes)}"></label>
+    <label class="check"><input id="e-hd" type="checkbox"${l.hard_deadline?' checked':''}> The deadline is fixed by someone else</label>
+    <label class="check"><input id="e-rv" type="checkbox"${l.reversible?'':' checked'}> Can't be recovered if missed</label>
+    <label class="field"><span>Missing this holds up</span><select id="e-b"><option value="0">Nothing else</option>${others.map(o=>`<option value="${o.id}"${o.id===l.blocks?' selected':''}>${esc(o.summary.slice(0,60))}</option>`).join('')}</select></label>
+    <div class="srow"><button class="btn pri" id="e-go">Save changes</button><button class="btn ghost" id="e-x">Cancel</button></div>`);
+  const g=s=>d.querySelector(s);g('#e-x').onclick=closeS;
+  attachMic(g('#e-mic'),g('#e-fix'));
+  g('#e-apply').onclick=async()=>{
+    const text=g('#e-fix').value.trim();if(!text)return;stopAllMics();g('#e-state').textContent='Applying';
+    try{const r=await api(`/api/loops/${l.id}/revise`,{method:'POST',body:{text}});await refresh();
+      const nl=S.loops.find(x=>x.id===l.id)||l;
+      if(!r.changed.length){g('#e-state').textContent='Couldn\'t tell what to change. Try saying it differently.';return}
+      editFlow(nl);toast('Changed: '+r.changed.map(k=>({summary:'task',person:'who',due:'due time',effort_h:'time needed',cost:'importance',stakes:'what happens if missed',hard_deadline:'deadline type',reversible:'recoverable'}[k]||k)).join(', '))}
+    catch(e){g('#e-state').textContent='';toast(e.message)}
+  };
+  g('#e-go').onclick=async()=>{
+    const due=new Date(g('#e-d').value);
+    const body={summary:g('#e-s').value.trim()||l.summary,person:g('#e-p').value.trim(),effort_h:+g('#e-h').value||l.effort_h,
+      stakes:g('#e-k').value.trim(),hard_deadline:g('#e-hd').checked,reversible:!g('#e-rv').checked,blocks:+g('#e-b').value};
+    if(!isNaN(due))body.due=due.toISOString();
+    try{await api(`/api/loops/${l.id}`,{method:'PATCH',body});closeS();toast('Changes saved.');refresh()}catch(e){toast(e.message)}
+  };
 }
+function accuracyFlow(){
+  const A=S.accuracy,o=A.on_time_14d,d=A.detect,c=A.close,pct=(k,n)=>n?Math.round(100*k/n)+'%':'Not enough yet';
+  const dd=frame(`<p class="ctx">Accuracy</p><h2>How well it's working for you</h2>
+    <div class="stat"><b>${pct(o.k,o.n)}</b><span>Done on time in the last 14 days: ${o.k} of ${o.n}</span></div>
+    <div class="stat"><b>${pct(d.correct,d.n)}</b><span>Spotted real tasks correctly: ${d.correct} of ${d.n}</span></div>
+    <div class="stat"><b>${pct(c.correct,c.n)}</b><span>Knew a task was done without asking: ${c.correct} of ${c.n}</span></div>
+    <p class="nums">Built only from your answers, including every “Nice” and “Not done yet”. Under about 20 each, treat these as rough.</p>
+    <div class="srow"><button class="btn pri" id="a-x">Done</button></div>`);
+  dd.querySelector('#a-x').onclick=closeS;
+}
+
+/* ---------- clicks ---------- */
+document.addEventListener('click',async e=>{
+  const h=e.target.closest('.ahead');
+  if(h){const a=h.dataset.area,sec=h.closest('.area');sec.classList.toggle('shut');const s=sec.classList.contains('shut');h.setAttribute('aria-expanded',!s);
+    s?shut.add(a):shut.delete(a);try{localStorage.setItem('loops.shut',JSON.stringify([...shut]))}catch(err){}return}
+  const b=e.target.closest('[data-act]');if(!b||b.closest('#sheet')||b.closest('#focus'))return;
+  const id=+b.dataset.id, act=b.dataset.act, l=S&&[...S.loops,...S.closed].find(x=>x.id===id);
+  try{
+    if(act==='focus')return openFocus();
+    if(act==='toggle'){
+      const r=b.closest('.row');
+      if(r){r.classList.toggle('open');expanded.has(id)?expanded.delete(id):expanded.add(id);return}
+      expanded.has(id)?expanded.delete(id):expanded.add(id);return render();
+    }
+    if(act==='close'){const r=b.closest('.row');if(r){r.classList.add('ticking');await new Promise(z=>setTimeout(z,RM?0:420))}return closeFlow(l)}
+    if(act==='later')return laterFlow(l);
+    if(act==='edit')return editFlow(l);
+    if(act==='talk')return talkFlow(l);
+    if(act==='notdone')return notDoneFlow(l);
+    if(act==='writeup')return writeUpFlow(l);
+    if(act==='lead-apply'){const r=await api(`/api/leads/${id}/apply`,{method:'POST'});toast('Added to Jobs. It will spot the confirmation email when you apply.');return refresh()}
+    if(act==='lead-skip'){await api(`/api/leads/${id}/skip`,{method:'POST'});toast('Skipped.');return refresh()}
+    if(act==='ack'){const card=b.closest('.win');if(card)sparkle(card.querySelector('.badge'));await api(`/api/loops/${id}/ack`,{method:'POST'});return refresh()}
+    const msg={dismiss:'Removed. It learns from this.',confirm:'Nice. Done.',reject:'Kept open.',reopen:'Reopened.'}[act];
+    await api(`/api/loops/${id}/${act}`,{method:'POST'});toast(msg);refresh();
+  }catch(err){toast(err.message)}
+});
+
+/* ---------- reminders: it checks your inbox first, then chases ---------- */
+const notifOn=()=>('Notification' in window)&&Notification.permission==='granted';
+function remLabel(){$('rem').classList.toggle('on',notifOn());$('rem').title=notifOn()?'Reminders on':'Turn on reminders'}
 $('rem').onclick=async()=>{
   if(!('Notification' in window))return toast('This browser can\'t show notifications. Keep this tab open and reminders will appear here.');
-  if(Notification.permission==='granted')return toast(`Reminders are on. It checks every ${S?S.chase_every:2} minutes once something should have started.`);
+  if(notifOn())return toast(`Reminders are on. Before each one it checks your inbox for proof it's already done.`);
   const p=await Notification.requestPermission();remLabel();
   toast(p==='granted'?'Reminders on. Keep this tab open in the background.':'Notifications are blocked. Allow them in the browser\'s site settings.');
 };
@@ -381,10 +718,10 @@ async function tick(){
   try{
     const {nudges}=await api('/api/nudges/tick',{method:'POST'});
     for(const n of nudges){
-      if(('Notification' in window)&&Notification.permission==='granted'){
-        const note=new Notification('Loops',{body:n.text,tag:'loop-'+n.id,requireInteraction:true});
+      if(notifOn()&&document.hidden){
+        const note=new Notification(n.kind==='done'?'Nice one':'Loops',{body:n.text,tag:'loop-'+n.id,requireInteraction:n.kind!=='done'});
         note.onclick=()=>{window.focus();note.close();const l=S&&S.loops.find(x=>x.id===n.id);if(l)talkFlow(l)};
-      }else toast(n.text);
+      }else if(n.kind!=='done')toast(n.text);
     }
     if(nudges.length)refresh();
   }catch(e){}
@@ -414,65 +751,6 @@ function attachMic(btn,box,stateEl){
   };
 }
 
-function toLocal(iso){const d=new Date(iso),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}
-function editFlow(l){
-  const others=S.loops.filter(o=>o.id!==l.id);
-  const d=frame(`<p class="ctx">Edit</p><h2>${esc(l.summary)}</h2>
-    <div class="fix"><p class="note">Say or type what to change, like “no, I meant tomorrow at 10” or “it only takes 20 minutes”.</p>
-      <div class="inrow"><textarea id="e-fix" placeholder="What should change?"></textarea><button class="mic" id="e-mic" aria-label="Dictate a change">${MIC}</button></div>
-      <div class="srow"><button class="primary" id="e-apply">Apply change</button><span class="textbtn" id="e-state" style="cursor:default"></span></div></div>
-    <label class="field"><span>Task</span><input id="e-s" value="${esc(l.summary)}"></label>
-    <label class="field"><span>Who</span><input id="e-p" value="${esc(l.person)}"></label>
-    <label class="field"><span>Due</span><input id="e-d" type="datetime-local" value="${toLocal(l.due)}"></label>
-    <label class="field"><span>Takes about (hours)</span><input id="e-h" type="number" min="0.05" step="0.25" value="${Math.round(l.effort_h*100)/100}"></label>
-    <label class="field"><span>What happens if it's missed</span><input id="e-k" value="${esc(l.stakes)}"></label>
-    <label class="check"><input id="e-hd" type="checkbox"${l.hard_deadline?' checked':''}> The deadline is fixed by someone else</label>
-    <label class="check"><input id="e-rv" type="checkbox"${l.reversible?'':' checked'}> Can't be recovered if missed</label>
-    <label class="field"><span>Missing this holds up</span><select id="e-b"><option value="0">Nothing else</option>${others.map(o=>`<option value="${o.id}"${o.id===l.blocks?' selected':''}>${esc(o.summary.slice(0,60))}</option>`).join('')}</select></label>
-    <div class="srow"><button class="primary" id="e-go">Save changes</button><button class="textbtn" id="e-x">Cancel</button></div>`);
-  const g=s=>d.querySelector(s);g('#e-x').onclick=closeS;
-  attachMic(g('#e-mic'),g('#e-fix'),g('#e-state'));
-  g('#e-apply').onclick=async()=>{
-    const text=g('#e-fix').value.trim();if(!text)return;stopAllMics();g('#e-state').textContent='Applying';
-    try{const r=await api(`/api/loops/${l.id}/revise`,{method:'POST',body:{text}});await refresh();
-      const nl=S.loops.find(x=>x.id===l.id)||l;
-      if(!r.changed.length){g('#e-state').textContent='Couldn\'t tell what to change. Try saying it differently.';return}
-      editFlow(nl);toast('Changed: '+r.changed.map(k=>({summary:'task',person:'who',due:'due time',effort_h:'time needed',cost:'importance',stakes:'what happens if missed',hard_deadline:'deadline type',reversible:'recoverable'}[k]||k)).join(', '))}
-    catch(e){g('#e-state').textContent='';toast(e.message)}
-  };
-  g('#e-go').onclick=async()=>{
-    const due=new Date(g('#e-d').value);
-    const body={summary:g('#e-s').value.trim()||l.summary,person:g('#e-p').value.trim(),effort_h:+g('#e-h').value||l.effort_h,
-      stakes:g('#e-k').value.trim(),hard_deadline:g('#e-hd').checked,reversible:!g('#e-rv').checked,blocks:+g('#e-b').value};
-    if(!isNaN(due))body.due=due.toISOString();
-    try{await api(`/api/loops/${l.id}`,{method:'PATCH',body});closeS();toast('Changes saved.');refresh()}catch(e){toast(e.message)}
-  };
-}
-function accuracyFlow(){
-  const A=S.accuracy,o=A.on_time_14d,d=A.detect,c=A.close,pct=(k,n)=>n?Math.round(100*k/n)+'%':'Not enough yet';
-  const dd=frame(`<p class="ctx">Accuracy</p><h2>How well it's working for you</h2>
-    <div class="stat"><b>${pct(o.k,o.n)}</b><span>Closed on time in the last 14 days: ${o.k} of ${o.n}</span></div>
-    <div class="stat"><b>${pct(d.correct,d.n)}</b><span>Spotted real tasks correctly: ${d.correct} of ${d.n}</span></div>
-    <div class="stat"><b>${pct(c.correct,c.n)}</b><span>Closed loops by itself correctly: ${c.correct} of ${c.n}</span></div>
-    <p class="muted-note">Built only from your answers. Under about 20 each, treat these as rough.</p>
-    <div class="srow"><button class="primary" id="a-x">Done</button></div>`);
-  dd.querySelector('#a-x').onclick=closeS;
-}
-
-document.addEventListener('click',async e=>{
-  const b=e.target.closest('[data-act]');if(!b||b.closest('#sheet'))return;
-  const id=+b.dataset.id, act=b.dataset.act, l=S&&[...S.loops,...S.closed].find(x=>x.id===id);
-  try{
-    if(act==='toggle'){expanded.has(id)?expanded.delete(id):expanded.add(id);return render()}
-    if(act==='close')return closeFlow(l);
-    if(act==='later')return laterFlow(l);
-    if(act==='edit')return editFlow(l);
-    if(act==='talk')return talkFlow(l);
-    const msg={dismiss:'Removed. It learns from this.',confirm:'Closed.',reject:'Kept open.',reopen:'Reopened.'}[act];
-    await api(`/api/loops/${id}/${act}`,{method:'POST'});toast(msg);refresh();
-  }catch(err){toast(err.message)}
-});
-
 /* ---------- capture ---------- */
 const cap=$('cap');
 const grow=()=>{cap.style.height='auto';cap.style.height=Math.min(cap.scrollHeight,120)+'px';$('add').disabled=!cap.value.trim()};
@@ -486,20 +764,277 @@ async function add(){
   try{const r=await api('/api/capture',{method:'POST',body:{text}});cap.value='';grow();$('capstate').textContent='';
     await refresh();
     if(r.questions&&r.questions.length){const s=S.loops.find(x=>x.id===r.id);askMissing({id:r.id,summary:s?s.summary:text,questions:r.questions})}
-    else toast('Added. It will chase you until it\'s closed.')}
+    else toast('Added. It will chase you until it\'s done.')}
   catch(e){$('capstate').textContent='';toast(e.message)}
 }
 attachMic($('mic'),cap,$('capstate'));
 
 /* ---------- header ---------- */
-$('sync').onclick=async()=>{try{await api('/api/sync',{method:'POST'});toast('Syncing your accounts');setTimeout(refresh,800)}catch(e){toast(e.message)}};
+$('sync').onclick=async()=>{try{await api('/api/sync',{method:'POST'});toast('Checking your inbox now');setTimeout(refresh,800)}catch(e){toast(e.message)}};
 $('acc').onclick=()=>S&&accuracyFlow();
 $('hear').onclick=async()=>{
   if(!('speechSynthesis' in window))return toast('Speech isn\'t available in this browser.');
   try{const {text}=await api('/api/brief');speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-GB';speechSynthesis.speak(u)}catch(e){toast(e.message)}
 };
+$('focusbtn').onclick=openFocus;
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
-remLabel();refresh();
+
+/* =================================================================== */
+/* ---------- focus mode (job-hunt sessions), on the same page ---------- */
+let D=null, built=null, focusApp=null, T=null;
+const fopen=()=>!$('focus').hidden;
+function openFocus(){
+  const f=$('focus');if(!f.hidden)return;
+  f.hidden=false;document.body.style.overflow='hidden';
+  if(location.hash!=='#focus')history.replaceState(null,'','#focus');
+  anim(f,[{opacity:0,transform:'translateY(24px)'},{opacity:1,transform:'none'}],{duration:380});
+  loadFocus();
+}
+function closeFocus(){
+  const f=$('focus');
+  anim(f,[{opacity:1,transform:'none'},{opacity:0,transform:'translateY(24px)'}],{duration:260}).finished.then(()=>{f.hidden=true;document.body.style.overflow=''});
+  history.replaceState(null,'',location.pathname==='/session'?'/':location.pathname);
+  refresh();
+}
+$('fback').onclick=closeFocus;
+function notify(title,body){try{if(notifOn()&&document.hidden)new Notification(title,{body})}catch(e){}}
+function pickCV(){$('cvfile').click()}
+$('cvfile').onchange=()=>{const f=$('cvfile').files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=async()=>{try{await api('/api/docs/cv',{method:'POST',body:{name:f.name,b64:rd.result}});toast('CV saved. Research, answers and job leads will use it.');await loadFocus()}catch(e){toast(e.message)}};
+  rd.readAsDataURL(f);$('cvfile').value=''};
+
+async function loadFocus(){
+  try{D=await api('/api/session')}catch(e){$('fview').innerHTML='<p style="margin-top:20vh;text-align:center">Loops isn\'t running. Start it in Terminal with python run.py serve</p>';return}
+  $('faiwarn').textContent=D.ai?'':'Research and the helper need your API key';
+  if(!D.active){built=null;return fopen()?renderIntake():null}
+  if(built!==D.active.id){loadT();if(fopen())buildSession()}
+  if(fopen())fill();
+}
+
+/* intake */
+let QS=null, answers={}, qi=0;
+async function renderIntake(){
+  if(!QS)QS=(await api('/api/session/intake')).questions;
+  const vis=QS.filter(q=>!q.when||Object.entries(q.when).every(([k,v])=>answers[k]===v));
+  if(qi>=vis.length)return startSession();
+  const q=vis[qi];
+  const last=D.last&&qi===0?`<p class="ctx" style="margin-bottom:22px">Last time: ${esc(D.last.title)}. ${esc(D.last.summary||'')}</p>`:'';
+  $('fview').innerHTML=`<section class="intake">${last}<div class="progress"><i style="width:${Math.round(100*qi/vis.length)}%"></i></div><p class="ctx">New focus session</p><h1>${esc(q.q)}</h1>
+    ${q.type==='choice'?`<div class="choices">${q.options.map((o,k)=>`<button data-k="${k}">${esc(o.label)}</button>`).join('')}</div>`
+      :`<div class="inrow"><textarea id="qa" placeholder="${esc(q.placeholder||'')}"></textarea><button class="mic" id="qmic" aria-label="Dictate">${MIC}</button></div>
+        <div class="srow"><button class="btn pri" id="qnext">Next</button></div>`}
+    <div class="srow">${qi?'<button class="btn ghost" id="qback">Back</button>':''}</div>
+    <p class="nums" style="margin-top:28px">${D.cv?`Using your CV: ${esc(D.cv)}. <button class="link" id="cvbtn">Replace</button>`:'Upload your CV so research, answers and job leads are tailored to you. <button class="link" id="cvbtn">Upload CV</button>'}</p></section>`;
+  const sec=$('fview').firstElementChild;anim(sec,[{opacity:0,transform:'translateX(16px)'},{opacity:1,transform:'none'}],{duration:320});
+  const next=v=>{answers[q.id]=v;qi++;renderIntake()};
+  if(q.type==='choice'){const c=sec.querySelector('.choices');c.onclick=e=>{const b=e.target.closest('button');if(b)next(q.options[+b.dataset.k].value)};c.querySelector('button').focus()}
+  else{const t=$('qa');t.focus();attachMic($('qmic'),t);$('qnext').onclick=()=>{stopAllMics();if(t.value.trim())next(t.value.trim());else toast('Type or say something first.')};
+    t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('qnext').click()}})}
+  if($('qback'))$('qback').onclick=()=>{qi--;renderIntake()};
+  $('cvbtn').onclick=pickCV;
+}
+async function startSession(){
+  $('fview').innerHTML='<section class="intake"><p class="ctx">Setting up</p><h1>Working out your objectives</h1></section>';
+  try{await api('/api/session/start',{method:'POST',body:{answers}});answers={};qi=0;await loadFocus()}
+  catch(e){toast(e.message);answers={};qi=0;renderIntake()}
+}
+
+/* timer */
+const TK=()=>'loops.timer.'+D.active.id;
+function loadT(){try{T=JSON.parse(localStorage.getItem(TK()))}catch(e){T=null}if(!T)T={phase:'idle',block:0,focusDone:0,lastCheck:Date.now()}}
+function saveT(){try{localStorage.setItem(TK(),JSON.stringify(T))}catch(e){}}
+const F=()=>D.active.focus_min, B=()=>D.active.break_min;
+const mmss=ms=>{const s=Math.max(0,Math.round(ms/1000));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};
+function startFocus(){T.phase='focus';T.endsAt=Date.now()+F()*60000;T.paused=null;saveT();renderClock()}
+function startBreak(min){T.phase='break';T.endsAt=Date.now()+min*60000;T.breakLen=min;saveT();showBreak()}
+function endFocus(early){
+  const done=early?Math.round((F()*60000-(T.endsAt-Date.now()))/60000):F();
+  T.focusDone+=Math.max(0,done);T.block++;saveT();
+  notify('Focus block done','Time for a '+B()+' minute break.');
+  if(!fopen())openFocus();
+  startBreak(B());
+}
+const C2=2*Math.PI*84;
+function renderClock(){
+  const el=$('clock');if(!el)return;
+  const counting=!F();
+  let num,phase,sub,btns,frac=0,brk=false;
+  if(counting){
+    const mins=Math.round((Date.now()-new Date(D.active.started))/60000);
+    num=`${Math.floor(mins/60)}:${String(mins%60).padStart(2,'0')}`;phase='Working, no timer';sub='It checks in with you every hour.';frac=(mins%60)/60;
+    btns='<button class="btn" id="ckin">Check in now</button>';
+  }else if(T.phase==='focus'){
+    const left=T.paused!=null?T.paused:T.endsAt-Date.now();frac=1-left/(F()*60000);
+    num=mmss(left);phase=`Focus block ${T.block+1}`+(T.paused!=null?', paused':'');
+    sub=T.paused!=null?'Paused.':`Break at ${hm(T.endsAt)}.`;
+    btns=`<button class="btn dark" id="pp">${T.paused!=null?'Resume':'Pause'}</button><button class="btn" id="early">Take the break now</button>`;
+  }else{
+    num=mmss(F()*60000);phase=T.block?`Ready for block ${T.block+1}`:'Ready when you are';
+    sub=`${F()} min focus, ${B()} min breaks.`+(T.focusDone?` ${T.focusDone} min focused so far.`:'');
+    btns='<button class="btn dark" id="go">Start focus block</button>';
+  }
+  const sig=phase+btns;
+  if(el.dataset.sig!==sig){
+    el.dataset.sig=sig;
+    el.innerHTML=`<div class="clock${brk?' brk':''}"><div class="dial"><svg viewBox="0 0 200 200"><circle class="trk" cx="100" cy="100" r="84" fill="none" stroke-width="12"/>
+      <circle class="arc" id="arc" cx="100" cy="100" r="84" fill="none" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C2}" stroke-dashoffset="${C2}"/></svg><div class="num" id="cnum"></div></div>
+      <div><p class="phase">${phase}</p><p class="sub">${sub}</p><div class="acts" style="margin-top:0">${btns}</div></div></div>`;
+    if($('go'))$('go').onclick=startFocus;
+    if($('pp'))$('pp').onclick=()=>{if(T.paused!=null){T.endsAt=Date.now()+T.paused;T.paused=null}else T.paused=T.endsAt-Date.now();saveT();renderClock()};
+    if($('early'))$('early').onclick=()=>endFocus(true);
+    if($('ckin'))$('ckin').onclick=()=>checkin();
+  }
+  $('cnum').textContent=num;
+  $('arc').style.strokeDashoffset=String(C2*(1-Math.max(0,Math.min(1,frac))));
+}
+setInterval(()=>{
+  if(!D||!D.active||!T)return;
+  if(T.phase==='focus'&&T.paused==null&&Date.now()>=T.endsAt)endFocus(false);
+  else if(T.phase==='break'){const l=T.endsAt-Date.now();const n=$('bnum');if(n)n.textContent=mmss(l);if(l<=0){T.phase='idle';saveT();notify('Break over','How is it going?');checkin()}}
+  if(!F()&&Date.now()-T.lastCheck>=3600000){T.lastCheck=Date.now();saveT();notify('Loops','Hour check-in');checkin()}
+  if(fopen())renderClock();
+},1000);
+
+function fx(html){$('fxbox').innerHTML=html;const f=$('fx');const was=f.hidden;f.hidden=false;if(was)anim(f,[{opacity:0},{opacity:1}],{duration:300});anim($('fxbox'),[{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:360})}
+function closeFx(){$('fx').hidden=true}
+function wellbeing(){const m=T.focusDone;return m>=120?'Eat something before the next block.':m>=60?'Drink some water and stand up for a minute.':'Look away from the screen and stretch.'}
+function showBreak(){
+  fx(`<div class="big" id="bnum">${mmss(T.endsAt-Date.now())}</div><h2>Break. ${T.focusDone} min focused so far.</h2><p>${wellbeing()}</p>
+    <div class="srow"><button class="btn" id="bend">End break early</button></div>`);
+  $('bend').onclick=()=>{T.phase='idle';saveT();checkin()};
+}
+function checkin(){
+  if(!fopen())openFocus();
+  fx(`<h2>How's it going?</h2><div class="choices">
+    <button data-m="good">Good, keep going</button><button data-m="stuck">I'm stuck</button><button data-m="tired">I'm tired</button><button data-m="done">Done for today</button></div>`);
+  $('fxbox').querySelector('.choices').onclick=async e=>{
+    const b=e.target.closest('button');if(!b)return;const mood=b.dataset.m;
+    if(mood==='done'){closeFx();return endSession()}
+    let r;try{r=await api('/api/session/checkin',{method:'POST',body:{mood,focus_minutes:T.focusDone}})}catch(err){closeFx();return toast(err.message)}
+    const offer=r.offer?`<button class="btn dark" id="oyes">Yes, do it next</button><button class="btn" id="ono">Not now</button>`:'';
+    const nextBtn=mood==='tired'?`<button class="btn dark" id="obreak">Start a ${r.break_min} minute break</button>`
+      :mood==='stuck'?'<button class="btn dark" id="ohelp">Ask the helper</button>'
+      :F()?'<button class="btn dark" id="ogo">Start the next block</button>':'<button class="btn dark" id="oclose">Back to it</button>';
+    fx(`<h2>${mood==='good'?'Nice.':mood==='stuck'?'Let\'s get you unstuck.':'Okay.'}</h2><p>${esc(r.message)}</p><div class="srow">${offer||nextBtn}</div>`);
+    const wire=()=>{
+      if($('ogo'))$('ogo').onclick=()=>{closeFx();startFocus()};
+      if($('oclose'))$('oclose').onclick=closeFx;
+      if($('obreak'))$('obreak').onclick=()=>startBreak(r.break_min);
+      if($('ohelp'))$('ohelp').onclick=()=>{closeFx();$('hin').focus()};
+    };
+    const after=()=>{$('fxbox').querySelector('.srow').innerHTML=nextBtn;wire()};
+    if(r.offer){$('oyes').onclick=()=>{setNow(r.offer.summary);after()};$('ono').onclick=after}else wire();
+  };
+}
+function setNow(text){try{localStorage.setItem('loops.now.'+D.active.id,text||'')}catch(e){}fill()}
+function getNow(){try{return localStorage.getItem('loops.now.'+D.active.id)||''}catch(e){return ''}}
+
+function buildSession(){
+  built=D.active.id;
+  const s=D.active;
+  $('fview').innerHTML=`<div class="grid"><div>
+      <div class="shead"><p class="ctx" id="since" style="color:var(--muted);margin:0"></p><h1>${esc(s.title)}</h1>
+        <ul class="objs">${s.objectives.map(o=>`<li>${esc(o)}</li>`).join('')}</ul></div>
+      <section id="clock"></section>
+      <div id="nowbox"></div>
+      <div id="tally"></div>
+      <section class="panel around" id="aroundSec" hidden><h2>Around you</h2><p class="explain">Things outside this session that might need you.</p><ul id="around"></ul></section>
+      ${s.kind==='apply'?`<section class="panel"><h2>Applications</h2>
+        ${s.steps.length?`<p class="explain">For each one: ${s.steps.map(x=>esc(x.replace(/\.$/,''))).join('; ')}.</p>`:''}
+        <div class="addapp"><textarea id="appin" placeholder="Paste a job link, or the full job description"></textarea>
+        <div class="srow"><button class="btn pri" id="appgo">${s.research?'Research it':'Add it'}</button><span class="nums" id="appstate"></span></div></div>
+        <div id="apps"></div></section>`:''}
+      <div class="srow" style="margin-top:22px"><button class="btn" id="endbtn">End session</button></div>
+    </div>
+    <aside class="helper"><h2>Helper</h2><p class="hint">Ask about a role, a concept, or how to answer a question. <span id="cvh"></span></p>
+      <div id="ctxchip"></div><div class="msgs" id="hmsgs"></div>
+      <div class="inrow"><textarea id="hin" placeholder="Ask anything"></textarea><button class="mic" id="hmic" aria-label="Dictate a question">${MIC}</button></div>
+      <div class="srow" style="margin-top:8px"><button class="add" id="hsend">Ask</button><span class="nums" id="hstate"></span></div></aside></div>`;
+  anim($('fview').firstElementChild,[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{duration:380});
+  $('endbtn').onclick=endSession;
+  attachMic($('hmic'),$('hin'));
+  $('hsend').onclick=ask;
+  $('hin').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask()}});
+  if($('appgo'))$('appgo').onclick=addApp;
+  renderClock();
+}
+function fill(){
+  if(!$('since'))return;
+  const s=D.active;
+  $('since').textContent=`Focus session, ${D.elapsed_min} min in`;
+  const now=getNow();
+  $('nowbox').innerHTML=now?`<p class="focusnow">Now: ${esc(now)}. <button class="link" id="nowclear">Back to the plan</button></p>`:'';
+  if($('nowclear'))$('nowclear').onclick=()=>setNow('');
+  if(s.kind==='apply'){
+    const n=s.target||Math.max(D.submitted+1,3);
+    $('tally').innerHTML=`<div class="tally">${Array.from({length:n},(_,i)=>`<span class="${i<D.submitted?'on':''}"></span>`).join('')}
+      <b>${D.submitted}${s.target?' of '+s.target:''} submitted</b><em>${esc(D.pace)}</em></div>`;
+  }
+  const items=[
+    ...D.events.map(e=>`<li><div><div>${esc(e.title)}</div><div class="w">In your calendar</div></div><div>${hm(e.start)}</div></li>`),
+    ...D.assessments.map(a=>`<li><div><div>${esc(a.summary)}</div><div class="w">Due ${new Date(a.due).toLocaleDateString([], {weekday:'long'})} ${hm(a.due)}, about ${Math.round((a.effort_h||1)*60)} min</div></div><button class="link" data-now="${esc(a.summary)}">Do it next</button></li>`),
+    ...D.other.map(o=>`<li><div><div>${esc(o.summary)}</div><div class="w">${esc(o.why)}</div></div></li>`)];
+  $('aroundSec').hidden=!items.length;$('around').innerHTML=items.join('');
+  $('around').querySelectorAll('[data-now]').forEach(b=>b.onclick=()=>setNow(b.dataset.now));
+  $('cvh').innerHTML=D.cv?`Using ${esc(D.cv)}. <button class="link" id="cvbtn2">Replace CV</button>`:'<button class="link" id="cvbtn2">Upload your CV</button> for tailored answers.';
+  $('cvbtn2').onclick=pickCV;
+  if($('apps'))renderApps();
+  renderHelper();
+}
+function list(title,arr){return arr&&arr.length?`<div><h4>${title}</h4><ul>${arr.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+function renderApps(){
+  const apps=[...D.apps].reverse();
+  $('apps').innerHTML=apps.length?apps.map(a=>{
+    const r=a.research, sub=a.status==='submitted', skip=a.status==='skipped';
+    return `<article class="app${sub||skip?' sub':''}"><h3>${esc(a.role)}</h3><p class="co">${esc(a.company)}${a.url?` <a class="link" href="${esc(a.url)}" target="_blank" rel="noopener">Open job</a>`:''}</p>
+      ${sub||skip?`<p class="stag">${sub?'Submitted. It will watch for their reply and remind you to chase in 10 days.':'Skipped'}</p>`:`
+      <div class="rs">${r?`${r.summary?`<p>${esc(r.summary)}</p>`:''}${list('What they want most',r.top_requirements)}${list('Where you match',r.match)}${list('Gaps to address',r.gaps)}
+        ${list('For “why this company”',r.talking_points)}${r.watch_out?`<div><h4>Watch out</h4><p>${esc(r.watch_out)}</p></div>`:''}${r.deadline?`<p><b>Deadline:</b> ${esc(r.deadline)}</p>`:''}`
+        :'<p class="nums">No research on this one. Ask the helper anything about it.</p>'}</div>
+      <div class="acts"><button class="btn pri" data-sub="${a.id}">Mark submitted</button><button class="btn" data-ask="${a.id}">Ask about this role</button><button class="btn ghost" data-skip="${a.id}">Skip it</button></div>`}
+    </article>`}).join(''):'<p class="nums" style="margin-top:12px">Paste your first job above to start.</p>';
+  $('apps').querySelectorAll('[data-sub]').forEach(b=>b.onclick=async()=>{await api('/api/apps/'+b.dataset.sub,{method:'POST',body:{status:'submitted'}});toast('Submitted. It will watch for their reply.');loadFocus()});
+  $('apps').querySelectorAll('[data-skip]').forEach(b=>b.onclick=async()=>{await api('/api/apps/'+b.dataset.skip,{method:'POST',body:{status:'skipped'}});loadFocus()});
+  $('apps').querySelectorAll('[data-ask]').forEach(b=>b.onclick=()=>{focusApp=+b.dataset.ask;renderHelper();$('hin').focus()});
+}
+async function addApp(){
+  const v=$('appin').value.trim();if(!v)return toast('Paste a job link or description first.');
+  $('appgo').disabled=true;$('appstate').textContent=D.active.research?'Reading the job and researching the company. This can take 20 to 40 seconds.':'Adding';
+  try{const r=await api('/api/apps',{method:'POST',body:{input:v}});$('appin').value='';focusApp=r.id;
+    toast(r.researched?`Researched: ${r.role} at ${r.company}`:`Added: ${r.role}`);await loadFocus()}
+  catch(e){toast(e.message)}finally{$('appgo').disabled=false;$('appstate').textContent=''}
+}
+function renderHelper(){
+  const a=focusApp&&D.apps.find(x=>x.id===focusApp);
+  $('ctxchip').innerHTML=a?`<span class="pchip">About: ${esc(a.role)} at ${esc(a.company)} <button aria-label="Clear">×</button></span>`:'';
+  if(a)$('ctxchip').querySelector('button').onclick=()=>{focusApp=null;renderHelper()};
+  const m=$('hmsgs');
+  m.innerHTML=D.helper.length?D.helper.map(x=>`<div class="msg ${x.role==='you'?'you':'coach'}">${esc(x.text)}</div>`).join('')
+    :'<div class="msg coach">I\'m here while you work. Paste a job and I\'ll research it, or ask me anything.</div>';
+  m.scrollTop=m.scrollHeight;
+}
+async function ask(){
+  const q=$('hin').value.trim();if(!q)return;stopAllMics();
+  D.helper.push({role:'you',text:q});$('hin').value='';renderHelper();$('hstate').textContent='Thinking';
+  try{const r=await api('/api/helper',{method:'POST',body:{question:q,app_id:focusApp}});D.helper.push({role:'coach',text:r.answer});renderHelper()}
+  catch(e){toast(e.message)}finally{$('hstate').textContent=''}
+}
+async function endSession(){
+  let r;try{r=await api('/api/session/end',{method:'POST'})}catch(e){return toast(e.message)}
+  try{localStorage.removeItem(TK());localStorage.removeItem('loops.now.'+D.active.id)}catch(e){}
+  built=null;closeFx();D.active=null;T=null;
+  $('fview').innerHTML=`<section class="intake"><p class="ctx">Session done</p><h1>${esc(r.summary)}</h1>
+    ${r.submitted.length?`<ul class="objs">${r.submitted.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><p class="nums" style="margin-top:12px">Each one is on your list as waiting to hear back. It will spot their reply in your inbox.</p>`:''}
+    <div class="srow"><button class="btn pri" id="fdone">Back to your list</button><button class="btn" id="again">Start another</button></div></section>`;
+  $('fdone').onclick=closeFocus;$('again').onclick=()=>loadFocus();
+}
+setInterval(()=>{if(fopen()&&D&&D.active&&!['TEXTAREA','INPUT'].includes(document.activeElement.tagName))loadFocus()},60000);
+
+remLabel();
+refresh().then(()=>{
+  if(location.hash==='#focus'||location.pathname==='/session')openFocus();
+  else if(S&&S.session)loadFocus();   // keep the timer running in the background
+});
 })();
 </script>
 </body>

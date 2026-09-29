@@ -21,6 +21,8 @@ Reply ONLY with JSON:
                 "options": ["2 to 4 short options, choice only"],
                 "use": "outcome" (how it went) | "next_loop" (answer is something to do next) | "note" | "effort" (took longer or shorter)}]}"""
 
+NOTES_Q = {"question": "What did you talk about? Rough notes are fine, and I'll write it up with a thank-you note.",
+           "kind": "text", "use": "interview_notes"}
 EFFORT_OPTIONS = ["Quicker than planned", "About as planned", "Longer than planned"]
 
 
@@ -40,10 +42,12 @@ def _happened(loop):
 
 
 def _rules(loop):
+    from .interviews import is_interview
     s = f"{loop['summary']} {loop['stakes'] or ''}".lower()
     f = []
     if re.search(r"\binterview", s):
         f = [{"question": "How did it go?", "kind": "choice", "options": ["Well", "Okay", "Not great"], "use": "outcome"},
+             NOTES_Q if is_interview(loop) else
              {"question": "Anything to follow up on, like a thank-you note or next round?", "kind": "text", "use": "next_loop"}]
     elif re.search(r"\b(client|meeting|pitch|demo|stakeholder)\b", s):
         f = [{"question": "Anything to remember or do before the next meeting?", "kind": "text", "use": "next_loop"}]
@@ -66,6 +70,9 @@ def closing_questions(loop):
                 q["options"] = EFFORT_OPTIONS
             fu.append({"question": q["question"], "kind": q.get("kind", "text"),
                        "options": q.get("options", [])[:4], "use": q.get("use", "note")})
+        from .interviews import is_interview
+        if is_interview(loop):
+            fu = [q for q in fu if q["use"] != "next_loop"][:1] + [NOTES_Q]
         out = {"happened": d.get("happened") or _happened(loop), "followups": fu}
     except Exception:
         out = _rules(loop)

@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from email.utils import parseaddr
 
 from ..config import GMAIL_CREDENTIALS, GMAIL_TOKEN
+from ..leads import is_job_alert
 from ..models import Message
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/calendar.readonly"]
@@ -66,8 +67,8 @@ class GmailConnector:
             h = {x["name"].lower(): x["value"] for x in m["payload"].get("headers", [])}
             name, addr = parseaddr(h.get("from", ""))
             addr = addr.lower()
-            if "list-unsubscribe" in h and addr != me:
-                continue  # newsletters and bulk mail never create loops
+            if "list-unsubscribe" in h and addr != me and not is_job_alert(addr, name, h.get("subject", "")):
+                continue  # newsletters and bulk mail never create loops; job alerts become leads
             out.append(Message(
                 source="gmail", msg_id=mid, thread_id=m["threadId"], sender=addr,
                 sender_name=name or addr, is_from_me=(addr == me),
