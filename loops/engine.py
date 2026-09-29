@@ -265,6 +265,8 @@ def plan(rows):
 
 
 # ---------------------------------------------------------------- orchestration
+SOURCES = {}  # last check per account, shown at the top of the page: {name: {ok, at, count | error}}
+
 def sync(store, connectors, decide, extract=default_extract):
     # Look back far enough that unanswered requests can age into 'waiting' loops
     since = utcnow() - timedelta(days=LOOKBACK_DAYS + WAITING_DAYS)
@@ -272,8 +274,10 @@ def sync(store, connectors, decide, extract=default_extract):
         try:
             msgs = c.fetch(since)
             store.upsert_messages(msgs)
+            SOURCES[c.name] = {"ok": True, "at": utcnow().isoformat(), "count": len(msgs)}
             print(f"{c.name}: {len(msgs)} messages")
         except Exception as e:
+            SOURCES[c.name] = {"ok": False, "at": utcnow().isoformat(), "error": str(e)[:200]}
             print(f"{c.name}: skipped ({e})")
     new = []
     for source, thread_id in store.recent_threads(since):

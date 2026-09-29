@@ -99,3 +99,31 @@ def test_interview_write_up(tmp_path, monkeypatch):
     assert w["title"] == "Deloitte interview" and "real-time fraud models" in w["thank_you"]
     assert any("Friday" in f for f in w["follow_ups"])
     assert any("thank-you" in x["summary"] for x in r["created"])
+
+
+def test_account_status_and_custom_focus(tmp_path, monkeypatch):
+    c, db = client(tmp_path, monkeypatch)
+    from loops import config as C
+    from loops import engine
+    monkeypatch.setattr(C, "CONNECTORS", ["gmail", "slack"])
+    monkeypatch.setattr(engine, "SOURCES", {})
+
+    class Ok:
+        name = "gmail"
+        def fetch(self, since): return []
+
+    class Broken:
+        name = "slack"
+        def fetch(self, since): raise RuntimeError("set SLACK_USER_TOKEN in .env")
+
+    engine.sync(db(), [Ok(), Broken()], __import__("loops.decisions", fromlist=["x"]).RuleDecisions())
+    src = {x["name"]: x for x in c.get("/api/state").json()["sources"]}
+    assert src["gmail"]["state"] == "ok" and src["gmail"]["count"] == 0 and src["gmail"]["at"]
+    assert src["slack"]["state"] == "error" and ".env" in src["slack"]["fix"]
+    monkeypatch.setattr(C, "CONNECTORS", [])  # the session view reads calendars; keep it offline
+
+    kinds = [o["value"] for o in c.get("/api/session/intake").json()["questions"][0]["options"]]
+    assert kinds[-1] == "custom"
+    c.post("/api/session/start", json={"answers": {"kind": "custom", "which": "write the follow-up email to Priya",
+                                                   "minutes": "30", "rhythm": "25/5"}})
+    assert c.get("/api/session").json()["active"]["title"] == "Write the follow-up email to Priya"

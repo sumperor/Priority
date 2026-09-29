@@ -62,7 +62,8 @@ INTAKE = [
     {"id": "kind", "q": "What do you want to get done in this session?", "type": "choice",
      "options": [{"label": "Apply to jobs", "value": "apply"}, {"label": "Complete an assessment", "value": "assessment"},
                  {"label": "Prepare for an interview", "value": "interview"},
-                 {"label": "Learn a skill for my applications", "value": "upskill"}]},
+                 {"label": "Learn a skill for my applications", "value": "upskill"},
+                 {"label": "Something else", "value": "custom"}]},
     {"id": "target", "q": "How many applications are you aiming for?", "type": "choice", "when": {"kind": "apply"},
      "options": [{"label": "3", "value": "3"}, {"label": "5", "value": "5"}, {"label": "10", "value": "10"},
                  {"label": "As many as I can", "value": "0"}]},
@@ -74,6 +75,8 @@ INTAKE = [
      "placeholder": "e.g. CIL first round, Thursday 10am"},
     {"id": "which", "q": "What do you want to learn, and what's it for?", "type": "text", "when": {"kind": "upskill"},
      "placeholder": "e.g. SQL window functions for data analyst tests"},
+    {"id": "which", "q": "What do you want to get done?", "type": "text", "when": {"kind": "custom"},
+     "placeholder": "e.g. Write the follow-up email to Priya"},
     {"id": "minutes", "q": "How long have you got?", "type": "choice",
      "options": [{"label": "30 minutes", "value": "30"}, {"label": "1 hour", "value": "60"},
                  {"label": "2 hours", "value": "120"}, {"label": "Until it's done", "value": "0"}]},
@@ -107,6 +110,11 @@ def _objectives_fallback(a):
         return {"title": f"Complete {which or 'the assessment'}",
                 "objectives": ["Do one practice question to warm up", "Complete it in one sitting, somewhere quiet",
                                "Note what came up, for next time"], "steps": []}
+    if kind == "custom":
+        what = which[:1].upper() + which[1:] if which else "Get one thing done"
+        return {"title": what,
+                "objectives": ["Start with the smallest first step", "Finish it in this session",
+                               "Tick it off on your list when it's done"], "steps": []}
     if kind == "interview":
         return {"title": f"Prepare for {which or 'the interview'}",
                 "objectives": ["Research the company's recent news and deals", "Prepare 3 STAR stories matched to the role",

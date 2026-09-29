@@ -43,6 +43,26 @@ def _run_sync():
         _sync_state["last"] = datetime.now(timezone.utc).isoformat()
 
 
+def _sources():
+    """Per account: when it was last checked, and whether that worked."""
+    from .connectors import ALL
+    from .engine import SOURCES
+    names = {"gmail": "Gmail", "outlook": "Outlook", "slack": "Slack"}
+    out = []
+    for n in C.CONNECTORS:
+        if n not in ALL:
+            continue
+        st = SOURCES.get(n)
+        state = ("checking" if _sync_state["running"] and not st else "waiting" if not st
+                 else "ok" if st["ok"] else "error")
+        err = (st or {}).get("error", "")
+        fix = (f"Connect it in Terminal: python run.py auth {n}" if "auth" in err or "authori" in err.lower()
+               else f"Add the missing setting to .env" if "set " in err else "")
+        out.append({"name": n, "label": names.get(n, n), "state": state, "at": (st or {}).get("at"),
+                    "count": (st or {}).get("count"), "error": err, "fix": fix})
+    return out
+
+
 def _scheduler():
     while True:
         _run_sync()
@@ -77,7 +97,7 @@ def state():
         l["evidence"] = json.loads(l["evidence"]) if l.get("evidence") else None
     celebrate = [l for l in closed if l["outcome"] == "evidence" and not l.get("acked")]
     return {"loops": loops, "closed": closed, "celebrate": celebrate, "leads": shown(s), "areas": AREAS,
-            "sync_every": C.AUTO_SYNC_MINUTES, "accuracy": s.accuracy(), "sync": _sync_state,
+            "sync_every": C.AUTO_SYNC_MINUTES, "sources": _sources(), "accuracy": s.accuracy(), "sync": _sync_state,
             "connectors": C.CONNECTORS, "ai": bool(os.getenv("ANTHROPIC_API_KEY")),
             "last_msg": {str(r["loop_id"]): r["text"] for r in s.db.execute(
                 "SELECT loop_id, text FROM chat WHERE id IN (SELECT MAX(id) FROM chat WHERE role='agent' GROUP BY loop_id)")},
@@ -488,5 +508,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Loops v0.9 running at http://127.0.0.1:{C.PORT}")
+    print(f"Loops v0.10 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")
