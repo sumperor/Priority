@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Loops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F5;--surface:#FFFFFF;--ink:#14213D;--muted:#5B6478;--line:#D9DEE7;
+  --close:#0F7B6C;--close-ink:#FFFFFF;--late:#C2410C;--soon:#A86B0C;--ok:#0F7B6C;--soft:#E3E8EF;
+  --font:"Bricolage Grotesque",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1626;--surface:#16213A;--ink:#E8ECF4;--muted:#98A2B8;--line:#26324D;
+    --close:#3CC4AE;--close-ink:#07201C;--late:#F07A4A;--soon:#E0B04A;--ok:#3CC4AE;--soft:#1D2A45;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1626;--surface:#16213A;--ink:#E8ECF4;--muted:#98A2B8;--line:#26324D;
+  --close:#3CC4AE;--close-ink:#07201C;--late:#F07A4A;--soon:#E0B04A;--ok:#3CC4AE;--soft:#1D2A45;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;font-optical-sizing:auto}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--close);outline-offset:2px;border-radius:6px}
+.wrap{max-width:680px;margin:0 auto;padding:22px 20px 170px}
+
+/* top bar */
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.date{font-size:.95rem;color:var(--muted)}
+.tools{display:flex;gap:14px;align-items:baseline;font-size:.88rem;color:var(--muted);flex-wrap:wrap}
+.link{border:0;background:none;padding:0;color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.link:hover{text-decoration-color:var(--ink)}
+.warn{color:var(--soon)}
+
+/* the one next action */
+.next{margin:34px 0 8px}
+.next .lead{margin:0 0 6px;color:var(--muted);font-size:.95rem}
+.next h1{margin:0;font-size:clamp(2rem,6vw,3.1rem);line-height:1.04;font-weight:750;letter-spacing:-.025em;max-width:18ch;font-variation-settings:"opsz" 96}
+.next .why{margin:14px 0 0;font-size:1.06rem;max-width:52ch;color:var(--ink)}
+.next .why.lvl-late{color:var(--late)}
+.nextActs{display:flex;align-items:center;gap:18px;margin-top:22px;flex-wrap:wrap}
+.closer{display:inline-flex;align-items:center;gap:12px;border:0;background:var(--close);color:var(--close-ink);
+  padding:10px 22px 10px 10px;border-radius:999px;font-weight:650;font-size:1.02rem}
+.closer .ring{width:34px;height:34px;border-radius:50%;border:3px solid currentColor;opacity:.9;display:grid;place-items:center}
+.closer .ring::after{content:"";width:12px;height:12px;border-radius:50%;background:currentColor;transform:scale(0);transition:transform .2s}
+.closer:hover .ring::after{transform:scale(1)}
+.textbtn{border:0;background:none;padding:6px 2px;color:var(--muted);font-weight:600}
+.textbtn:hover{color:var(--ink)}
+.empty-next h1{color:var(--muted)}
+
+/* plan timeline */
+.sec{margin-top:44px}
+.sec h2{margin:0 0 10px;font-size:1.02rem;font-weight:650;letter-spacing:-.005em}
+.sec h2 small{font-weight:400;color:var(--muted);margin-left:6px;font-size:.9rem}
+ol.plan,ul.list{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:62px 18px 1fr auto;column-gap:12px;align-items:start;padding:12px 0}
+.row .when{text-align:right;font-weight:600;font-size:.95rem;padding-top:1px}
+.row .when small{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
+.rail{position:relative;height:100%;min-height:44px}
+.rail::before{content:"";position:absolute;left:8px;top:-12px;bottom:-12px;width:2px;background:var(--line)}
+.plan .row:first-child .rail::before{top:9px}
+.plan .row:last-child .rail::before{bottom:auto;height:21px}
+.rail .dot{position:absolute;left:3px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--surface);border:3px solid var(--muted)}
+.lvl-late .dot{border-color:var(--late)} .lvl-soon .dot{border-color:var(--soon)} .lvl-ok .dot{border-color:var(--ok)}
+.lvl-late .when{color:var(--late)} .lvl-soon .when{color:var(--soon)}
+.body{min-width:0;cursor:pointer}
+.title{margin:0;font-weight:600;font-size:1.02rem;overflow-wrap:anywhere}
+.whyline{margin:2px 0 0;color:var(--muted);font-size:.9rem}
+.more{display:none;margin-top:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;font-size:.9rem}
+.open .more{display:block}
+.more p{margin:0 0 6px}
+.more .nums{color:var(--muted);font-size:.84rem}
+.more .acts{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
+.tick{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:var(--surface);margin-top:2px;display:grid;place-items:center;color:var(--close)}
+.tick:hover{border-color:var(--close)}
+.tick svg{opacity:0;transition:opacity .15s}
+.tick:hover svg,.tick:focus-visible svg{opacity:1}
+.plain .row{grid-template-columns:62px 1fr auto}
+.plain .rail{display:none}
+.plain .row + .row{border-top:1px solid var(--line)}
+.muted-note{color:var(--muted);font-size:.92rem;margin:4px 0 0}
+details.closed{margin-top:44px}
+details.closed summary{cursor:pointer;font-weight:650;list-style:none}
+details.closed summary::-webkit-details-marker{display:none}
+details.closed summary::after{content:" +";color:var(--muted)}
+details.closed[open] summary::after{content:" \2212"}
+.done .title{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+
+/* composer */
+.composer{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
+  background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+.composer .in{max-width:680px;margin:0 auto;display:flex;gap:10px;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:8px 8px 8px 16px}
+.composer textarea{flex:1;border:0;background:transparent;resize:none;outline:none;font-size:1.02rem;line-height:1.4;padding:7px 0;max-height:120px}
+.composer textarea::placeholder{color:var(--muted)}
+.mic{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:transparent;display:grid;place-items:center;flex:none}
+.mic.on{background:var(--late);border-color:var(--late);color:#fff}
+.add{border:0;background:var(--ink);color:var(--bg);border-radius:999px;padding:0 18px;height:40px;font-weight:650;flex:none}
+.add:disabled{opacity:.35;cursor:default}
+.composer .state{max-width:680px;margin:6px auto 0;font-size:.82rem;color:var(--muted);min-height:1.1em;padding-left:16px}
+
+/* step sheet */
+.scrim{position:fixed;inset:0;background:rgba(8,14,28,.42);z-index:10}
+.sheet{position:fixed;z-index:11;left:50%;bottom:0;transform:translateX(-50%);width:min(520px,100%);max-height:90vh;overflow-y:auto;
+  background:var(--surface);border-radius:22px 22px 0 0;padding:22px 22px calc(24px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(8,14,28,.18)}
+@media (min-width:720px){.sheet{bottom:auto;top:50%;transform:translate(-50%,-50%);border-radius:22px}}
+.progress{height:3px;background:var(--soft);border-radius:3px;margin:0 0 18px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--close);transition:width .25s}
+.sheet .ctx{margin:0 0 4px;color:var(--muted);font-size:.9rem}
+.sheet h2{margin:0 0 18px;font-size:1.55rem;line-height:1.15;font-weight:700;letter-spacing:-.015em}
+.choices{display:grid;gap:8px}
+.choices button{text-align:left;border:1px solid var(--line);background:var(--bg);padding:14px 16px;border-radius:14px;font-weight:550;font-size:1rem}
+.choices button:hover{border-color:var(--ink)}
+.sheet textarea,.field input,.field select{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:12px;font-size:1rem}
+.sheet textarea{min-height:92px;resize:vertical}
+.srow{display:flex;gap:12px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.primary{border:0;background:var(--close);color:var(--close-ink);padding:11px 22px;border-radius:999px;font-weight:650}
+.field{display:block;margin:0 0 12px}
+.field span{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+.check{display:flex;gap:8px;align-items:center;margin:0 0 12px}
+.stat{padding:14px 0;border-top:1px solid var(--line)}
+.stat b{font-size:1.6rem;display:block;letter-spacing:-.02em}
+.stat span{color:var(--muted);font-size:.9rem}
+.loading{color:var(--muted)}
+
+.say{margin:18px 0 0;padding:12px 14px;border-left:3px solid var(--close);background:var(--surface);border-radius:0 12px 12px 0;max-width:56ch}
+.say p{margin:0}
+.say .srow{margin-top:8px}
+.explain{margin:-4px 0 10px;color:var(--muted);font-size:.88rem;max-width:60ch}
+.rowbtns{display:flex;gap:8px;margin-top:2px}
+.pen{width:30px;height:30px;border-radius:50%;border:1px solid transparent;background:none;display:grid;place-items:center;color:var(--muted)}
+.pen:hover{border-color:var(--line);color:var(--ink)}
+.msgs{display:flex;flex-direction:column;gap:8px;margin:0 0 14px;max-height:46vh;overflow-y:auto}
+.msg{max-width:85%;padding:10px 13px;border-radius:16px;font-size:.96rem;line-height:1.4}
+.msg.agent{background:var(--bg);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px}
+.msg.you{background:var(--ink);color:var(--bg);align-self:flex-end;border-bottom-right-radius:4px}
+.quick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.quick button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:7px 12px;font-size:.88rem;font-weight:550}
+.quick button:hover{border-color:var(--ink)}
+.inrow{display:flex;gap:8px;align-items:flex-end}
+.inrow textarea{min-height:48px;flex:1}
+.fix{padding:14px;border:1px solid var(--line);border-radius:14px;margin:0 0 18px;background:var(--bg)}
+.fix textarea{background:var(--surface);min-height:60px}
+.fix .note{margin:0 0 8px;font-size:.9rem;color:var(--muted)}
+#toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);background:var(--ink);color:var(--bg);
+  padding:10px 16px;border-radius:999px;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:480px){.row{grid-template-columns:50px 16px 1fr auto;column-gap:10px}.plain .row{grid-template-columns:50px 1fr auto}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <div class="date" id="date"></div>
+    <div class="tools"><a class="link" id="sess" href="/session" style="color:var(--close)">Start a job-hunt session</a><span id="syncinfo"></span><button class="link" id="sync">Sync</button><button class="link" id="rem">Reminders</button><button class="link" id="acc">Accuracy</button><button class="link" id="hear">Hear brief</button></div>
+  </header>
+
+  <section class="next" id="next" aria-live="polite"></section>
+
+  <section class="sec" id="planSec" hidden><h2>Then</h2><p class="explain">The rest of your plan, in the order it suggests doing them.</p><ol class="plan" id="plan"></ol></section>
+  <section class="sec" id="confirmSec" hidden><h2>Probably done</h2><p class="explain">It saw a sign these are finished, like a reply you sent. Confirm, or keep them open.</p><ul class="list plain" id="confirm"></ul></section>
+  <section class="sec" id="waitSec" hidden><h2>Waiting on others</h2><p class="explain">People who owe you something. It tells you when to chase them.</p><ul class="list plain" id="wait"></ul></section>
+  <details class="closed" id="closedSec" hidden><summary id="closedSum">Closed recently</summary><p class="explain" style="margin-top:8px">Finished or dropped loops, with what you told it when you closed them.</p><ul class="list plain" id="closed"></ul></details>
+</main>
+
+<div class="composer">
+  <div class="in">
+    <textarea id="cap" rows="1" placeholder="What do you need to remember?"></textarea>
+    <button class="mic" id="mic" aria-label="Dictate">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+    </button>
+    <button class="add" id="add" disabled>Add</button>
+  </div>
+  <p class="state" id="capstate"></p>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const OUT={done:'Done',dropped:'Not needed',dismissed:'Not a task',auto:'Closed automatically',auto_confirmed:'Confirmed done',well:'Went well',partly:'Partly done',no:"Didn't happen"};
+const TICK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
+const PEN='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+const MIC='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+let S=null, expanded=new Set(), pollT=null;
+
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3000)}
+async function api(path,opts={}){
+  const r=await fetch(path,{headers:{'Content-Type':'application/json'},...opts,body:opts.body?JSON.stringify(opts.body):undefined});
+  if(!r.ok){let m='That didn\'t work. Check the Terminal window running Loops.';try{m=(await r.json()).detail||m}catch(e){}throw new Error(m)}
+  return r.json();
+}
+async function refresh(){
+  try{S=await api('/api/state');render()}
+  catch(e){$('next').innerHTML='<p class="lead">Loops isn\'t running</p><h1>Start it in Terminal with python run.py serve</h1>'}
+  clearTimeout(pollT);pollT=setTimeout(refresh,S&&S.sync.running?3000:30000);
+}
+const local=iso=>new Date(iso);
+const sameDay=(a,b)=>a.toDateString()===b.toDateString();
+function whenCell(l){
+  if(l.type==='waiting'){const d=local(l.due);return `${d.toLocaleDateString([], {weekday:'short'})}<small>chase</small>`}
+  const pressing=l.bucket!=='Later';
+  const d=local(pressing?l.forecast.latest_start:l.due), now=new Date();
+  if(l.forecast.level==='late')return `Now<small>${l.forecast.hours_left<0?'overdue':'tight'}</small>`;
+  const t=d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+  const day=sameDay(d,now)?'':(sameDay(d,new Date(now.getTime()+864e5))?'Tomorrow':d.toLocaleDateString([], {weekday:'short'}));
+  return pressing?`${day?day:t}<small>${day?t:'start by'}</small>`:`${d.toLocaleDateString([], {weekday:'short'})}<small>due</small>`;
+}
+
+function render(){
+  const L=S.loops;
+  const active=L.filter(l=>l.status==='open'&&l.type!=='waiting');
+  const wait=L.filter(l=>l.status==='open'&&l.type==='waiting');
+  const conf=L.filter(l=>l.status==='pending_close');
+  const hr=new Date().getHours();
+  $('date').textContent=(hr<12?'Good morning':hr<18?'Good afternoon':'Good evening')+', '+new Date().toLocaleDateString([], {weekday:'long',day:'numeric',month:'long'});
+  const sy=S.sync;
+  $('syncinfo').innerHTML=!S.ai?'<span class="warn">Smart parsing off: add your API key</span>':sy.running?'Syncing':sy.last?`Synced ${local(sy.last).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`:'';
+  $('sync').hidden=!S.connectors.length;
+  $('sess').textContent=S.session?'Resume session: '+S.session:'Start a job-hunt session';
+
+  const top=active[0];
+  if(!top){
+    $('next').className='next empty-next';
+    $('next').innerHTML=`<p class="lead">Nothing waiting on you</p><h1>Add anything you need to remember below.</h1>`;
+  }else{
+    $('next').className='next';
+    $('next').innerHTML=`<p class="lead">Do this next</p><h1>${esc(top.summary)}</h1>
+      <p class="why lvl-${top.forecast.level}">${esc(top.why||top.forecast.headline)}</p>
+      <div class="nextActs"><button class="closer" data-act="close" data-id="${top.id}"><span class="ring"></span>Close loop</button>
+      <button class="textbtn" data-act="edit" data-id="${top.id}">Edit</button>
+      <button class="textbtn" data-act="later" data-id="${top.id}">Not now</button>
+      <button class="textbtn" data-act="toggle" data-id="${top.id}">${expanded.has(top.id)?'Hide details':'Details'}</button></div>
+      ${S.last_msg[top.id]?`<div class="say"><p>${esc(S.last_msg[top.id])}</p><div class="srow"><button class="link" data-act="talk" data-id="${top.id}">Reply</button></div></div>`:''}
+      ${expanded.has(top.id)?`<div class="more" style="display:block;margin-top:16px">${details(top)}</div>`:''}`;
+  }
+  const rest=active.slice(1);
+  $('planSec').hidden=!rest.length;
+  $('plan').innerHTML=rest.map(l=>row(l,true)).join('');
+  $('confirmSec').hidden=!conf.length;
+  $('confirm').innerHTML=conf.map(l=>`<li class="row"><div class="when">${Math.round(100*(l.close_confidence||0))}%<small>sure</small></div>
+    <div class="body"><p class="title">${esc(l.summary)}</p><div class="more" style="display:block;background:none;border:0;padding:0;margin-top:6px"><div class="acts" style="margin:0">
+    <button class="link" data-act="confirm" data-id="${l.id}">Yes, it's done</button><button class="link" data-act="reject" data-id="${l.id}">Still open</button></div></div></div><span></span></li>`).join('');
+  $('waitSec').hidden=!wait.length;
+  $('wait').innerHTML=wait.map(l=>row(l,false)).join('');
+  $('closedSec').hidden=!S.closed.length;
+  $('closedSum').textContent=`Closed recently (${S.closed.length})`;
+  $('closed').innerHTML=S.closed.map(l=>`<li class="row done"><div class="when">${l.closed_at?local(l.closed_at).toLocaleDateString([], {weekday:'short'}):''}</div>
+    <div class="body"><p class="title">${esc(l.summary)}</p><p class="whyline">${esc(OUT[l.outcome]||l.outcome||'Closed')}${l.note?'. '+esc(l.note):''}</p></div>
+    <button class="textbtn" data-act="reopen" data-id="${l.id}">Reopen</button></li>`).join('');
+}
+function details(l){
+  const f=l.forecast;
+  return `<p><b>If missed:</b> ${esc(f.if_missed)}</p><p><b>If it slips a day:</b> ${esc(f.slip_1d)}</p>
+    <p class="nums">${Math.round(100*f.p_miss)}% chance of missing it. Takes about ${l.effort_adj}h. From ${esc(l.source==='manual'?'your notes':l.source)}.</p>
+    <div class="acts"><button class="link" data-act="talk" data-id="${l.id}">Talk about it</button><button class="link" data-act="dismiss" data-id="${l.id}">Not a task</button></div>`;
+}
+function row(l,rail){
+  return `<li class="row lvl-${l.forecast.level}${expanded.has(l.id)?' open':''}">
+    <div class="when">${whenCell(l)}</div>${rail?'<div class="rail"><span class="dot"></span></div>':''}
+    <div class="body" data-act="toggle" data-id="${l.id}"><p class="title">${esc(l.summary)}</p>
+      <p class="whyline">${esc(l.type==='waiting'?`Chase ${l.person||'them'} if nothing by ${local(l.due).toLocaleDateString([], {weekday:'long'})}`:l.bucket==='Later'?'When you have a gap':(l.why||''))}</p>
+      <div class="more">${details(l)}</div></div>
+    <div class="rowbtns"><button class="pen" data-act="edit" data-id="${l.id}" aria-label="Edit: ${esc(l.summary)}">${PEN}</button>
+    <button class="tick" data-act="close" data-id="${l.id}" aria-label="Close loop: ${esc(l.summary)}">${TICK}</button></div></li>`;
+}
+
+/* ---------- one question at a time ---------- */
+let pending=null;
+function closeS(){['scrim','sheet'].forEach(i=>{const x=$(i);if(x)x.remove()});if(pending){const p=pending;pending=null;p(null)}}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeS()});
+function frame(html){
+  ['scrim','sheet'].forEach(i=>{const x=$(i);if(x)x.remove()});
+  const s=document.createElement('div');s.className='scrim';s.id='scrim';s.onclick=closeS;
+  const d=document.createElement('div');d.className='sheet';d.id='sheet';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.innerHTML=html;
+  document.body.append(s,d);return d;
+}
+function step({ctx,q,kind='choice',options=[],n=1,of=1,skip=false,placeholder=''}){
+  return new Promise(res=>{
+    pending=res;
+    const bar=`<div class="progress"><i style="width:${Math.round(100*n/of)}%"></i></div>`;
+    const body=kind==='choice'
+      ?`<div class="choices">${options.map((o,k)=>`<button data-k="${k}">${esc(o.label)}</button>`).join('')}</div>${skip?'<div class="srow"><button class="textbtn" id="s-skip">Skip</button></div>':''}`
+      :`<textarea id="s-text" placeholder="${esc(placeholder)}"></textarea><div class="srow"><button class="primary" id="s-save">Save</button>${skip?'<button class="textbtn" id="s-skip">Nothing to add</button>':''}</div>`;
+    const d=frame(`${of>1?bar:''}${ctx?`<p class="ctx">${esc(ctx)}</p>`:''}<h2>${esc(q)}</h2>${body}`);
+    const done=v=>{pending=null;res(v)};
+    if(kind==='choice'){d.querySelector('.choices').onclick=e=>{const b=e.target.closest('button');if(b)done(options[+b.dataset.k].value)};d.querySelector('.choices button').focus()}
+    else{const t=d.querySelector('#s-text');t.focus();d.querySelector('#s-save').onclick=()=>done(t.value.trim());
+      t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();done(t.value.trim())}})}
+    const sk=d.querySelector('#s-skip');if(sk)sk.onclick=()=>done('');
+  });
+}
+function loading(msg){frame(`<p class="loading">${esc(msg)}</p>`)}
+
+async function laterFlow(l){
+  const opts=await api('/api/when-options');
+  const v=await step({ctx:l.summary,q:'When will you do it instead?',options:opts});
+  closeS(); if(!v)return;
+  await api(`/api/loops/${l.id}/reschedule`,{method:'POST',body:{due:v}});toast('Moved. It will come back then.');refresh();
+}
+async function closeFlow(l){
+  loading('One moment');
+  let Q;try{Q=await api(`/api/loops/${l.id}/closing`)}catch(e){closeS();toast(e.message);return}
+  const of=1+Q.followups.length;
+  const h=await step({ctx:l.summary,q:Q.happened,options:Q.happened_options,n:1,of});
+  if(h===null)return;
+  if(h==='not_yet')return laterFlow(l);
+  if(h==='no'){closeS();await api(`/api/loops/${l.id}/finish`,{method:'POST',body:{happened:'no'}});toast('Closed as not needed.');return refresh()}
+  const answers=[];
+  for(let i=0;i<Q.followups.length;i++){
+    const f=Q.followups[i];
+    const v=await step({ctx:l.summary,q:f.question,kind:f.kind,options:(f.options||[]).map(o=>({label:o,value:o})),n:i+2,of,skip:true,
+      placeholder:f.use==='next_loop'?'e.g. Send a thank-you email tomorrow morning':''});
+    if(v===null)return;
+    answers.push({question:f.question,use:f.use,value:v});
+  }
+  closeS();
+  const r=await api(`/api/loops/${l.id}/finish`,{method:'POST',body:{happened:'yes',answers}});
+  toast(r.created.length?`Closed. Added: ${r.created.map(c=>c.summary).join(', ')}`:'Loop closed.');
+  await refresh();
+  if(r.created[0]&&r.created[0].questions.length)askMissing(r.created[0]);
+}
+async function askMissing(c){
+  for(let i=0;i<c.questions.length;i++){
+    const q=c.questions[i];
+    const v=await step({ctx:c.summary,q:q.question,options:q.options,n:i+1,of:c.questions.length,skip:true});
+    if(v===null)return;
+    if(v!=='')await api(`/api/loops/${c.id}`,{method:'PATCH',body:{[q.field]:v}});
+  }
+  closeS();toast('Got it. Plan updated.');refresh();
+}
+async function talkFlow(l){
+  let msgs=[];try{msgs=(await api(`/api/loops/${l.id}/chat`)).messages}catch(e){}
+  const draw=()=>{
+    const d=frame(`<p class="ctx">${esc(l.summary)}</p><h2>Check-in</h2>
+      <div class="msgs" id="t-msgs">${msgs.length?msgs.map(m=>`<div class="msg ${m.role}">${esc(m.text)}</div>`).join(''):'<div class="msg agent">When will you start this? Tell me and I\'ll hold you to it.</div>'}</div>
+      <div class="quick">${['Starting now','In 10 minutes','In 30 minutes','Done','Not today'].map(q=>`<button>${q}</button>`).join('')}</div>
+      <div class="inrow"><textarea id="t-in" placeholder="Reply"></textarea><button class="mic" id="t-mic" aria-label="Dictate a reply">${MIC}</button><button class="add" id="t-send">Send</button></div>
+      <p class="state" id="t-state" style="margin:6px 0 0;color:var(--muted);font-size:.82rem"></p>`);
+    const box=d.querySelector('#t-msgs');box.scrollTop=box.scrollHeight;
+    const inp=d.querySelector('#t-in');inp.focus();
+    attachMic(d.querySelector('#t-mic'),inp,d.querySelector('#t-state'));
+    const send=async text=>{
+      text=(text||'').trim();if(!text)return;stopAllMics();
+      try{const r=await api(`/api/loops/${l.id}/reply`,{method:'POST',body:{text}});msgs=r.messages;refresh();
+        if(r.action==='close'){closeS();return closeFlow(l)}
+        if(r.action==='later'){draw();return}
+        draw()}catch(e){toast(e.message)}
+    };
+    d.querySelector('.quick').onclick=e=>{const b=e.target.closest('button');if(b)send(b.textContent)};
+    d.querySelector('#t-send').onclick=()=>send(inp.value);
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send(inp.value)}});
+  };
+  draw();
+}
+
+/* ---------- reminders: it chases you ---------- */
+function remLabel(){
+  const on=('Notification' in window)&&Notification.permission==='granted';
+  $('rem').textContent=on?`Reminders on`:'Turn on reminders';
+}
+$('rem').onclick=async()=>{
+  if(!('Notification' in window))return toast('This browser can\'t show notifications. Keep this tab open and reminders will appear here.');
+  if(Notification.permission==='granted')return toast(`Reminders are on. It checks every ${S?S.chase_every:2} minutes once something should have started.`);
+  const p=await Notification.requestPermission();remLabel();
+  toast(p==='granted'?'Reminders on. Keep this tab open in the background.':'Notifications are blocked. Allow them in the browser\'s site settings.');
+};
+async function tick(){
+  try{
+    const {nudges}=await api('/api/nudges/tick',{method:'POST'});
+    for(const n of nudges){
+      if(('Notification' in window)&&Notification.permission==='granted'){
+        const note=new Notification('Loops',{body:n.text,tag:'loop-'+n.id,requireInteraction:true});
+        note.onclick=()=>{window.focus();note.close();const l=S&&S.loops.find(x=>x.id===n.id);if(l)talkFlow(l)};
+      }else toast(n.text);
+    }
+    if(nudges.length)refresh();
+  }catch(e){}
+}
+setInterval(tick,30000);setTimeout(tick,4000);
+
+/* ---------- voice for any text box ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let activeMic=null;
+function stopAllMics(){if(activeMic)activeMic.stop()}
+function attachMic(btn,box,stateEl){
+  let rec=null,listening=false,committed='';
+  const stop=()=>{listening=false;if(rec)rec.stop();btn.classList.remove('on');if(stateEl)stateEl.textContent='';if(activeMic&&activeMic.btn===btn)activeMic=null};
+  const session=()=>{
+    rec=new SR();rec.lang='en-GB';rec.continuous=true;rec.interimResults=true;let cur='';
+    rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript;cur=t;box.value=(committed+' '+t).trim();box.dispatchEvent(new Event('input'))};
+    rec.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){toast('Microphone blocked. Allow it in the browser\'s site settings.');stop()}};
+    rec.onend=()=>{committed=(committed+' '+cur).trim();if(listening){try{session()}catch(err){stop()}}};
+    rec.start();
+  };
+  btn.onclick=()=>{
+    if(!SR)return toast('Voice input isn\'t available in this browser. Try Chrome.');
+    if(listening)return stop();
+    stopAllMics();listening=true;committed=box.value.trim();btn.classList.add('on');if(stateEl)stateEl.textContent='Listening. Tap the mic again to stop.';
+    activeMic={btn,stop};
+    try{session()}catch(err){stop();toast('Couldn\'t start the microphone.')}
+  };
+}
+
+function toLocal(iso){const d=new Date(iso),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}
+function editFlow(l){
+  const others=S.loops.filter(o=>o.id!==l.id);
+  const d=frame(`<p class="ctx">Edit</p><h2>${esc(l.summary)}</h2>
+    <div class="fix"><p class="note">Say or type what to change, like “no, I meant tomorrow at 10” or “it only takes 20 minutes”.</p>
+      <div class="inrow"><textarea id="e-fix" placeholder="What should change?"></textarea><button class="mic" id="e-mic" aria-label="Dictate a change">${MIC}</button></div>
+      <div class="srow"><button class="primary" id="e-apply">Apply change</button><span class="textbtn" id="e-state" style="cursor:default"></span></div></div>
+    <label class="field"><span>Task</span><input id="e-s" value="${esc(l.summary)}"></label>
+    <label class="field"><span>Who</span><input id="e-p" value="${esc(l.person)}"></label>
+    <label class="field"><span>Due</span><input id="e-d" type="datetime-local" value="${toLocal(l.due)}"></label>
+    <label class="field"><span>Takes about (hours)</span><input id="e-h" type="number" min="0.05" step="0.25" value="${Math.round(l.effort_h*100)/100}"></label>
+    <label class="field"><span>What happens if it's missed</span><input id="e-k" value="${esc(l.stakes)}"></label>
+    <label class="check"><input id="e-hd" type="checkbox"${l.hard_deadline?' checked':''}> The deadline is fixed by someone else</label>
+    <label class="check"><input id="e-rv" type="checkbox"${l.reversible?'':' checked'}> Can't be recovered if missed</label>
+    <label class="field"><span>Missing this holds up</span><select id="e-b"><option value="0">Nothing else</option>${others.map(o=>`<option value="${o.id}"${o.id===l.blocks?' selected':''}>${esc(o.summary.slice(0,60))}</option>`).join('')}</select></label>
+    <div class="srow"><button class="primary" id="e-go">Save changes</button><button class="textbtn" id="e-x">Cancel</button></div>`);
+  const g=s=>d.querySelector(s);g('#e-x').onclick=closeS;
+  attachMic(g('#e-mic'),g('#e-fix'),g('#e-state'));
+  g('#e-apply').onclick=async()=>{
+    const text=g('#e-fix').value.trim();if(!text)return;stopAllMics();g('#e-state').textContent='Applying';
+    try{const r=await api(`/api/loops/${l.id}/revise`,{method:'POST',body:{text}});await refresh();
+      const nl=S.loops.find(x=>x.id===l.id)||l;
+      if(!r.changed.length){g('#e-state').textContent='Couldn\'t tell what to change. Try saying it differently.';return}
+      editFlow(nl);toast('Changed: '+r.changed.map(k=>({summary:'task',person:'who',due:'due time',effort_h:'time needed',cost:'importance',stakes:'what happens if missed',hard_deadline:'deadline type',reversible:'recoverable'}[k]||k)).join(', '))}
+    catch(e){g('#e-state').textContent='';toast(e.message)}
+  };
+  g('#e-go').onclick=async()=>{
+    const due=new Date(g('#e-d').value);
+    const body={summary:g('#e-s').value.trim()||l.summary,person:g('#e-p').value.trim(),effort_h:+g('#e-h').value||l.effort_h,
+      stakes:g('#e-k').value.trim(),hard_deadline:g('#e-hd').checked,reversible:!g('#e-rv').checked,blocks:+g('#e-b').value};
+    if(!isNaN(due))body.due=due.toISOString();
+    try{await api(`/api/loops/${l.id}`,{method:'PATCH',body});closeS();toast('Changes saved.');refresh()}catch(e){toast(e.message)}
+  };
+}
+function accuracyFlow(){
+  const A=S.accuracy,o=A.on_time_14d,d=A.detect,c=A.close,pct=(k,n)=>n?Math.round(100*k/n)+'%':'Not enough yet';
+  const dd=frame(`<p class="ctx">Accuracy</p><h2>How well it's working for you</h2>
+    <div class="stat"><b>${pct(o.k,o.n)}</b><span>Closed on time in the last 14 days: ${o.k} of ${o.n}</span></div>
+    <div class="stat"><b>${pct(d.correct,d.n)}</b><span>Spotted real tasks correctly: ${d.correct} of ${d.n}</span></div>
+    <div class="stat"><b>${pct(c.correct,c.n)}</b><span>Closed loops by itself correctly: ${c.correct} of ${c.n}</span></div>
+    <p class="muted-note">Built only from your answers. Under about 20 each, treat these as rough.</p>
+    <div class="srow"><button class="primary" id="a-x">Done</button></div>`);
+  dd.querySelector('#a-x').onclick=closeS;
+}
+
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-act]');if(!b||b.closest('#sheet'))return;
+  const id=+b.dataset.id, act=b.dataset.act, l=S&&[...S.loops,...S.closed].find(x=>x.id===id);
+  try{
+    if(act==='toggle'){expanded.has(id)?expanded.delete(id):expanded.add(id);return render()}
+    if(act==='close')return closeFlow(l);
+    if(act==='later')return laterFlow(l);
+    if(act==='edit')return editFlow(l);
+    if(act==='talk')return talkFlow(l);
+    const msg={dismiss:'Removed. It learns from this.',confirm:'Closed.',reject:'Kept open.',reopen:'Reopened.'}[act];
+    await api(`/api/loops/${id}/${act}`,{method:'POST'});toast(msg);refresh();
+  }catch(err){toast(err.message)}
+});
+
+/* ---------- capture ---------- */
+const cap=$('cap');
+const grow=()=>{cap.style.height='auto';cap.style.height=Math.min(cap.scrollHeight,120)+'px';$('add').disabled=!cap.value.trim()};
+cap.addEventListener('input',grow);
+cap.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();add()}});
+$('add').onclick=add;
+async function add(){
+  const text=cap.value.trim();if(!text)return;
+  stopAllMics();
+  $('add').disabled=true;$('capstate').textContent='Working out what this is';
+  try{const r=await api('/api/capture',{method:'POST',body:{text}});cap.value='';grow();$('capstate').textContent='';
+    await refresh();
+    if(r.questions&&r.questions.length){const s=S.loops.find(x=>x.id===r.id);askMissing({id:r.id,summary:s?s.summary:text,questions:r.questions})}
+    else toast('Added. It will chase you until it\'s closed.')}
+  catch(e){$('capstate').textContent='';toast(e.message)}
+}
+attachMic($('mic'),cap,$('capstate'));
+
+/* ---------- header ---------- */
+$('sync').onclick=async()=>{try{await api('/api/sync',{method:'POST'});toast('Syncing your accounts');setTimeout(refresh,800)}catch(e){toast(e.message)}};
+$('acc').onclick=()=>S&&accuracyFlow();
+$('hear').onclick=async()=>{
+  if(!('speechSynthesis' in window))return toast('Speech isn\'t available in this browser.');
+  try{const {text}=await api('/api/brief');speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-GB';speechSynthesis.speak(u)}catch(e){toast(e.message)}
+};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
+remLabel();refresh();
+})();
+</script>
+</body>
+</html>

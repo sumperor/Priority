@@ -1,0 +1,11 @@
+anthropic>=0.40
+python-dotenv>=1.0
+requests>=2.31
+google-api-python-client>=2.100
+google-auth-oauthlib>=1.2
+google-auth>=2.23
+msal>=1.28
+slack_sdk>=3.27
+fastapi>=0.110
+uvicorn>=0.29
+pypdf>=4.0

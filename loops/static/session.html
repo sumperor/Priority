@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Loops session</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F5;--surface:#FFFFFF;--ink:#14213D;--muted:#5B6478;--line:#D9DEE7;
+  --close:#0F7B6C;--close-ink:#FFFFFF;--late:#C2410C;--soon:#A86B0C;--ok:#0F7B6C;--soft:#E3E8EF;
+  --font:"Bricolage Grotesque",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1626;--surface:#16213A;--ink:#E8ECF4;--muted:#98A2B8;--line:#26324D;
+    --close:#3CC4AE;--close-ink:#07201C;--late:#F07A4A;--soon:#E0B04A;--ok:#3CC4AE;--soft:#1D2A45;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1626;--surface:#16213A;--ink:#E8ECF4;--muted:#98A2B8;--line:#26324D;
+  --close:#3CC4AE;--close-ink:#07201C;--late:#F07A4A;--soon:#E0B04A;--ok:#3CC4AE;--soft:#1D2A45;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;font-optical-sizing:auto}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--close);outline-offset:2px;border-radius:6px}
+.wrap{max-width:680px;margin:0 auto;padding:22px 20px 170px}
+
+/* top bar */
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.date{font-size:.95rem;color:var(--muted)}
+.tools{display:flex;gap:14px;align-items:baseline;font-size:.88rem;color:var(--muted);flex-wrap:wrap}
+.link{border:0;background:none;padding:0;color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.link:hover{text-decoration-color:var(--ink)}
+.warn{color:var(--soon)}
+
+/* the one next action */
+.next{margin:34px 0 8px}
+.next .lead{margin:0 0 6px;color:var(--muted);font-size:.95rem}
+.next h1{margin:0;font-size:clamp(2rem,6vw,3.1rem);line-height:1.04;font-weight:750;letter-spacing:-.025em;max-width:18ch;font-variation-settings:"opsz" 96}
+.next .why{margin:14px 0 0;font-size:1.06rem;max-width:52ch;color:var(--ink)}
+.next .why.lvl-late{color:var(--late)}
+.nextActs{display:flex;align-items:center;gap:18px;margin-top:22px;flex-wrap:wrap}
+.closer{display:inline-flex;align-items:center;gap:12px;border:0;background:var(--close);color:var(--close-ink);
+  padding:10px 22px 10px 10px;border-radius:999px;font-weight:650;font-size:1.02rem}
+.closer .ring{width:34px;height:34px;border-radius:50%;border:3px solid currentColor;opacity:.9;display:grid;place-items:center}
+.closer .ring::after{content:"";width:12px;height:12px;border-radius:50%;background:currentColor;transform:scale(0);transition:transform .2s}
+.closer:hover .ring::after{transform:scale(1)}
+.textbtn{border:0;background:none;padding:6px 2px;color:var(--muted);font-weight:600}
+.textbtn:hover{color:var(--ink)}
+.empty-next h1{color:var(--muted)}
+
+/* plan timeline */
+.sec{margin-top:44px}
+.sec h2{margin:0 0 10px;font-size:1.02rem;font-weight:650;letter-spacing:-.005em}
+.sec h2 small{font-weight:400;color:var(--muted);margin-left:6px;font-size:.9rem}
+ol.plan,ul.list{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:62px 18px 1fr auto;column-gap:12px;align-items:start;padding:12px 0}
+.row .when{text-align:right;font-weight:600;font-size:.95rem;padding-top:1px}
+.row .when small{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
+.rail{position:relative;height:100%;min-height:44px}
+.rail::before{content:"";position:absolute;left:8px;top:-12px;bottom:-12px;width:2px;background:var(--line)}
+.plan .row:first-child .rail::before{top:9px}
+.plan .row:last-child .rail::before{bottom:auto;height:21px}
+.rail .dot{position:absolute;left:3px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--surface);border:3px solid var(--muted)}
+.lvl-late .dot{border-color:var(--late)} .lvl-soon .dot{border-color:var(--soon)} .lvl-ok .dot{border-color:var(--ok)}
+.lvl-late .when{color:var(--late)} .lvl-soon .when{color:var(--soon)}
+.body{min-width:0;cursor:pointer}
+.title{margin:0;font-weight:600;font-size:1.02rem;overflow-wrap:anywhere}
+.whyline{margin:2px 0 0;color:var(--muted);font-size:.9rem}
+.more{display:none;margin-top:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;font-size:.9rem}
+.open .more{display:block}
+.more p{margin:0 0 6px}
+.more .nums{color:var(--muted);font-size:.84rem}
+.more .acts{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
+.tick{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:var(--surface);margin-top:2px;display:grid;place-items:center;color:var(--close)}
+.tick:hover{border-color:var(--close)}
+.tick svg{opacity:0;transition:opacity .15s}
+.tick:hover svg,.tick:focus-visible svg{opacity:1}
+.plain .row{grid-template-columns:62px 1fr auto}
+.plain .rail{display:none}
+.plain .row + .row{border-top:1px solid var(--line)}
+.muted-note{color:var(--muted);font-size:.92rem;margin:4px 0 0}
+details.closed{margin-top:44px}
+details.closed summary{cursor:pointer;font-weight:650;list-style:none}
+details.closed summary::-webkit-details-marker{display:none}
+details.closed summary::after{content:" +";color:var(--muted)}
+details.closed[open] summary::after{content:" \2212"}
+.done .title{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+
+/* composer */
+.composer{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
+  background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+.composer .in{max-width:680px;margin:0 auto;display:flex;gap:10px;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:8px 8px 8px 16px}
+.composer textarea{flex:1;border:0;background:transparent;resize:none;outline:none;font-size:1.02rem;line-height:1.4;padding:7px 0;max-height:120px}
+.composer textarea::placeholder{color:var(--muted)}
+.mic{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:transparent;display:grid;place-items:center;flex:none}
+.mic.on{background:var(--late);border-color:var(--late);color:#fff}
+.add{border:0;background:var(--ink);color:var(--bg);border-radius:999px;padding:0 18px;height:40px;font-weight:650;flex:none}
+.add:disabled{opacity:.35;cursor:default}
+.composer .state{max-width:680px;margin:6px auto 0;font-size:.82rem;color:var(--muted);min-height:1.1em;padding-left:16px}
+
+/* step sheet */
+.scrim{position:fixed;inset:0;background:rgba(8,14,28,.42);z-index:10}
+.sheet{position:fixed;z-index:11;left:50%;bottom:0;transform:translateX(-50%);width:min(520px,100%);max-height:90vh;overflow-y:auto;
+  background:var(--surface);border-radius:22px 22px 0 0;padding:22px 22px calc(24px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(8,14,28,.18)}
+@media (min-width:720px){.sheet{bottom:auto;top:50%;transform:translate(-50%,-50%);border-radius:22px}}
+.progress{height:3px;background:var(--soft);border-radius:3px;margin:0 0 18px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--close);transition:width .25s}
+.sheet .ctx{margin:0 0 4px;color:var(--muted);font-size:.9rem}
+.sheet h2{margin:0 0 18px;font-size:1.55rem;line-height:1.15;font-weight:700;letter-spacing:-.015em}
+.choices{display:grid;gap:8px}
+.choices button{text-align:left;border:1px solid var(--line);background:var(--bg);padding:14px 16px;border-radius:14px;font-weight:550;font-size:1rem}
+.choices button:hover{border-color:var(--ink)}
+.sheet textarea,.field input,.field select{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:12px;font-size:1rem}
+.sheet textarea{min-height:92px;resize:vertical}
+.srow{display:flex;gap:12px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.primary{border:0;background:var(--close);color:var(--close-ink);padding:11px 22px;border-radius:999px;font-weight:650}
+.field{display:block;margin:0 0 12px}
+.field span{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+.check{display:flex;gap:8px;align-items:center;margin:0 0 12px}
+.stat{padding:14px 0;border-top:1px solid var(--line)}
+.stat b{font-size:1.6rem;display:block;letter-spacing:-.02em}
+.stat span{color:var(--muted);font-size:.9rem}
+.loading{color:var(--muted)}
+
+.say{margin:18px 0 0;padding:12px 14px;border-left:3px solid var(--close);background:var(--surface);border-radius:0 12px 12px 0;max-width:56ch}
+.say p{margin:0}
+.say .srow{margin-top:8px}
+.explain{margin:-4px 0 10px;color:var(--muted);font-size:.88rem;max-width:60ch}
+.rowbtns{display:flex;gap:8px;margin-top:2px}
+.pen{width:30px;height:30px;border-radius:50%;border:1px solid transparent;background:none;display:grid;place-items:center;color:var(--muted)}
+.pen:hover{border-color:var(--line);color:var(--ink)}
+.msgs{display:flex;flex-direction:column;gap:8px;margin:0 0 14px;max-height:46vh;overflow-y:auto}
+.msg{max-width:85%;padding:10px 13px;border-radius:16px;font-size:.96rem;line-height:1.4}
+.msg.agent{background:var(--bg);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px}
+.msg.you{background:var(--ink);color:var(--bg);align-self:flex-end;border-bottom-right-radius:4px}
+.quick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.quick button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:7px 12px;font-size:.88rem;font-weight:550}
+.quick button:hover{border-color:var(--ink)}
+.inrow{display:flex;gap:8px;align-items:flex-end}
+.inrow textarea{min-height:48px;flex:1}
+.fix{padding:14px;border:1px solid var(--line);border-radius:14px;margin:0 0 18px;background:var(--bg)}
+.fix textarea{background:var(--surface);min-height:60px}
+.fix .note{margin:0 0 8px;font-size:.9rem;color:var(--muted)}
+#toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);background:var(--ink);color:var(--bg);
+  padding:10px 16px;border-radius:999px;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:480px){.row{grid-template-columns:50px 16px 1fr auto;column-gap:10px}.plain .row{grid-template-columns:50px 1fr auto}}
+.wrap.wide{max-width:1120px;padding-bottom:60px}
+.back{color:var(--muted);text-decoration:none;font-weight:600}
+.back:hover{color:var(--ink)}
+.intake{max-width:560px;margin:8vh auto 0}
+.intake .ctx{color:var(--muted);margin:0 0 6px}
+.intake h1{font-size:clamp(1.9rem,5vw,2.6rem);line-height:1.08;letter-spacing:-.02em;margin:0 0 22px;font-weight:750}
+.intake textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px;font-size:1.05rem;min-height:90px}
+.cvline{margin:28px 0 0;color:var(--muted);font-size:.92rem}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:40px;margin-top:22px}
+@media (max-width:960px){.grid{grid-template-columns:1fr}}
+.shead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-top:18px;flex-wrap:wrap}
+.shead h1{margin:0;font-size:clamp(1.7rem,4.4vw,2.4rem);line-height:1.08;letter-spacing:-.02em;font-weight:750;max-width:22ch}
+.objs{margin:12px 0 0;padding:0;list-style:none;color:var(--ink)}
+.objs li{padding:3px 0 3px 22px;position:relative;font-size:.98rem}
+.objs li::before{content:"";position:absolute;left:2px;top:.62em;width:10px;height:10px;border-radius:50%;border:2px solid var(--close)}
+.clock{margin-top:30px;display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap}
+.clock .num{font-size:clamp(4.2rem,13vw,7.5rem);line-height:.9;font-weight:780;letter-spacing:-.045em;font-variation-settings:"opsz" 96}
+.clock.brk .num{color:var(--close)}
+.clock .meta{padding-bottom:10px}
+.clock .phase{font-weight:650;font-size:1.05rem;margin:0}
+.clock .sub{color:var(--muted);margin:2px 0 10px;font-size:.92rem}
+.bar{height:4px;background:var(--soft);border-radius:4px;margin:16px 0 0;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink)}
+.clock.brk + .bar i{background:var(--close)}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-weight:600}
+.btn:hover{border-color:var(--ink)}
+.btn.dark{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.focusnow{margin:14px 0 0;padding:10px 14px;border-left:3px solid var(--soon);background:var(--surface);border-radius:0 12px 12px 0}
+.tally{display:flex;gap:6px;align-items:center;margin-top:28px;flex-wrap:wrap}
+.tally span{width:18px;height:18px;border-radius:50%;border:2px solid var(--line)}
+.tally span.on{background:var(--close);border-color:var(--close)}
+.tally b{margin-left:8px;font-weight:650}
+.tally em{font-style:normal;color:var(--muted);margin-left:6px;font-size:.92rem}
+.around li{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:10px 0;border-top:1px solid var(--line)}
+.around li:first-child{border-top:0}
+.around .t{font-weight:600}
+.around .w{color:var(--muted);font-size:.88rem}
+.addapp textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px;min-height:74px;font-size:.98rem}
+.app{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:16px 18px;margin-top:12px}
+.app.sub{background:transparent}
+.app h3{margin:0;font-size:1.12rem;letter-spacing:-.01em}
+.app .co{color:var(--muted);margin:2px 0 0;font-size:.92rem}
+.app .rs{margin-top:12px;display:grid;gap:10px;font-size:.93rem}
+.app .rs h4{margin:0 0 3px;font-size:.86rem;color:var(--muted);font-weight:600}
+.app .rs ul{margin:0;padding-left:18px}
+.app .rs p{margin:0}
+.app .acts{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;align-items:center}
+.state-tag{font-size:.82rem;font-weight:650;color:var(--close)}
+.helper{position:sticky;top:18px;align-self:start;border:1px solid var(--line);background:var(--surface);border-radius:18px;padding:16px;display:flex;flex-direction:column;max-height:calc(100vh - 36px)}
+.helper h2{margin:0 0 2px;font-size:1.05rem}
+.helper .hint2{color:var(--muted);font-size:.86rem;margin:0 0 10px}
+.helper .msgs{flex:1;max-height:none;min-height:160px}
+.chip{display:inline-flex;gap:6px;align-items:center;font-size:.82rem;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:3px 10px;margin-bottom:8px}
+.chip button{border:0;background:none;padding:0;color:var(--muted)}
+.overlay{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+.overlay[hidden]{display:none}
+.overlay .box{max-width:560px;width:100%}
+.overlay .num{font-size:clamp(4rem,16vw,8rem);font-weight:780;letter-spacing:-.045em;line-height:.9;color:var(--close)}
+.overlay h2{font-size:clamp(1.6rem,4vw,2.2rem);letter-spacing:-.02em;margin:18px 0 8px;line-height:1.1}
+.overlay p{font-size:1.08rem;max-width:48ch}
+.overlay .choices{margin-top:18px}
+.summary h1{font-size:clamp(2rem,6vw,3rem);letter-spacing:-.025em;line-height:1.05;margin:0 0 12px}
+.helper textarea{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;font-size:.98rem;resize:vertical;min-height:52px}
+.msg.coach{background:var(--bg);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<main class="wrap wide">
+  <header class="top"><a class="back" href="/">Back to Loops</a><div class="tools"><span id="aiwarn" class="warn"></span><button class="link" id="rem">Turn on reminders</button></div></header>
+  <div id="view"><p class="loading" style="margin-top:20vh;text-align:center">Loading</p></div>
+</main>
+<div id="overlay" class="overlay" hidden><div class="box" id="obox"></div></div>
+<input type="file" id="cvfile" accept=".pdf,.txt,.md" hidden>
+<div id="toast" role="status"></div>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MIC='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+const hm=d=>new Date(d).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3200)}
+async function api(path,opts={}){
+  const r=await fetch(path,{headers:{'Content-Type':'application/json'},...opts,body:opts.body?JSON.stringify(opts.body):undefined});
+  if(!r.ok){let m='That didn\'t work. Check the Terminal window running Loops.';try{m=(await r.json()).detail||m}catch(e){}throw new Error(m)}
+  return r.json();
+}
+function notify(title,body){try{if(('Notification' in window)&&Notification.permission==='granted'&&document.hidden)new Notification(title,{body})}catch(e){}}
+
+/* ---------- voice ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let activeMic=null;
+function stopAllMics(){if(activeMic)activeMic.stop()}
+function attachMic(btn,box){
+  let rec=null,on=false,committed='';
+  const stop=()=>{on=false;if(rec)rec.stop();btn.classList.remove('on');if(activeMic&&activeMic.btn===btn)activeMic=null};
+  const go=()=>{rec=new SR();rec.lang='en-GB';rec.continuous=true;rec.interimResults=true;let cur='';
+    rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript;cur=t;box.value=(committed+' '+t).trim()};
+    rec.onerror=e=>{if(e.error==='not-allowed'){toast('Microphone blocked. Allow it in the browser\'s site settings.');stop()}};
+    rec.onend=()=>{committed=(committed+' '+cur).trim();if(on){try{go()}catch(err){stop()}}};rec.start()};
+  btn.onclick=()=>{if(!SR)return toast('Voice input isn\'t available in this browser. Try Chrome.');if(on)return stop();
+    stopAllMics();on=true;committed=box.value.trim();btn.classList.add('on');activeMic={btn,stop};try{go()}catch(e){stop()}};
+}
+
+/* ---------- CV upload ---------- */
+function pickCV(){$('cvfile').click()}
+$('cvfile').onchange=()=>{const f=$('cvfile').files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=async()=>{try{await api('/api/docs/cv',{method:'POST',body:{name:f.name,b64:rd.result}});toast('CV saved. Research and answers will use it.');await load()}catch(e){toast(e.message)}};
+  rd.readAsDataURL(f);$('cvfile').value=''};
+
+/* ---------- state ---------- */
+let D=null, built=null, focusApp=null;
+async function load(){
+  try{D=await api('/api/session')}catch(e){$('view').innerHTML='<p style="margin-top:20vh;text-align:center">Loops isn\'t running. Start it in Terminal with python run.py serve</p>';return}
+  $('aiwarn').textContent=D.ai?'':'Research and the helper need your API key';
+  if(!D.active){built=null;return renderIntake()}
+  if(built!==D.active.id)buildSession();
+  fill();
+}
+
+/* ---------- intake: one question at a time ---------- */
+let QS=null, answers={}, qi=0;
+async function renderIntake(){
+  if(!QS)QS=(await api('/api/session/intake')).questions;
+  const vis=QS.filter(q=>!q.when||Object.entries(q.when).every(([k,v])=>answers[k]===v));
+  if(qi>=vis.length)return startSession();
+  const q=vis[qi];
+  const last=D.last&&qi===0?`<p class="ctx" style="margin-bottom:22px">Last session: ${esc(D.last.title)}. ${esc(D.last.summary||'')}</p>`:'';
+  $('view').innerHTML=`<section class="intake">${last}<p class="ctx">New session</p><h1>${esc(q.q)}</h1>
+    ${q.type==='choice'?`<div class="choices">${q.options.map((o,k)=>`<button data-k="${k}">${esc(o.label)}</button>`).join('')}</div>`
+      :`<div class="inrow"><textarea id="qa" placeholder="${esc(q.placeholder||'')}"></textarea><button class="mic" id="qmic" aria-label="Dictate">${MIC}</button></div>
+        <div class="srow"><button class="primary" id="qnext">Next</button></div>`}
+    <div class="srow">${qi?'<button class="textbtn" id="qback">Back</button>':''}</div>
+    <p class="cvline">${D.cv?`Using your CV: ${esc(D.cv)}. <button class="link" id="cvbtn">Replace</button>`:'Upload your CV so research and answers are tailored to you. <button class="link" id="cvbtn">Upload CV</button>'}</p></section>`;
+  const next=v=>{answers[q.id]=v;qi++;renderIntake()};
+  if(q.type==='choice'){const c=document.querySelector('.choices');c.onclick=e=>{const b=e.target.closest('button');if(b)next(q.options[+b.dataset.k].value)};c.querySelector('button').focus()}
+  else{const t=$('qa');t.focus();attachMic($('qmic'),t);$('qnext').onclick=()=>{stopAllMics();if(t.value.trim())next(t.value.trim());else toast('Type or say something first.')};
+    t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('qnext').click()}})}
+  if($('qback'))$('qback').onclick=()=>{qi--;renderIntake()};
+  $('cvbtn').onclick=pickCV;
+}
+async function startSession(){
+  $('view').innerHTML='<section class="intake"><p class="ctx">Setting up</p><h1>Working out your objectives</h1></section>';
+  try{await api('/api/session/start',{method:'POST',body:{answers}});answers={};qi=0;await load()}
+  catch(e){toast(e.message);answers={};qi=0;renderIntake()}
+}
+
+/* ---------- timer ---------- */
+let T=null;
+const TK=()=>'loops.timer.'+D.active.id;
+function loadT(){try{T=JSON.parse(localStorage.getItem(TK()))}catch(e){T=null}if(!T)T={phase:'idle',block:0,focusDone:0,lastCheck:Date.now()}}
+function saveT(){try{localStorage.setItem(TK(),JSON.stringify(T))}catch(e){}}
+const F=()=>D.active.focus_min, B=()=>D.active.break_min;
+const mmss=ms=>{const s=Math.max(0,Math.round(ms/1000));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};
+function startFocus(){T.phase='focus';T.endsAt=Date.now()+F()*60000;T.paused=null;saveT();renderClock()}
+function startBreak(min){T.phase='break';T.endsAt=Date.now()+min*60000;T.breakLen=min;saveT();showBreak()}
+function endFocus(early){
+  const done=early?Math.round((F()*60000-(T.endsAt-Date.now()))/60000):F();
+  T.focusDone+=Math.max(0,done);T.block++;saveT();
+  notify('Focus block done','Time for a '+B()+' minute break.');
+  startBreak(B());
+}
+function renderClock(){
+  const el=$('clock');if(!el)return;
+  const counting=!F();
+  let num,phase,sub,btns,frac=0;
+  if(counting){
+    const mins=Math.round((Date.now()-new Date(D.active.started))/60000);
+    num=`${Math.floor(mins/60)}:${String(mins%60).padStart(2,'0')}`;phase='Working, no timer';sub='It checks in with you every hour.';
+    btns='<button class="btn" id="ckin">Check in now</button>';
+  }else if(T.phase==='focus'){
+    const left=T.paused!=null?T.paused:T.endsAt-Date.now();frac=1-left/(F()*60000);
+    num=mmss(left);phase=`Focus block ${T.block+1}`+(T.paused!=null?', paused':'');
+    sub=T.paused!=null?'Paused.':`Break at ${hm(T.endsAt)}.`;
+    btns=`<button class="btn dark" id="pp">${T.paused!=null?'Resume':'Pause'}</button><button class="btn" id="early">Take the break now</button>`;
+  }else{
+    num=mmss(F()*60000);phase=T.block?`Ready for block ${T.block+1}`:'Ready when you are';
+    sub=`${F()} min focus, ${B()} min breaks.`+(T.focusDone?` ${T.focusDone} min focused so far.`:'');
+    btns='<button class="btn dark" id="go">Start focus block</button>';
+  }
+  el.innerHTML=`<div class="clock"><div class="num">${num}</div><div class="meta"><p class="phase">${phase}</p><p class="sub">${sub}</p><div class="btns">${btns}</div></div></div>
+    <div class="bar"><i style="width:${Math.round(100*frac)}%"></i></div>`;
+  if($('go'))$('go').onclick=startFocus;
+  if($('pp'))$('pp').onclick=()=>{if(T.paused!=null){T.endsAt=Date.now()+T.paused;T.paused=null}else T.paused=T.endsAt-Date.now();saveT();renderClock()};
+  if($('early'))$('early').onclick=()=>endFocus(true);
+  if($('ckin'))$('ckin').onclick=()=>checkin();
+}
+setInterval(()=>{
+  if(!D||!D.active||!T)return;
+  if(T.phase==='focus'&&T.paused==null&&Date.now()>=T.endsAt)endFocus(false);
+  else if(T.phase==='break'){const l=T.endsAt-Date.now();const n=$('bnum');if(n)n.textContent=mmss(l);if(l<=0){T.phase='idle';saveT();notify('Break over','How is it going?');checkin()}}
+  if(!F()&&Date.now()-T.lastCheck>=3600000){T.lastCheck=Date.now();saveT();notify('Loops','Hour check-in');checkin()}
+  renderClock();
+},1000);
+
+/* ---------- break and check-in overlays ---------- */
+function overlay(html){$('obox').innerHTML=html;$('overlay').hidden=false}
+function closeOverlay(){$('overlay').hidden=true}
+function wellbeing(){const m=T.focusDone;return m>=120?'Eat something before the next block.':m>=60?'Drink some water and stand up for a minute.':'Look away from the screen and stretch.'}
+function showBreak(){
+  overlay(`<div class="num" id="bnum">${mmss(T.endsAt-Date.now())}</div><h2>Break. ${T.focusDone} min focused so far.</h2><p>${wellbeing()}</p>
+    <div class="srow"><button class="btn" id="bend">End break early</button></div>`);
+  $('bend').onclick=()=>{T.phase='idle';saveT();checkin()};
+}
+function checkin(){
+  overlay(`<h2>How's it going?</h2><div class="choices">
+    <button data-m="good">Good, keep going</button><button data-m="stuck">I'm stuck</button><button data-m="tired">I'm tired</button><button data-m="done">Done for today</button></div>`);
+  document.querySelector('#obox .choices').onclick=async e=>{
+    const b=e.target.closest('button');if(!b)return;const mood=b.dataset.m;
+    if(mood==='done'){closeOverlay();return endSession()}
+    let r;try{r=await api('/api/session/checkin',{method:'POST',body:{mood,focus_minutes:T.focusDone}})}catch(err){closeOverlay();return toast(err.message)}
+    const offer=r.offer?`<button class="btn dark" id="oyes">Yes, do it next</button><button class="btn" id="ono">Not now</button>`:'';
+    const nextBtn=mood==='tired'?`<button class="btn dark" id="obreak">Start a ${r.break_min} minute break</button>`
+      :mood==='stuck'?'<button class="btn dark" id="ohelp">Ask the helper</button>'
+      :F()?'<button class="btn dark" id="ogo">Start the next block</button>':'<button class="btn dark" id="oclose">Back to it</button>';
+    overlay(`<h2>${mood==='good'?'Nice.':mood==='stuck'?'Let\'s get you unstuck.':'Okay.'}</h2><p>${esc(r.message)}</p><div class="srow">${offer||nextBtn}</div>`);
+    const after=()=>{$('obox').querySelector('.srow').innerHTML=nextBtn;wire()};
+    const wire=()=>{
+      if($('ogo'))$('ogo').onclick=()=>{closeOverlay();startFocus()};
+      if($('oclose'))$('oclose').onclick=closeOverlay;
+      if($('obreak'))$('obreak').onclick=()=>startBreak(r.break_min);
+      if($('ohelp'))$('ohelp').onclick=()=>{closeOverlay();$('hin').focus()};
+    };
+    if(r.offer){$('oyes').onclick=()=>{setNow(r.offer.summary);after()};$('ono').onclick=after}else wire();
+  };
+}
+function setNow(text){try{localStorage.setItem('loops.now.'+D.active.id,text||'')}catch(e){}fill()}
+function getNow(){try{return localStorage.getItem('loops.now.'+D.active.id)||''}catch(e){return ''}}
+
+/* ---------- session screen ---------- */
+function buildSession(){
+  built=D.active.id;loadT();
+  const s=D.active;
+  $('view').innerHTML=`<div class="shead"><div><p class="ctx" id="since"></p><h1>${esc(s.title)}</h1>
+      <ul class="objs">${s.objectives.map(o=>`<li>${esc(o)}</li>`).join('')}</ul></div>
+      <div class="btns"><button class="btn" id="endbtn">End session</button></div></div>
+    <div class="grid"><div>
+      <section id="clock"></section>
+      <div id="nowbox"></div>
+      <div id="tally"></div>
+      <section class="sec" id="aroundSec" hidden><h2>Around you</h2><p class="explain">Things outside this session that might need you.</p><ul class="list around" id="around"></ul></section>
+      ${s.kind==='apply'?`<section class="sec"><h2>Applications</h2>
+        ${s.steps.length?`<p class="explain">For each one: ${s.steps.map(x=>esc(x.replace(/\.$/,''))).join('; ')}.</p>`:''}
+        <div class="addapp"><textarea id="appin" placeholder="Paste a job link, or the full job description"></textarea>
+        <div class="srow"><button class="primary" id="appgo">${s.research?'Research it':'Add it'}</button><span class="textbtn" id="appstate" style="cursor:default"></span></div></div>
+        <div id="apps"></div></section>`:''}
+    </div>
+    <aside class="helper"><h2>Helper</h2><p class="hint2">Ask about a role, a concept, or how to answer a question. <span id="cvh"></span></p>
+      <div id="ctxchip"></div><div class="msgs" id="hmsgs"></div>
+      <div class="inrow"><textarea id="hin" placeholder="Ask anything"></textarea><button class="mic" id="hmic" aria-label="Dictate a question">${MIC}</button></div>
+      <div class="srow" style="margin-top:8px"><button class="add" id="hsend">Ask</button><span class="textbtn" id="hstate" style="cursor:default"></span></div></aside></div>`;
+  $('endbtn').onclick=endSession;
+  attachMic($('hmic'),$('hin'));
+  $('hsend').onclick=ask;
+  $('hin').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask()}});
+  if($('appgo')){$('appgo').onclick=addApp}
+  renderClock();
+}
+function fill(){
+  const s=D.active;
+  $('since').textContent=`Session, ${D.elapsed_min} min in`;
+  const now=getNow();
+  $('nowbox').innerHTML=now?`<p class="focusnow">Now: ${esc(now)}. <button class="link" id="nowclear">Back to the plan</button></p>`:'';
+  if($('nowclear'))$('nowclear').onclick=()=>setNow('');
+  if(s.kind==='apply'){
+    const n=s.target||Math.max(D.submitted+1,3);
+    $('tally').innerHTML=`<div class="tally">${Array.from({length:n},(_,i)=>`<span class="${i<D.submitted?'on':''}"></span>`).join('')}
+      <b>${D.submitted}${s.target?' of '+s.target:''} submitted</b><em>${esc(D.pace)}</em></div>`;
+  }
+  const items=[
+    ...D.events.map(e=>`<li><div><div class="t">${esc(e.title)}</div><div class="w">In your calendar</div></div><div>${hm(e.start)}</div></li>`),
+    ...D.assessments.map(a=>`<li><div><div class="t">${esc(a.summary)}</div><div class="w">Due ${new Date(a.due).toLocaleDateString([], {weekday:'long'})} ${hm(a.due)}, about ${Math.round((a.effort_h||1)*60)} min</div></div><button class="link" data-now="${esc(a.summary)}">Do it next</button></li>`),
+    ...D.other.map(o=>`<li><div><div class="t">${esc(o.summary)}</div><div class="w">${esc(o.why)}</div></div></li>`)];
+  $('aroundSec').hidden=!items.length;$('around').innerHTML=items.join('');
+  $('around').querySelectorAll('[data-now]').forEach(b=>b.onclick=()=>setNow(b.dataset.now));
+  $('cvh').innerHTML=D.cv?`Using ${esc(D.cv)}. <button class="link" id="cvbtn2">Replace CV</button>`:'<button class="link" id="cvbtn2">Upload your CV</button> for tailored answers.';
+  $('cvbtn2').onclick=pickCV;
+  if($('apps'))renderApps();
+  renderHelper();
+}
+function list(title,arr){return arr&&arr.length?`<div><h4>${title}</h4><ul>${arr.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+function renderApps(){
+  const apps=[...D.apps].reverse();
+  $('apps').innerHTML=apps.length?apps.map(a=>{
+    const r=a.research, sub=a.status==='submitted', skip=a.status==='skipped';
+    return `<article class="app${sub||skip?' sub':''}"><h3>${esc(a.role)}</h3><p class="co">${esc(a.company)}${a.url?` <a class="link" href="${esc(a.url)}" target="_blank" rel="noopener">Open job</a>`:''}</p>
+      ${sub||skip?`<p class="state-tag">${sub?'Submitted. It will remind you to chase in 10 days.':'Skipped'}</p>`:`
+      <div class="rs">${r?`${r.summary?`<p>${esc(r.summary)}</p>`:''}${list('What they want most',r.top_requirements)}${list('Where you match',r.match)}${list('Gaps to address',r.gaps)}
+        ${list('For \u201cwhy this company\u201d',r.talking_points)}${r.watch_out?`<div><h4>Watch out</h4><p>${esc(r.watch_out)}</p></div>`:''}${r.deadline?`<p><b>Deadline:</b> ${esc(r.deadline)}</p>`:''}`
+        :'<p class="muted-note">No research on this one. Ask the helper anything about it.</p>'}</div>
+      <div class="acts"><button class="primary" data-sub="${a.id}">Mark submitted</button><button class="link" data-ask="${a.id}">Ask about this role</button><button class="textbtn" data-skip="${a.id}">Skip it</button></div>`}
+    </article>`}).join(''):'<p class="muted-note" style="margin-top:12px">Paste your first job above to start.</p>';
+  $('apps').querySelectorAll('[data-sub]').forEach(b=>b.onclick=async()=>{await api('/api/apps/'+b.dataset.sub,{method:'POST',body:{status:'submitted'}});toast('Submitted. Added to Waiting on others.');load()});
+  $('apps').querySelectorAll('[data-skip]').forEach(b=>b.onclick=async()=>{await api('/api/apps/'+b.dataset.skip,{method:'POST',body:{status:'skipped'}});load()});
+  $('apps').querySelectorAll('[data-ask]').forEach(b=>b.onclick=()=>{focusApp=+b.dataset.ask;renderHelper();$('hin').focus()});
+}
+async function addApp(){
+  const v=$('appin').value.trim();if(!v)return toast('Paste a job link or description first.');
+  $('appgo').disabled=true;$('appstate').textContent=D.active.research?'Reading the job and researching the company. This can take 20 to 40 seconds.':'Adding';
+  try{const r=await api('/api/apps',{method:'POST',body:{input:v}});$('appin').value='';focusApp=r.id;
+    toast(r.researched?`Researched: ${r.role} at ${r.company}`:`Added: ${r.role}`);await load()}
+  catch(e){toast(e.message)}finally{$('appgo').disabled=false;$('appstate').textContent=''}
+}
+function renderHelper(){
+  const a=focusApp&&D.apps.find(x=>x.id===focusApp);
+  $('ctxchip').innerHTML=a?`<span class="chip">About: ${esc(a.role)} at ${esc(a.company)} <button aria-label="Clear">\u00d7</button></span>`:'';
+  if(a)$('ctxchip').querySelector('button').onclick=()=>{focusApp=null;renderHelper()};
+  const m=$('hmsgs');
+  m.innerHTML=D.helper.length?D.helper.map(x=>`<div class="msg ${x.role==='you'?'you':'coach'}">${esc(x.text)}</div>`).join('')
+    :'<div class="msg coach">I\'m here while you work. Paste a job on the left and I\'ll research it, or ask me anything.</div>';
+  m.scrollTop=m.scrollHeight;
+}
+async function ask(){
+  const q=$('hin').value.trim();if(!q)return;stopAllMics();
+  D.helper.push({role:'you',text:q});$('hin').value='';renderHelper();$('hstate').textContent='Thinking';
+  try{const r=await api('/api/helper',{method:'POST',body:{question:q,app_id:focusApp}});D.helper.push({role:'coach',text:r.answer});renderHelper()}
+  catch(e){toast(e.message)}finally{$('hstate').textContent=''}
+}
+async function endSession(){
+  let r;try{r=await api('/api/session/end',{method:'POST'})}catch(e){return toast(e.message)}
+  try{localStorage.removeItem(TK());localStorage.removeItem('loops.now.'+D.active.id)}catch(e){}
+  built=null;closeOverlay();
+  $('view').innerHTML=`<section class="intake summary"><p class="ctx">Session done</p><h1>${esc(r.summary)}</h1>
+    ${r.submitted.length?`<ul class="objs">${r.submitted.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><p class="explain" style="margin-top:12px">Each one is now in Waiting on others, so you'll be told when to chase.</p>`:''}
+    <div class="srow"><a class="primary" href="/" style="text-decoration:none">Back to Loops</a><button class="btn" id="again">Start another session</button></div></section>`;
+  $('again').onclick=()=>{D.active=null;load()};
+}
+
+/* ---------- reminders ---------- */
+function remLabel(){$('rem').textContent=('Notification' in window)&&Notification.permission==='granted'?'Reminders on':'Turn on reminders'}
+$('rem').onclick=async()=>{if(!('Notification' in window))return toast('This browser can\'t show notifications.');await Notification.requestPermission();remLabel()};
+remLabel();
+setInterval(()=>{if(D&&D.active&&document.activeElement.tagName!=='TEXTAREA')load()},60000);
+load();
+})();
+</script>
+</body>
+</html>
