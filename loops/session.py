@@ -234,7 +234,7 @@ def end():
 
 # ---------------------------------------------------------------- applications
 def _page_text(url):
-    r = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0 (Macintosh) Loops job helper"})
+    r = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0 (Macintosh) Sparrow job helper"})
     r.raise_for_status()
     html = re.sub(r"(?is)<(script|style|noscript).*?</\1>", " ", r.text)
     text = re.sub(r"(?s)<[^>]+>", " ", html)

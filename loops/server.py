@@ -13,7 +13,7 @@ from . import config as C
 from .engine import ranked, sync
 from .store import Store
 
-app = FastAPI(title="Loops")
+app = FastAPI(title="Sparrow")
 from .session import router as session_router, active as _active_session, db as _session_db  # noqa: E402
 app.include_router(session_router)
 from . import connect as _connect  # noqa: E402
@@ -72,7 +72,7 @@ def _plain_error(err, label):
     if not err:
         return "", ""
     if "quota" in e or "rate limit" in e or "ratelimit" in e or " 429" in e or "too many" in e:
-        return (f"{label} is limiting how fast Loops can read.", "Nothing to do. It catches up on the next check.")
+        return (f"{label} is limiting how fast Sparrow can read.", "Nothing to do. It catches up on the next check.")
     if "not connected" in e or "not set up" in e:
         return (f"{label} isn't connected any more.", "Disconnect it, then connect it again.")
     if "invalid_grant" in e or "expired" in e or "revoked" in e or "authori" in e or "connect it" in e:
@@ -97,6 +97,7 @@ def _scheduler():
 def start_scheduler():
     if C.AUTO_SYNC_MINUTES > 0 and C.CONNECTORS:
         threading.Thread(target=_scheduler, daemon=True).start()
+    threading.Thread(target=_nudger, daemon=True).start()   # reminders even with the browser closed
 
 
 from fastapi.staticfiles import StaticFiles  # noqa: E402
@@ -581,13 +582,69 @@ def lead_skip(lead_id: int):
     return {"ok": True}
 
 
-@app.post("/api/nudges/tick")
-def nudges_tick():
+def run_nudges():
+    """Work out due reminders and send them to the Mac and phone. Called by the page and a background timer."""
     from .agent import due_nudges
+    from .notify import dispatch
     s = _session_db()
     if _active_session(s):
-        return {"nudges": []}  # no nagging mid-session; the session screen shows what's pressing
-    return {"nudges": due_nudges(s, ranked(s))}
+        return []  # no nagging mid-session; the session screen shows what's pressing
+    nudges = due_nudges(s, ranked(s))
+    dispatch(nudges)
+    return nudges
+
+
+def _nudger():
+    while True:
+        time.sleep(30)
+        try:
+            run_nudges()
+        except Exception as e:
+            print(f"[sparrow] reminders: {e}")
+
+
+@app.post("/api/nudges/tick")
+def nudges_tick():
+    return {"nudges": run_nudges()}
+
+
+@app.get("/api/notify")
+def notify_settings():
+    from . import notify
+    import shutil
+    st = notify.settings()
+    return {**st, "mac_available": notify.mac_available(), "clickable": bool(shutil.which("terminal-notifier")),
+            "ntfy_url": f"{notify.NTFY}/{st['ntfy_topic']}" if st["ntfy_topic"] else "", "errors": notify.last_error}
+
+
+class NotifySettings(BaseModel):
+    mac: bool | None = None
+    ntfy: bool | None = None
+
+
+@app.post("/api/notify")
+def notify_update(body: NotifySettings):
+    from . import notify
+    st = notify.settings()
+    if body.mac is not None:
+        st["mac"] = body.mac
+    if body.ntfy is not None:
+        st["ntfy"] = body.ntfy
+        if body.ntfy and not st["ntfy_topic"]:
+            st["ntfy_topic"] = notify.new_topic()
+    notify.save(st)
+    return notify_settings()
+
+
+@app.post("/api/notify/test")
+def notify_test():
+    from . import notify
+    sent = notify.send("Sparrow", "Reminders are working. This is what a nudge looks like.",
+                       url=f"http://127.0.0.1:{C.PORT}/")
+    if not sent:
+        raise HTTPException(400, ("Couldn't send: " + "; ".join(notify.last_error.values())) if notify.last_error
+                            else "Nothing is switched on yet. Tick Mac notifications or Your phone first.")
+    return {"sent": sent, "errors": notify.last_error}
 
 
 @app.get("/api/loops/{loop_id}/chat")
@@ -622,5 +679,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Loops v0.16 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.17 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

@@ -123,7 +123,7 @@ def test_gmail_only_fetches_new_and_errors_are_plain(tmp_path, monkeypatch):
     engine.SOURCES["gmail"] = {"ok": False, "at": now.isoformat(), "error":
                                "<HttpError 403 ... returned \"Quota exceeded for quota metric 'Total Query Cost'\">"}
     src = {x["name"]: x for x in c.get("/api/state").json()["sources"]}["gmail"]
-    assert src["error"] == "Gmail is limiting how fast Loops can read." and "next check" in src["fix"]
+    assert src["error"] == "Gmail is limiting how fast Sparrow can read." and "next check" in src["fix"]
 
 
 def test_tasks_show_the_email_they_came_from(tmp_path, monkeypatch):

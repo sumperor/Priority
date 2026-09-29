@@ -1,4 +1,6 @@
-# Loops backend
+# Sparrow
+
+Sparrow (code package `loops`) reads your email and messages, turns them into tasks, and chases you until they're done.
 
 Reads Gmail, Outlook and Slack, finds open loops (replies you owe, promises you made,
 people you're waiting on), closes them automatically when evidence appears, ranks them by
@@ -66,6 +68,15 @@ Press **Focus** at the top of the page (or open http://127.0.0.1:8765/#focus).
   your calendar shows what's coming; after a good block it offers to slot an assessment in next.
 - Normal reminders pause during a session so you're not nagged while focused.
 - Calendar needs one re-connect after this update: `python run.py auth gmail` and/or `python run.py auth outlook`.
+
+## Reminders
+Tap the bell at the top of the page:
+- **Mac notifications:** sent by Sparrow itself while it's running, even with the browser closed.
+  `brew install terminal-notifier` once to make them tappable (they open the task).
+  If nothing appears, allow notifications for Script Editor (or terminal-notifier) in System Settings, Notifications.
+- **Your phone:** install the free **ntfy** app and subscribe to the private topic shown. Reminder text passes through ntfy.sh.
+- **This browser:** pops up while the tab is open.
+Use **Send a test** to check. Reminders pause during focus sessions.
 
 ## Chasing
 - Tap **Turn on reminders** once and keep the Loops tab open (it can be in the background).

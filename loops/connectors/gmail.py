@@ -74,7 +74,7 @@ class GmailConnector:
             except HttpError as e:
                 if e.resp.status in (403, 429):
                     # Keep what we have; the rest comes on the next check
-                    self.note = f"Gmail asked Loops to slow down. Got {i} new emails; the rest come on the next check."
+                    self.note = f"Gmail asked Sparrow to slow down. Got {i} new emails; the rest come on the next check."
                     break
                 raise
             time.sleep(0.05)  # stay well under Gmail's per-second limit

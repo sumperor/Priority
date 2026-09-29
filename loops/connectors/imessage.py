@@ -31,7 +31,7 @@ def can_read():
             c.execute("SELECT 1 FROM message LIMIT 1").fetchall()
         return True, ""
     except sqlite3.DatabaseError as e:
-        return False, ("macOS is blocking access. Give Terminal Full Disk Access, then restart Loops."
+        return False, ("macOS is blocking access. Give Terminal Full Disk Access, then restart Sparrow."
                        if "unable to open" in str(e) or "authoriz" in str(e) else str(e))
 
 

@@ -63,7 +63,7 @@ def rule_explore(loop, name, address, msgs):
               ["The messages don't say. Ask them for a line on what they'd like to cover before you meet."]
     who = (f"{name} appears to work at {org}, judging by their email address." if name and org
            else f"{name}. Their email address doesn't show an employer." if name and address
-           else f"{name}. There's no email from them in Loops, so this is from the name only." if name
+           else f"{name}. There's no email from them in Sparrow, so this is from the name only." if name
            else "Couldn't tell who this is from the task.")
     return {"name": name, "who": who, "role": "", "org": org, "background": [], "likely_reasons": reasons,
             "prep": ["Look them up on LinkedIn with the button below", "Have one line ready on who you are and what you're looking for",

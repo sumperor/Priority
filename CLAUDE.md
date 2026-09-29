@@ -1,6 +1,6 @@
-# Loops
+# Sparrow
 
-A local-first task-completion agent, currently focused on job hunters. It reads Gmail, Outlook and
+Sparrow (Python package `loops`; the app used to be called Loops). A local-first task-completion agent, currently focused on job hunters. It reads Gmail, Outlook and
 Slack, turns messages and notes into "loops" (tasks), plans them by deadline and effort, chases the
 user until they're done, and runs focused job-hunt sessions with a Claude-backed helper.
 
@@ -8,7 +8,7 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - Run: `python run.py serve` then open http://127.0.0.1:8765 (focus mode: /#focus)
 - Test: `python -m pytest -q tests` (must pass before you finish any change)
 - Python 3.10+, deps in `requirements.txt`. Secrets live in `.env` (never read it aloud, print it, or commit it)
-- After a user-visible change, bump the version string in `loops/server.py` ("Loops vX.Y running")
+- After a user-visible change, bump the version string in `loops/server.py` ("Sparrow vX.Y running")
 
 ## Layout
 - `loops/server.py` FastAPI app and main API; `loops/session.py` job-hunt sessions (router)
@@ -21,6 +21,8 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - `loops/evidence.py` proof in the inbox that a loop is done (checked after sync and before every nudge)
 - `loops/leads.py` job-alert and recruiter emails: credibility, fit, "worth applying"; `loops/interviews.py` write-ups
 - `loops/areas.py` which section a loop lives in (rules only); `loops/explore.py` "Explore": who someone is, why you are meeting; `loops/invites.py` calendar invites become meetings
+- `loops/notify.py` reminders to Mac notifications and phone (ntfy), sent by a server timer
+- `loops/static/vendor/motion.js` Motion 12 (animations); page falls back to built-in animations
 - `loops/connect.py` Connect buttons: Google/Microsoft sign-in, Slack token, iMessage access, disconnect
 - `loops/connectors/` gmail, outlook, teams, slack, imessage (mail, chat, calendar); `loops/static/index.html` the whole UI, incl. focus mode (no build step)
 

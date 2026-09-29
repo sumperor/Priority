@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Loops</title>
+<title>Sparrow</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%20aria-hidden%3D%22true%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22lg%22%20x1%3D%220%22%20y1%3D%221%22%20x2%3D%221%22%20y2%3D%220%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234F46E5%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230E7C66%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%2215%22%20fill%3D%22url%28%23lg%29%22/%3E%3Cpath%20d%3D%22M7.5%2022.5%2022%2010%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22/%3E%3Cpath%20d%3D%22M16%209.4h6.6V16%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3Cpath%20d%3D%22M7.5%2022.5c.2-2.4%201.3-4%203.3-4.7M7.5%2022.5c2.4-.2%204-1.3%204.7-3.3%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%22.85%22/%3E%3Cpath%20d%3D%22M11.8%2017.7c1.2-3.3%204.2-5.4%207.6-5.6-1.3%203.1-4.2%205.3-7.6%205.6Z%22%20fill%3D%22%23fff%22%20opacity%3D%22.9%22/%3E%3Ccircle%20cx%3D%2219.6%22%20cy%3D%2212.3%22%20r%3D%22.9%22%20fill%3D%22%234F46E5%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
@@ -33,6 +34,18 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font
 button,input,textarea,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+@property --a{syntax:"<angle>";inherits:false;initial-value:0deg}
+.aura{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.aura i{position:absolute;width:52vmax;height:52vmax;border-radius:50%;filter:blur(80px);opacity:.16;left:50%;top:50%;margin:-26vmax 0 0 -26vmax;animation:orbit 38s linear infinite}
+.aura i:nth-child(1){background:var(--accent);transform-origin:40% 60%}
+.aura i:nth-child(2){background:var(--jobs);animation-duration:52s;animation-direction:reverse;transform-origin:65% 35%}
+.aura i:nth-child(3){background:var(--study);opacity:.1;animation-duration:70s;transform-origin:30% 30%}
+@keyframes orbit{from{transform:rotate(0deg) translateX(18vmax) rotate(0deg)}to{transform:rotate(360deg) translateX(18vmax) rotate(-360deg)}}
+@media (prefers-color-scheme:dark){.aura i{opacity:.12}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:780;font-size:1.25rem;letter-spacing:-.02em}
+.brand .logo{width:32px;height:32px;flex:none;filter:drop-shadow(0 4px 10px color-mix(in srgb,var(--jobs) 35%,transparent))}
+.wrap{position:relative;z-index:1}
+.composer{z-index:5}
 .wrap{max-width:720px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top,0px)) 16px 190px}
 
 /* top */
@@ -69,6 +82,22 @@ button{cursor:pointer}
 .focusbtn:hover{transform:translateY(-1px)}
 .focusbtn .live{width:8px;height:8px;border-radius:50%;background:var(--accent)}
 
+/* live clock: time is passing, and here's the next deadline */
+.clock-side{margin-top:14px;padding:14px 16px;border-radius:20px;background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:var(--shadow);display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:end}
+.clock-side .place{font-size:.78rem;color:var(--muted);font-weight:650;letter-spacing:.04em;text-transform:uppercase}
+.clock-side .t{font-size:1.9rem;font-weight:760;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.clock-side .t small{font-size:.9rem;color:var(--muted);font-weight:600;letter-spacing:0;margin-left:2px}
+.clock-side .t small b{color:var(--accent);font-weight:700}
+.clock-side .next{grid-column:1/-1;font-size:.86rem;color:var(--muted);margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:baseline}
+.clock-side .next b{color:var(--ink);font-weight:650}
+.clock-side .cd{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
+.clock-side .cd.late{color:var(--late)} .clock-side .cd.soon{color:var(--soon)}
+.donering{display:flex;align-items:center;gap:8px;font-size:.84rem;color:var(--muted);justify-self:end}
+.donering b{display:grid;place-items:center;min-width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:.95rem}
+.soundbtn{border:0;background:none;color:var(--faint);font-size:.78rem;padding:0;justify-self:end}
+@media (min-width:1320px){.clock-side{position:fixed;right:24px;top:50%;transform:translateY(-50%);width:250px;margin:0;grid-template-columns:1fr;z-index:2}
+  .donering,.soundbtn{justify-self:start}}
+.confetti{position:fixed;width:8px;height:12px;border-radius:2px;pointer-events:none;z-index:70;left:0;top:0}
 /* wins */
 #wins{display:grid;gap:12px;margin-top:22px}
 #wins:empty{display:none}
@@ -93,7 +122,12 @@ a.btn{color:inherit}
 .spark{position:absolute;width:6px;height:6px;border-radius:50%;left:21px;top:21px;pointer-events:none}
 
 /* hero */
-.hero{margin-top:26px;padding:26px 24px 22px;border-radius:26px;background:var(--surface);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.hero{margin-top:26px;padding:26px 24px 22px;border-radius:26px;position:relative;overflow:hidden;box-shadow:var(--shadow);border:1.5px solid transparent;
+  background:linear-gradient(var(--surface),var(--surface)) padding-box,conic-gradient(from var(--a),transparent 0 62%,var(--accent) 78%,var(--jobs) 90%,transparent 100%) border-box;
+  animation:ring 7s linear infinite;transition:transform .35s var(--ease),box-shadow .35s}
+@keyframes ring{to{--a:360deg}}
+.hero:hover,.area:hover,.win:hover{transform:translateY(-2px);box-shadow:var(--shadow),0 18px 40px -18px rgba(0,0,0,.25)}
+.area,.win{transition:transform .35s var(--ease),box-shadow .35s}
 .hero .lead{margin:0 0 8px;color:var(--muted);font-size:.9rem;display:flex;gap:8px;align-items:center}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:650;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--c,var(--other)) 13%,transparent);color:var(--c,var(--other))}
 .hero h1 .w{display:inline-block;will-change:transform}
@@ -198,9 +232,9 @@ details.closed[open] summary::after{content:" \2212"}
 
 /* sheet */
 .scrim{position:fixed;inset:0;background:rgba(10,11,14,.45);z-index:40;backdrop-filter:blur(3px)}
-.sheet{position:fixed;z-index:41;left:50%;bottom:0;transform:translateX(-50%);width:min(540px,100%);max-height:90vh;overflow-y:auto;
+.sheet{position:fixed;z-index:41;left:0;right:0;margin:0 auto;bottom:0;width:min(540px,100%);max-height:90vh;overflow-y:auto;
   background:var(--surface);border-radius:26px 26px 0 0;padding:24px 22px calc(24px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.2)}
-@media (min-width:720px){.sheet{bottom:auto;top:50%;transform:translate(-50%,-50%);border-radius:26px}}
+@media (min-width:720px){.sheet{top:0;bottom:0;height:fit-content;margin:auto;border-radius:26px}}
 .progress{height:4px;background:var(--raised);border-radius:4px;margin:0 0 18px;overflow:hidden}
 .progress i{display:block;height:100%;background:var(--accent);transition:width .35s var(--ease)}
 .sheet p{overflow-wrap:anywhere}
@@ -303,9 +337,10 @@ details.closed[open] summary::after{content:" \2212"}
 </style>
 </head>
 <body>
+<div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
 <main class="wrap">
   <header class="top">
-    <p class="hello" id="hello"></p>
+    <div class="brand"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="var(--jobs)"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs><circle cx="16" cy="16" r="15" fill="url(#lg)"/><path d="M7.5 22.5 22 10" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M16 9.4h6.6V16" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 22.5c.2-2.4 1.3-4 3.3-4.7M7.5 22.5c2.4-.2 4-1.3 4.7-3.3" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".85"/><path d="M11.8 17.7c1.2-3.3 4.2-5.4 7.6-5.6-1.3 3.1-4.2 5.3-7.6 5.6Z" fill="#fff" opacity=".9"/><circle cx="19.6" cy="12.3" r=".9" fill="var(--jobs)"/></svg><span>Sparrow</span></div>
     <div class="icons">
       <button class="focusbtn" id="focusbtn"><span class="live" id="focuslive" hidden></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span id="focuslabel">Focus</span></button>
       <button class="ib" id="sync" aria-label="Check now" title="Check now"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg></button>
@@ -314,7 +349,10 @@ details.closed[open] summary::after{content:" \2212"}
       <button class="ib" id="acc" aria-label="Accuracy" title="How well it's working"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
     </div>
   </header>
+  <p class="hello" id="hello" style="margin:14px 0 0"></p>
   <p class="status" id="status"></p>
+  <aside class="clock-side" id="clockside" aria-label="Time now"><div><div class="place" id="cplace"></div><div class="t" id="ctime"></div></div>
+    <div class="donering" id="cdone"></div><div class="next" id="cnext"></div><button class="soundbtn" id="csound"></button></aside>
   <section id="wins" aria-live="polite"></section>
   <section id="hero" aria-live="polite"></section>
   <div id="areas"></div>
@@ -358,7 +396,7 @@ try{shut=new Set(JSON.parse(localStorage.getItem('loops.shut')||'[]'))}catch(e){
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3200)}
 async function api(path,opts={}){
   const r=await fetch(path,{headers:{'Content-Type':'application/json'},...opts,body:opts.body?JSON.stringify(opts.body):undefined});
-  if(!r.ok){let m='That didn\'t work. Check the Terminal window running Loops.';try{m=(await r.json()).detail||m}catch(e){}throw new Error(m)}
+  if(!r.ok){let m='That didn\'t work. Check the Terminal window running Sparrow.';try{m=(await r.json()).detail||m}catch(e){}throw new Error(m)}
   return r.json();
 }
 const hm=d=>new Date(d).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
@@ -392,9 +430,9 @@ function motion(el,props,o={}){
 }
 function enter(el,i=0){
   const d=Math.min(i,10)*.045;
-  if(el.classList.contains('win'))return motion(el,{opacity:[0,1],y:[-18,0],scale:[.94,1]},{bounce:.38,vd:.5,delay:d});
-  if(el.classList.contains('area'))return motion(el,{opacity:[0,1],y:[22,0],scale:[.97,1]},{bounce:.18,vd:.5,delay:d});
-  motion(el,{opacity:[0,1],y:[12,0]},{bounce:.2,vd:.4,delay:d});
+  if(el.classList.contains('win'))return motion(el,{opacity:[0,1],y:[-40,0],scale:[.82,1],rotate:[-2,0]},{bounce:.45,vd:.6,delay:d});
+  if(el.classList.contains('area'))return motion(el,{opacity:[0,1],y:[46,0],scale:[.9,1]},{bounce:.32,vd:.6,delay:d});
+  motion(el,{opacity:[0,1],y:[24,0],scale:[.96,1]},{bounce:.35,vd:.5,delay:d});
 }
 function leave(el){
   if(el.classList.contains('leaving'))return;
@@ -414,16 +452,43 @@ function flip(before){
     const n=el.getBoundingClientRect();let dy=r.top-n.top;
     const p=el.parentElement&&el.parentElement.closest('[data-key]');
     if(p&&before.has(p)){dy-=before.get(p).top-p.getBoundingClientRect().top}
-    if(Math.abs(dy)>1)motion(el,{y:[dy,0]},{bounce:.15,vd:.45});
+    if(Math.abs(dy)>1)motion(el,{y:[dy,0]},{bounce:.3,vd:.55});
   });
 }
 /* "Do this next": the title rises in word by word */
 function wordsIn(h1){
   if(!h1||RM)return;
   h1.innerHTML=h1.textContent.split(/\s+/).filter(Boolean).map(w=>`<span class="w">${esc(w)}</span>`).join(' ');
-  h1.querySelectorAll('.w').forEach((w,i)=>motion(w,{opacity:[0,1],y:[26,0],rotate:[3,0]},{bounce:.3,vd:.55,delay:.05+i*.035}));
+  h1.querySelectorAll('.w').forEach((w,i)=>motion(w,{opacity:[0,1],y:[48,0],rotate:[8,0],scale:[.8,1]},{bounce:.45,vd:.65,delay:.06+i*.05}));
 }
-function bump(el){motion(el,{scale:[1.45,1]},{bounce:.5,vd:.4})}
+function bump(el){motion(el,{scale:[1.7,1],rotate:[-12,0]},{bounce:.6,vd:.5})}
+
+/* ---------- the reward for finishing something ---------- */
+let soundOn=true;try{soundOn=localStorage.getItem('sparrow.sound')!=='off'}catch(e){}
+let actx=null;
+function chime(){
+  if(!soundOn)return;
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const t=actx.currentTime;
+    [[784,0],[1175,.09],[1568,.18]].forEach(([f,dt])=>{const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(0,t+dt);g.gain.linearRampToValueAtTime(.16,t+dt+.015);g.gain.exponentialRampToValueAtTime(.001,t+dt+.5);
+      o.connect(g).connect(actx.destination);o.start(t+dt);o.stop(t+dt+.55)})}catch(e){}
+}
+let lastTap={x:innerWidth/2,y:innerHeight/2};
+document.addEventListener('pointerdown',e=>{lastTap={x:e.clientX,y:e.clientY}},true);
+function confetti(x=lastTap.x,y=lastTap.y,n=46){
+  if(RM)return;
+  const cols=['var(--accent)','var(--jobs)','var(--study)','var(--money)','var(--personal)','#FFD166'];
+  for(let i=0;i<n;i++){
+    const c=document.createElement('i');c.className='confetti';c.style.background=cols[i%cols.length];
+    if(i%3===0){c.style.borderRadius='50%';c.style.width=c.style.height='7px'}
+    document.body.appendChild(c);
+    const a=-Math.PI/2+(Math.random()-.5)*Math.PI*1.3, v=260+Math.random()*320, spin=(Math.random()-.5)*900, T=1.1+Math.random()*.5;
+    const kf=[...Array(9)].map((_,k)=>{const t=k/8*T, px=x+Math.cos(a)*v*t, py=y+Math.sin(a)*v*t+700*t*t;
+      return {transform:`translate(${px}px,${py}px) rotate(${spin*t}deg) scale(${1-k/12})`,opacity:k<6?1:1-(k-5)/3}});
+    c.animate(kf,{duration:T*1000,easing:'linear'}).finished.then(()=>c.remove());
+  }
+}
+function celebrate(x,y){confetti(x,y);chime();setTimeout(()=>{const b=document.querySelector('#cdone b');if(b)bump(b)},350)}
 /* every button gives a little under your finger */
 const PRESSABLE='.btn,.closer,.tick,.choices button,.quick button,.add,.mic,.ib,.focusbtn,.src-chip,.ahead';
 document.addEventListener('pointerdown',e=>{const b=e.target.closest(PRESSABLE);if(!b||b.disabled)return;
@@ -460,7 +525,7 @@ function sparkle(host){
 /* ---------- data ---------- */
 async function refresh(){
   try{S=await api('/api/state');render()}
-  catch(e){$('hero').innerHTML='<div class="empty"><p>Loops isn\'t running</p><h1>Start it in Terminal with python run.py serve</h1></div>'}
+  catch(e){$('hero').innerHTML='<div class="empty"><p>Sparrow isn\'t running</p><h1>Start it in Terminal with python run.py serve</h1></div>'}
   clearTimeout(pollT);pollT=setTimeout(refresh,S&&S.sync.running?3000:30000);
 }
 function whenText(l){
@@ -518,18 +583,18 @@ function manageFlow(st,src){
 function gmailFlow(st){
   if(st.registered){
     const d=frame(`<p class="ctx">Connect</p><h2>Connect Gmail</h2>
-      <p style="margin:0">You'll sign in with Google and allow Loops to read your email and calendar. It can't send, delete or change anything.</p>
+      <p style="margin:0">You'll sign in with Google and allow Sparrow to read your email and calendar. It can't send, delete or change anything.</p>
       <p class="note">Everything stays on this computer. If Google says the app isn't verified, press Continue: it's your own app.</p>
       <div class="srow"><button class="btn pri bigbtn" id="c-go">Continue with Google</button></div>`);
     d.querySelector('#c-go').onclick=()=>{location.href='/api/connect/gmail/start'};
     return;
   }
-  const d=frame(`<p class="ctx">One-time setup</p><h2>Register Loops with Google</h2>
+  const d=frame(`<p class="ctx">One-time setup</p><h2>Register Sparrow with Google</h2>
     <p class="note" style="margin:-8px 0 14px">Only the app's owner does this, once. After that, connecting is one click for anyone you add as a tester.</p>
     <ol class="steps">
-      <li>${EXT('https://console.cloud.google.com/projectcreate','Create a Google Cloud project')} called Loops.</li>
+      <li>${EXT('https://console.cloud.google.com/projectcreate','Create a Google Cloud project')} called Sparrow.</li>
       <li>Turn on the ${EXT('https://console.cloud.google.com/apis/library/gmail.googleapis.com','Gmail API')} and the ${EXT('https://console.cloud.google.com/apis/library/calendar-json.googleapis.com','Google Calendar API')}.</li>
-      <li>In ${EXT('https://console.cloud.google.com/auth/overview','Google Auth Platform')}, name the app Loops, choose External, and add your Gmail address as a test user.</li>
+      <li>In ${EXT('https://console.cloud.google.com/auth/overview','Google Auth Platform')}, name the app Sparrow, choose External, and add your Gmail address as a test user.</li>
       <li>Under ${EXT('https://console.cloud.google.com/auth/clients','Clients')}, create a client of type <b>Desktop app</b> and download its file.</li>
     </ol>
     <label class="drop" id="c-drop">Drop the downloaded file here, or tap to choose it<input type="file" accept=".json,application/json" id="c-file" hidden></label>`);
@@ -543,16 +608,16 @@ function msFlow(st){
   const what=st.name==='teams'?'Teams chats':'Outlook email and calendar';
   if(st.registered){
     const d=frame(`<p class="ctx">Connect</p><h2>Connect ${esc(st.label)}</h2>
-      <p style="margin:0">You'll sign in with Microsoft and allow Loops to read your ${what}. It can't send or change anything.</p>
+      <p style="margin:0">You'll sign in with Microsoft and allow Sparrow to read your ${what}. It can't send or change anything.</p>
       ${st.name==='teams'?'<p class="note">Works with work and university accounts. Personal Teams chats can\'t be read by apps.</p>':'<p class="note">A university or work account may ask for an admin\'s approval. A personal Outlook account connects straight away.</p>'}
       <div class="srow"><button class="btn pri bigbtn" id="c-go">Continue with Microsoft</button></div>`);
     d.querySelector('#c-go').onclick=()=>{location.href=`/api/connect/${st.name}/start`};
     return;
   }
-  const d=frame(`<p class="ctx">One-time setup</p><h2>Register Loops with Microsoft</h2>
+  const d=frame(`<p class="ctx">One-time setup</p><h2>Register Sparrow with Microsoft</h2>
     <p class="note" style="margin:-8px 0 14px">Only the app's owner does this, once. It covers Outlook and Teams.</p>
     <ol class="steps">
-      <li>In ${EXT('https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade','Azure App registrations')}, choose New registration. Name it Loops, and allow <b>any organisational directory and personal Microsoft accounts</b>.</li>
+      <li>In ${EXT('https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade','Azure App registrations')}, choose New registration. Name it Sparrow, and allow <b>any organisational directory and personal Microsoft accounts</b>.</li>
       <li>Under Authentication, add the platform <b>Mobile and desktop applications</b> with this address, and turn on <b>Allow public client flows</b>:${copyBtn(`http://localhost:${PORT}/oauth/microsoft`)}</li>
       <li>Under API permissions, add Microsoft Graph delegated permissions: <code>Mail.Read</code> <code>Calendars.Read</code> <code>Chat.Read</code> <code>User.Read</code></li>
       <li>Copy the <b>Application (client) ID</b> from Overview and paste it here.</li>
@@ -571,25 +636,25 @@ function slackFlow(st){
     </ol>
     <div class="inrow"><textarea id="c-tok" placeholder="xoxp-..." style="min-height:48px"></textarea></div>
     <div class="srow"><button class="btn pri" id="c-save">Connect Slack</button><span class="nums" id="c-state"></span></div>
-    <p class="note">Loops reads your direct messages only, not channels. The token stays on this computer.</p>`);
+    <p class="note">Sparrow reads your direct messages only, not channels. The token stays on this computer.</p>`);
   d.querySelector('#c-save').onclick=async()=>{d.querySelector('#c-state').textContent='Checking with Slack';
     try{const r=await api('/api/connect/slack',{method:'POST',body:{token:d.querySelector('#c-tok').value}});closeS();toast(`Slack connected as ${r.user} in ${r.team}. Checking now.`);refresh()}
     catch(e){d.querySelector('#c-state').textContent='';toast(e.message)}};
 }
 function imessageFlow(st){
   const d=frame(`<p class="ctx">Connect</p><h2>Connect iMessage</h2>
-    <p style="margin:0">Loops reads your Messages on this Mac, so texts like \u201ccan you send me the deck?\u201d become tasks. Nothing leaves your computer.</p>
+    <p style="margin:0">Sparrow reads your Messages on this Mac, so texts like \u201ccan you send me the deck?\u201d become tasks. Nothing leaves your computer.</p>
     <div class="srow"><button class="btn pri bigbtn" id="c-go">Connect iMessage</button></div><div id="c-help"></div>`);
   d.querySelector('#c-go').onclick=async()=>{
     try{await api('/api/connect/imessage',{method:'POST'});closeS();toast('iMessage connected. Checking now.');refresh()}
     catch(e){d.querySelector('#c-help').innerHTML=`<p style="margin:16px 0 8px"><b>${esc(e.message)}</b></p><ol class="steps">
       <li><a href="x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles">Open Full Disk Access settings</a> (System Settings, Privacy &amp; Security, Full Disk Access).</li>
-      <li>Turn on <b>Terminal</b> (the app running Loops). Use the + button if it isn't listed.</li>
-      <li>Quit Terminal, open it again, start Loops, and tap Connect iMessage again.</li></ol>`}};
+      <li>Turn on <b>Terminal</b> (the app running Sparrow). Use the + button if it isn't listed.</li>
+      <li>Quit Terminal, open it again, start Sparrow, and tap Connect iMessage again.</li></ol>`}};
 }
 function linkedinTip(){
   const d=frame(`<p class="ctx">LinkedIn</p><h2>LinkedIn comes in through your email</h2>
-    <p style="margin:0">LinkedIn doesn't let apps read your messages. But it can email you about new messages and job alerts, and Loops reads those from your inbox: recruiter messages become tasks, and job alerts become checked leads.</p>
+    <p style="margin:0">LinkedIn doesn't let apps read your messages. But it can email you about new messages and job alerts, and Sparrow reads those from your inbox: recruiter messages become tasks, and job alerts become checked leads.</p>
     <ol class="steps" style="margin-top:14px">
       <li>Open ${EXT('https://www.linkedin.com/mypreferences/d/categories/notifications','LinkedIn notification settings')}.</li>
       <li>Turn on <b>email</b> for Messages and for Job alerts.</li>
@@ -629,12 +694,42 @@ async function exploreFlow(l,fresh=false){
     <h4>Why you might be meeting</h4><ul>${li(x.likely_reasons)}</ul>
     ${x.prep&&x.prep.length?`<h4>Before you go</h4><ul>${li(x.prep)}</ul>`:''}
     ${x.sources&&x.sources.length?`<h4>Sources</h4><div class="src">${x.sources.map(u=>`<div><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//,'').slice(0,70))}</a></div>`).join('')}</div>`:''}
-    ${x.searched?'':`<p class="note">${S.ai?'Web search didn\'t return anything useful, so this is from what Loops already has.':'This is from what Loops already has. Add your API key and Explore searches the web too.'}</p>`}
+    ${x.searched?'':`<p class="note">${S.ai?'Web search didn\'t return anything useful, so this is from what Sparrow already has.':'This is from what Sparrow already has. Add your API key and Explore searches the web too.'}</p>`}
     <div class="srow">${(x.links||[]).map(k=>`<a class="btn" href="${esc(k.url)}" target="_blank" rel="noopener" style="text-decoration:none">${esc(k.label)}</a>`).join('')}
       <button class="btn ghost" id="x-again">Look again</button><button class="btn pri" id="x-x">Done</button></div></div>`);
   d.querySelectorAll('.xp h4, .xp ul, .xp .who').forEach((el,i)=>motion(el,{opacity:[0,1],y:[8,0]},{bounce:.2,vd:.35,delay:i*.04}));
   d.querySelector('#x-x').onclick=closeS;d.querySelector('#x-again').onclick=()=>exploreFlow(l,true);
 }
+
+/* ---------- the clock: time is passing ---------- */
+const TZ=Intl.DateTimeFormat().resolvedOptions().timeZone||'';
+const PLACE=(TZ.split('/').pop()||'Local time').replace(/_/g,' ');
+const p2=n=>String(n).padStart(2,'0'), p3=n=>String(n).padStart(3,'0');
+function nextDeadline(){
+  if(!S)return null;
+  const now=Date.now();
+  return S.loops.filter(l=>l.status==='open'&&l.type!=='waiting').map(l=>({l,at:new Date(l.type==='meeting'?l.due:l.forecast.latest_start).getTime()}))
+    .sort((a,b)=>a.at-b.at).find(x=>x.at>now-864e5)||null;
+}
+function span(ms){const late=ms<0;ms=Math.abs(ms);const h=Math.floor(ms/36e5),m=Math.floor(ms%36e5/6e4),sec=Math.floor(ms%6e4/1e3);
+  return (h>=24?`${Math.floor(h/24)}d ${h%24}h `:h?`${h}h `:'')+`${p2(m)}m ${p2(sec)}s`}
+let nd=null, ndAt=0;
+function tickClock(){
+  const t=performance.timeOrigin+performance.now(), d=new Date(t);
+  const ms=Math.floor(t%1000), us=Math.floor((t*1000)%1000);
+  $('ctime').innerHTML=`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}<small>.${p3(ms)}<b>${p3(us)}</b></small>`;
+  if(t-ndAt>1000){ndAt=t;nd=nextDeadline();
+    const done=S?S.closed.filter(l=>l.closed_at&&sameDay(new Date(l.closed_at),d)&&!['dismissed','dropped'].includes(l.outcome)).length:0;
+    const cd=$('cdone');const txt=`<b>${done}</b>done today`;if(cd.innerHTML!==txt)cd.innerHTML=txt;
+    $('cplace').textContent=`${PLACE} \u00b7 ${d.toLocaleDateString([], {weekday:'short',day:'numeric',month:'short'})}`;
+    $('csound').textContent=soundOn?'Sound on':'Sound off';}
+  if(nd){const left=nd.at-t, cls=left<0?'late':left<36e5?'soon':'';
+    $('cnext').innerHTML=`<span>${nd.l.type==='meeting'?'Next meeting':'Next start'}:</span><b>${esc(nd.l.summary.slice(0,48))}</b><span class="cd ${cls}">${left<0?'late by ':'in '}${span(left)}</span>`}
+  else $('cnext').innerHTML='<span>Nothing with a deadline. Enjoy it.</span>';
+  requestAnimationFrame(tickClock);
+}
+$('csound').onclick=()=>{soundOn=!soundOn;try{localStorage.setItem('sparrow.sound',soundOn?'on':'off')}catch(e){}$('csound').textContent=soundOn?'Sound on':'Sound off';if(soundOn)chime()};
+requestAnimationFrame(tickClock);
 
 /* ---------- render ---------- */
 function render(){
@@ -769,8 +864,12 @@ function frame(html){
   const s=document.createElement('div');s.className='scrim';s.id='scrim';s.onclick=closeS;
   const d=document.createElement('div');d.className='sheet';d.id='sheet';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.innerHTML=html;
   document.body.append(s,d);
-  if(!had){anim(s,[{opacity:0},{opacity:1}],{duration:220});anim(d,[{opacity:0,translate:'0 24px'},{opacity:1,translate:'0 0'}],{duration:340})}
-  else anim(d.firstElementChild?d:d,[{opacity:.4},{opacity:1}],{duration:200});
+  if(!had){
+    anim(s,[{opacity:0},{opacity:1}],{duration:260});
+    const r=d.getBoundingClientRect();
+    if(innerWidth>=720){d.style.transformOrigin=`${lastTap.x-r.left}px ${lastTap.y-r.top}px`;motion(d,{opacity:[0,1],scale:[.4,1]},{bounce:.3,vd:.5})}
+    else motion(d,{y:[r.height,0]},{bounce:.2,vd:.45});
+  }else{const kids=[...d.children];kids.forEach((k,i)=>motion(k,{opacity:[0,1],x:[30,0]},{bounce:.3,vd:.4,delay:i*.03}))}
   return d;
 }
 function step({ctx,q,kind='choice',options=[],n=1,of=1,skip=false,skipLabel='',placeholder=''}){
@@ -798,7 +897,9 @@ async function laterFlow(l){
   await api(`/api/loops/${l.id}/reschedule`,{method:'POST',body:{due:v}});toast('Moved. It will come back then.');refresh();
 }
 function unTick(id){document.querySelectorAll(`[data-key="r${id}"]`).forEach(e=>e.classList.remove('ticking'))}
+let tapDone={x:innerWidth/2,y:innerHeight/2};
 async function closeFlow(l){
+  tapDone={...lastTap};
   loading('One moment');
   let Q;try{Q=await api(`/api/loops/${l.id}/closing`)}catch(e){closeS();unTick(l.id);toast(e.message);return}
   const of=1+Q.followups.length;
@@ -816,6 +917,7 @@ async function closeFlow(l){
   }
   if(answers.some(a=>a.use==='interview_notes'))loading('Writing it up');else closeS();
   const r=await api(`/api/loops/${l.id}/finish`,{method:'POST',body:{happened:'yes',answers}});
+  celebrate(tapDone.x,tapDone.y);
   await refresh();
   if(r.write_up)return writeUpSheet(r.write_up,r.created);
   closeS();
@@ -952,7 +1054,8 @@ document.addEventListener('click',async e=>{
     if(act==='writeup')return writeUpFlow(l);
     if(act==='lead-apply'){const r=await api(`/api/leads/${id}/apply`,{method:'POST'});toast('Added to Jobs. It will spot the confirmation email when you apply.');return refresh()}
     if(act==='lead-skip'){await api(`/api/leads/${id}/skip`,{method:'POST'});toast('Skipped.');return refresh()}
-    if(act==='ack'){const card=b.closest('.win');if(card)sparkle(card.querySelector('.badge'));await api(`/api/loops/${id}/ack`,{method:'POST'});return refresh()}
+    if(act==='ack'){celebrate(lastTap.x,lastTap.y);await api(`/api/loops/${id}/ack`,{method:'POST'});return refresh()}
+    if(act==='confirm'){celebrate(lastTap.x,lastTap.y)}
     const msg={dismiss:'Removed. It learns from this.',confirm:'Nice. Done.',reject:'Kept open.',reopen:'Reopened.'}[act];
     await api(`/api/loops/${id}/${act}`,{method:'POST'});toast(msg);refresh();
   }catch(err){toast(err.message)}
@@ -961,18 +1064,35 @@ document.addEventListener('click',async e=>{
 /* ---------- reminders: it checks your inbox first, then chases ---------- */
 const notifOn=()=>('Notification' in window)&&Notification.permission==='granted';
 function remLabel(){$('rem').classList.toggle('on',notifOn());$('rem').title=notifOn()?'Reminders on':'Turn on reminders'}
-$('rem').onclick=async()=>{
-  if(!('Notification' in window))return toast('This browser can\'t show notifications. Keep this tab open and reminders will appear here.');
-  if(notifOn())return toast(`Reminders are on. Before each one it checks your inbox for proof it's already done.`);
-  const p=await Notification.requestPermission();remLabel();
-  toast(p==='granted'?'Reminders on. Keep this tab open in the background.':'Notifications are blocked. Allow them in the browser\'s site settings.');
-};
+$('rem').onclick=()=>remindersFlow();
+async function remindersFlow(){
+  let N;try{N=await api('/api/notify')}catch(e){return toast(e.message)}
+  const tog=(id,on,label,desc,disabled)=>`<label class="check" style="align-items:flex-start;margin:0 0 14px${disabled?';opacity:.5':''}"><input type="checkbox" id="${id}"${on?' checked':''}${disabled?' disabled':''} style="margin-top:4px"><span><b>${label}</b><br><span class="nums">${desc}</span></span></label>`;
+  const d=frame(`<p class="ctx">Reminders</p><h2>Where Sparrow reaches you</h2>
+    <p class="note" style="margin:-8px 0 16px">Before each reminder it checks your inbox for proof it's already done. Nothing is sent during a focus session.</p>
+    ${tog('n-mac',N.mac&&N.mac_available,'Mac notifications',N.mac_available?`Sent by Sparrow itself, even with this tab closed, while Sparrow is running.${N.clickable?' Tap one to open the task.':' For notifications you can tap to open the task, run <code>brew install terminal-notifier</code> once.'}`:'Only on a Mac.',!N.mac_available)}
+    ${tog('n-ntfy',N.ntfy,'Your phone (ntfy app)','Free push notifications on iPhone or Android. The reminder text passes through ntfy.sh.')}
+    <div id="n-phone">${N.ntfy&&N.ntfy_url?`<ol class="steps"><li>Install <b>ntfy</b> from the App Store or Google Play.</li><li>In the app, tap + and subscribe to this topic. Keep it private: anyone with the name can read your reminders.${copyBtn(N.ntfy_topic)}</li></ol>`:''}</div>
+    ${tog('n-web',notifOn(),'This browser','Pops up while this tab is open, even in the background.',!('Notification' in window))}
+    ${Object.keys(N.errors||{}).length?`<p class="note" style="color:var(--late)">Last problem: ${esc(Object.values(N.errors).join('; '))}</p>`:''}
+    <div class="srow"><button class="btn pri" id="n-test">Send a test</button><button class="btn ghost" id="n-x">Done</button></div>`);
+  const save=async body=>{try{await api('/api/notify',{method:'POST',body});remindersFlow()}catch(e){toast(e.message)}};
+  d.querySelector('#n-mac').onchange=e=>save({mac:e.target.checked});
+  d.querySelector('#n-ntfy').onchange=e=>save({ntfy:e.target.checked});
+  d.querySelector('#n-web').onchange=async e=>{if(e.target.checked){const p=await Notification.requestPermission();if(p!=='granted')toast('Chrome is blocking notifications. Allow them in the site settings, and for Chrome in Mac System Settings, Notifications.')}remLabel();remindersFlow()};
+  d.querySelector('#n-x').onclick=closeS;
+  d.querySelector('#n-test').onclick=async()=>{
+    try{const r=await api('/api/notify/test',{method:'POST'});
+      if(notifOn())new Notification('Sparrow',{body:'This browser can show reminders too.'});
+      toast(`Sent to: ${r.sent.map(x=>x==='ntfy'?'your phone':'this Mac').join(' and ')}. Nothing arrived? Check Mac System Settings, Notifications${r.sent.includes('osascript')?', Script Editor':''}.`)}
+    catch(e){if(notifOn()){new Notification('Sparrow',{body:'Reminders are working in this browser.'});toast('Sent to this browser.')}else toast(e.message)}};
+}
 async function tick(){
   try{
     const {nudges}=await api('/api/nudges/tick',{method:'POST'});
     for(const n of nudges){
-      if(notifOn()&&document.hidden){
-        const note=new Notification(n.kind==='done'?'Nice one':'Loops',{body:n.text,tag:'loop-'+n.id,requireInteraction:n.kind!=='done'});
+      if(notifOn()&&document.hidden&&!(n.sent&&n.sent.length)){  // skip if the Mac or phone already got it
+        const note=new Notification(n.kind==='done'?'Nice one':'Sparrow',{body:n.text,tag:'loop-'+n.id,requireInteraction:n.kind!=='done'});
         note.onclick=()=>{window.focus();note.close();const l=S&&S.loops.find(x=>x.id===n.id);if(l)talkFlow(l)};
       }else if(n.kind!=='done')toast(n.text);
     }
@@ -1043,12 +1163,14 @@ function openFocus(){
   const f=$('focus');if(!f.hidden)return;
   f.hidden=false;document.body.style.overflow='hidden';
   if(location.hash!=='#focus')history.replaceState(null,'','#focus');
-  anim(f,[{opacity:0,transform:'translateY(24px)'},{opacity:1,transform:'none'}],{duration:380});
+  const at=`${lastTap.x}px ${lastTap.y}px`;
+  anim(f,[{clipPath:`circle(0px at ${at})`},{clipPath:`circle(${Math.hypot(innerWidth,innerHeight)}px at ${at})`}],{duration:650,easing:'cubic-bezier(.7,0,.2,1)'});
   loadFocus();
 }
 function closeFocus(){
   const f=$('focus');
-  anim(f,[{opacity:1,transform:'none'},{opacity:0,transform:'translateY(24px)'}],{duration:260}).finished.then(()=>{f.hidden=true;document.body.style.overflow=''});
+  const b=$('focusbtn').getBoundingClientRect(), at=`${b.left+b.width/2}px ${b.top+b.height/2}px`;
+  anim(f,[{clipPath:`circle(${Math.hypot(innerWidth,innerHeight)}px at ${at})`},{clipPath:`circle(0px at ${at})`}],{duration:480,easing:'cubic-bezier(.7,0,.2,1)',fill:'forwards'}).finished.then(()=>{f.hidden=true;f.getAnimations().forEach(a=>a.cancel());document.body.style.overflow=''});
   history.replaceState(null,'',location.pathname==='/session'?'/':location.pathname);
   refresh();
 }
@@ -1060,7 +1182,7 @@ $('cvfile').onchange=()=>{const f=$('cvfile').files[0];if(!f)return;const rd=new
   rd.readAsDataURL(f);$('cvfile').value=''};
 
 async function loadFocus(){
-  try{D=await api('/api/session')}catch(e){$('fview').innerHTML='<p style="margin-top:20vh;text-align:center">Loops isn\'t running. Start it in Terminal with python run.py serve</p>';return}
+  try{D=await api('/api/session')}catch(e){$('fview').innerHTML='<p style="margin-top:20vh;text-align:center">Sparrow isn\'t running. Start it in Terminal with python run.py serve</p>';return}
   $('faiwarn').textContent=D.ai?'':'Research and the helper need your API key';
   if(!D.active){built=null;return fopen()?renderIntake():null}
   if(built!==D.active.id){loadT();if(fopen())buildSession()}
@@ -1147,7 +1269,7 @@ setInterval(()=>{
   if(!D||!D.active||!T)return;
   if(T.phase==='focus'&&T.paused==null&&Date.now()>=T.endsAt)endFocus(false);
   else if(T.phase==='break'){const l=T.endsAt-Date.now();const n=$('bnum');if(n)n.textContent=mmss(l);if(l<=0){T.phase='idle';saveT();notify('Break over','How is it going?');checkin()}}
-  if(!F()&&Date.now()-T.lastCheck>=3600000){T.lastCheck=Date.now();saveT();notify('Loops','Hour check-in');checkin()}
+  if(!F()&&Date.now()-T.lastCheck>=3600000){T.lastCheck=Date.now();saveT();notify('Sparrow','Hour check-in');checkin()}
   if(fopen())renderClock();
 },1000);
 
@@ -1288,6 +1410,8 @@ setInterval(()=>{if(fopen()&&D&&D.active&&!['TEXTAREA','INPUT'].includes(documen
 
 remLabel();
 refresh().then(()=>{
+  const m=location.hash.match(/^#task-(\d+)/);
+  if(m){history.replaceState(null,'',location.pathname);const l=S&&S.loops.find(x=>x.id===+m[1]);if(l)return talkFlow(l)}
   if(location.hash==='#focus'||location.pathname==='/session')openFocus();
   else if(S&&S.session)loadFocus();   // keep the timer running in the background
 });
