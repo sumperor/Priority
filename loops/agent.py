@@ -26,7 +26,9 @@ def _dur(minutes):
 
 def _q(summary):
     s = summary.strip().rstrip(".")
-    return f"\u201c{s if len(s) <= 60 else s[:60].rsplit(' ', 1)[0] + '\u2026'}\u201d"
+    if len(s) > 60:
+        s = s[:60].rsplit(" ", 1)[0] + "\u2026"
+    return f"\u201c{s}\u201d"
 
 
 def due_nudges(store, rows):
