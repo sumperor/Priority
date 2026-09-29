@@ -6,7 +6,12 @@ load_dotenv()
 def _f(k, d): return float(os.getenv(k, d))
 
 DB_PATH = os.getenv("LOOPS_DB", "loops.db")
-CONNECTORS = [c.strip() for c in os.getenv("CONNECTORS", "gmail,outlook,slack").split(",") if c.strip()]
+# Which account types the app offers. Only the ones you connect in the app are actually read.
+ALL_SOURCES = "gmail,outlook,teams,slack,imessage"
+_c = os.getenv("CONNECTORS", ALL_SOURCES)
+if _c.replace(" ", "") == "gmail,outlook,slack":
+    _c = ALL_SOURCES  # the old .env default: offer every account type
+CONNECTORS = [c.strip() for c in _c.split(",") if c.strip()]
 LOOKBACK_DAYS = int(os.getenv("LOOKBACK_DAYS", "3"))
 WAITING_DAYS = int(os.getenv("WAITING_DAYS", "3"))
 AUTO_CLOSE = _f("AUTO_CLOSE_THRESHOLD", "0.9")
@@ -22,6 +27,41 @@ GMAIL_TOKEN = os.getenv("GMAIL_TOKEN", "secrets/gmail_token.json")
 MS_CLIENT_ID = os.getenv("MS_CLIENT_ID", "")
 MS_TOKEN_CACHE = os.getenv("MS_TOKEN_CACHE", "secrets/ms_token_cache.json")
 SLACK_USER_TOKEN = os.getenv("SLACK_USER_TOKEN", "")
+SECRETS_DIR = os.getenv("LOOPS_SECRETS", "secrets")
+
+
+def secret_path(name):
+    return os.path.join(SECRETS_DIR, name)
+
+
+def read_secret(name):
+    import json
+    try:
+        with open(secret_path(name)) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def write_secret(name, data):
+    import json
+    os.makedirs(SECRETS_DIR, exist_ok=True)
+    path = secret_path(name)
+    with open(path, "w") as f:
+        json.dump(data, f)
+    try:
+        os.chmod(path, 0o600)  # only you can read it
+    except OSError:
+        pass
+
+
+def ms_client_id():
+    """Microsoft app ID: from .env, or saved from the Connect screen."""
+    return os.getenv("MS_CLIENT_ID") or read_secret("microsoft_app.json").get("client_id", "")
+
+
+def slack_token():
+    return os.getenv("SLACK_USER_TOKEN") or read_secret("slack.json").get("token", "")
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")

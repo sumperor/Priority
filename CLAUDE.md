@@ -21,7 +21,8 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - `loops/evidence.py` proof in the inbox that a loop is done (checked after sync and before every nudge)
 - `loops/leads.py` job-alert and recruiter emails: credibility, fit, "worth applying"; `loops/interviews.py` write-ups
 - `loops/areas.py` which section a loop lives in (rules only)
-- `loops/connectors/` gmail, outlook, slack (mail + calendar); `loops/static/index.html` the whole UI, incl. focus mode (no build step)
+- `loops/connect.py` Connect buttons: Google/Microsoft sign-in, Slack token, iMessage access, disconnect
+- `loops/connectors/` gmail, outlook, teams, slack, imessage (mail, chat, calendar); `loops/static/index.html` the whole UI, incl. focus mode (no build step)
 
 ## Rules
 - Every Claude call must have a non-AI fallback; the app must work with no API key

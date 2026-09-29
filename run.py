@@ -42,7 +42,8 @@ def main():
         ALL[args.service]().authenticate()
 
     elif args.cmd == "sync":
-        sync(store, [ALL[n]() for n in C.CONNECTORS if n in ALL], get_engine())
+        from loops.connect import connected
+        sync(store, [ALL[n]() for n in connected() if n in ALL], get_engine())
 
     elif args.cmd == "list":
         rows = ranked(store)

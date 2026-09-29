@@ -161,7 +161,8 @@ def start(body: Start):
 def upcoming_events(hours=12):
     from .connectors import ALL
     now, out = utcnow(), []
-    for name in C.CONNECTORS:
+    from .connect import connected
+    for name in connected():
         c = ALL.get(name)
         if not c or not hasattr(c, "events"):
             continue

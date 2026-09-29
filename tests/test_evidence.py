@@ -19,7 +19,13 @@ def client(tmp_path, monkeypatch):
     from loops import config as C
     monkeypatch.setattr(C, "DB_PATH", str(tmp_path / "e.db"))
     monkeypatch.setattr(C, "CONNECTORS", [])
+    monkeypatch.setattr(C, "SECRETS_DIR", str(tmp_path / "secrets"))
+    monkeypatch.setattr(C, "GMAIL_TOKEN", str(tmp_path / "secrets" / "gmail_token.json"))
+    monkeypatch.setattr(C, "GMAIL_CREDENTIALS", str(tmp_path / "secrets" / "gmail_credentials.json"))
+    monkeypatch.setattr(C, "MS_TOKEN_CACHE", str(tmp_path / "secrets" / "ms.json"))
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("SLACK_USER_TOKEN", raising=False)
+    monkeypatch.delenv("MS_CLIENT_ID", raising=False)
     from fastapi.testclient import TestClient
     from loops.server import app, db
     return TestClient(app), db
@@ -105,8 +111,10 @@ def test_account_status_and_custom_focus(tmp_path, monkeypatch):
     c, db = client(tmp_path, monkeypatch)
     from loops import config as C
     from loops import engine
-    monkeypatch.setattr(C, "CONNECTORS", ["gmail", "slack"])
+    monkeypatch.setattr(C, "CONNECTORS", ["gmail", "outlook", "slack"])
     monkeypatch.setattr(engine, "SOURCES", {})
+    from loops.connect import _mark
+    _mark("gmail"); _mark("slack")
 
     class Ok:
         name = "gmail"
@@ -114,12 +122,13 @@ def test_account_status_and_custom_focus(tmp_path, monkeypatch):
 
     class Broken:
         name = "slack"
-        def fetch(self, since): raise RuntimeError("set SLACK_USER_TOKEN in .env")
+        def fetch(self, since): raise RuntimeError("not connected: connect Slack from the app")
 
     engine.sync(db(), [Ok(), Broken()], __import__("loops.decisions", fromlist=["x"]).RuleDecisions())
     src = {x["name"]: x for x in c.get("/api/state").json()["sources"]}
     assert src["gmail"]["state"] == "ok" and src["gmail"]["count"] == 0 and src["gmail"]["at"]
-    assert src["slack"]["state"] == "error" and ".env" in src["slack"]["fix"]
+    assert src["slack"]["state"] == "error" and "Reconnect" in src["slack"]["fix"]
+    assert src["outlook"]["state"] == "off"
     monkeypatch.setattr(C, "CONNECTORS", [])  # the session view reads calendars; keep it offline
 
     kinds = [o["value"] for o in c.get("/api/session/intake").json()["questions"][0]["options"]]

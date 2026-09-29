@@ -3,7 +3,7 @@ Slack limits history access for apps not in its Marketplace; this backs off on r
 import time
 from datetime import datetime, timezone
 
-from ..config import SLACK_USER_TOKEN
+from ..config import slack_token
 from ..models import Message
 
 
@@ -12,9 +12,10 @@ class SlackConnector:
 
     def _client(self):
         from slack_sdk import WebClient
-        if not SLACK_USER_TOKEN:
-            raise RuntimeError("set SLACK_USER_TOKEN in .env")
-        return WebClient(token=SLACK_USER_TOKEN)
+        token = slack_token()
+        if not token:
+            raise RuntimeError("not connected: connect Slack from the app")
+        return WebClient(token=token)
 
     def _call(self, fn, **kw):
         from slack_sdk.errors import SlackApiError

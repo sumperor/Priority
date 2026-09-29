@@ -13,28 +13,17 @@ Pipeline: connectors -> local SQLite -> decisions (Claude now, Jev later) -> Cla
     cp .env.example .env        # then fill it in
     python -m pytest -q tests   # offline check, no accounts needed
 
-## 2. Connect accounts (do each once)
-
-### Gmail
-1. Google Cloud Console: create a project, enable the Gmail API.
-2. OAuth consent screen: External, Testing mode, add your own address as a test user.
-3. Credentials: create OAuth client ID, type Desktop app, download JSON to `secrets/gmail_credentials.json`.
-4. `python run.py auth gmail` (browser opens, approve read-only access).
-Testing mode is fine for you. A public launch needs Google verification plus a yearly security assessment.
-
-### Outlook
-1. Azure portal, App registrations, New registration. Supported accounts: any org directory and personal Microsoft accounts.
-2. Authentication: enable "Allow public client flows".
-3. API permissions: Microsoft Graph, delegated, `Mail.Read` and `User.Read`.
-4. Put the Application (client) ID in `MS_CLIENT_ID`, then `python run.py auth outlook` and follow the code prompt.
-Work or university accounts may block this until an IT admin approves the app.
-
-### Slack
-1. api.slack.com/apps, Create app, From scratch, pick your workspace.
-2. OAuth & Permissions, User Token Scopes: `im:history`, `im:read`, `mpim:history`, `mpim:read`, `users:read`.
-3. Install to workspace, copy the User OAuth Token (xoxp-) into `SLACK_USER_TOKEN`.
-4. `python run.py auth slack`.
-Slack restricts history access and AI use of data for apps outside its Marketplace. Check current terms.
+## 2. Connect accounts
+Open the app and tap an account at the top of the page: **Gmail, Outlook, Teams, Slack** or **iMessage** (Mac).
+- **Gmail, Outlook, Teams:** tap, sign in with Google or Microsoft, done. The first time, the app's owner
+  registers Loops with Google (drop the client file into the page) and/or Microsoft (paste the app ID).
+  The page walks you through it. Google allows up to 100 test users before a public launch needs its review.
+- **Slack:** paste a user token (xoxp-) once. Slack only allows sign-in buttons on https addresses.
+- **iMessage:** read from this Mac only. Give Terminal Full Disk Access once when the page asks.
+- **LinkedIn, WhatsApp, Instagram:** can't be read by apps. Turn on LinkedIn email notifications and Loops
+  picks up recruiter messages and job alerts from your inbox.
+Tap a connected account to see when it was last checked, check now, or disconnect.
+`python run.py auth gmail|outlook|slack` still works from Terminal if you prefer.
 
 ### Brief delivery
 - Telegram: message @BotFather, `/newbot`, copy the token. Send your bot a message, then read your chat id from

@@ -1,11 +1,11 @@
-"""Outlook / Microsoft 365 via Microsoft Graph, device-code sign-in (no web server needed).
+"""Outlook / Microsoft 365 via Microsoft Graph. Connected from the app (or `run.py auth outlook`).
 Work or university accounts may need an IT admin to approve the app."""
 import os
 from datetime import datetime
 
 import requests
 
-from ..config import MS_CLIENT_ID, MS_TOKEN_CACHE
+from ..config import MS_TOKEN_CACHE, ms_client_id
 from ..models import Message
 
 GRAPH = "https://graph.microsoft.com/v1.0"
@@ -14,35 +14,50 @@ AUTHORITY = "https://login.microsoftonline.com/common"
 MAX_PER_FOLDER = 250
 
 
+def ms_app():
+    """Microsoft sign-in client plus its saved token cache (shared by Outlook and Teams)."""
+    import msal
+    client_id = ms_client_id()
+    if not client_id:
+        raise RuntimeError("not set up yet: connect it from the app")
+    cache = msal.SerializableTokenCache()
+    if os.path.exists(MS_TOKEN_CACHE):
+        cache.deserialize(open(MS_TOKEN_CACHE).read())
+    return msal.PublicClientApplication(client_id, authority=AUTHORITY, token_cache=cache), cache
+
+
+def save_cache(cache):
+    if cache.has_state_changed:
+        os.makedirs(os.path.dirname(MS_TOKEN_CACHE) or ".", exist_ok=True)
+        with open(MS_TOKEN_CACHE, "w") as f:
+            f.write(cache.serialize())
+
+
+def ms_token(scopes, interactive=False):
+    app, cache = ms_app()
+    accounts = app.get_accounts()
+    result = app.acquire_token_silent(scopes, account=accounts[0]) if accounts else None
+    if not result:
+        if not interactive:
+            raise RuntimeError("not authorised: connect it again from the app")
+        flow = app.initiate_device_flow(scopes=scopes)
+        if "user_code" not in flow:
+            raise RuntimeError(flow.get("error_description", "device flow failed"))
+        print(flow["message"])
+        result = app.acquire_token_by_device_flow(flow)
+    save_cache(cache)
+    if "access_token" not in result:
+        raise RuntimeError(result.get("error_description", "sign-in failed"))
+    return result["access_token"]
+
+
 class OutlookConnector:
     name = "outlook"
 
-    def _token(self, interactive=False) -> str:
-        import msal
+    scopes = SCOPES
 
-        if not MS_CLIENT_ID:
-            raise RuntimeError("set MS_CLIENT_ID in .env")
-        cache = msal.SerializableTokenCache()
-        if os.path.exists(MS_TOKEN_CACHE):
-            cache.deserialize(open(MS_TOKEN_CACHE).read())
-        app = msal.PublicClientApplication(MS_CLIENT_ID, authority=AUTHORITY, token_cache=cache)
-        accounts = app.get_accounts()
-        result = app.acquire_token_silent(SCOPES, account=accounts[0]) if accounts else None
-        if not result:
-            if not interactive:
-                raise RuntimeError("not authorised, run: python run.py auth outlook")
-            flow = app.initiate_device_flow(scopes=SCOPES)
-            if "user_code" not in flow:
-                raise RuntimeError(flow.get("error_description", "device flow failed"))
-            print(flow["message"])
-            result = app.acquire_token_by_device_flow(flow)
-        if cache.has_state_changed:
-            os.makedirs(os.path.dirname(MS_TOKEN_CACHE) or ".", exist_ok=True)
-            with open(MS_TOKEN_CACHE, "w") as f:
-                f.write(cache.serialize())
-        if "access_token" not in result:
-            raise RuntimeError(result.get("error_description", "sign-in failed"))
-        return result["access_token"]
+    def _token(self, interactive=False) -> str:
+        return ms_token(self.scopes, interactive)
 
     def authenticate(self):
         self._token(interactive=True)

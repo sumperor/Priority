@@ -16,6 +16,9 @@ from .store import Store
 app = FastAPI(title="Loops")
 from .session import router as session_router, active as _active_session, db as _session_db  # noqa: E402
 app.include_router(session_router)
+from . import connect as _connect  # noqa: E402
+app.include_router(_connect.router)
+_connect.after_connect = lambda: threading.Thread(target=_run_sync, daemon=True).start()
 STATIC = Path(__file__).parent / "static"
 _sync_state = {"running": False, "last": None, "log": ""}
 
@@ -34,7 +37,7 @@ def _run_sync():
         import io, contextlib
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
-            sync(db(), [ALL[n]() for n in C.CONNECTORS if n in ALL], get_engine())
+            sync(db(), [ALL[n]() for n in _connect.connected() if n in ALL], get_engine())
         _sync_state["log"] = buf.getvalue().strip()
     except Exception as e:
         _sync_state["log"] = f"Sync failed: {e}"
@@ -45,19 +48,19 @@ def _run_sync():
 
 def _sources():
     """Per account: when it was last checked, and whether that worked."""
-    from .connectors import ALL
+    from .connectors import LABELS
     from .engine import SOURCES
-    names = {"gmail": "Gmail", "outlook": "Outlook", "slack": "Slack"}
+    names = LABELS
     out = []
-    for n in C.CONNECTORS:
-        if n not in ALL:
-            continue
+    for n in _connect.offered():
         st = SOURCES.get(n)
-        state = ("checking" if _sync_state["running"] and not st else "waiting" if not st
-                 else "ok" if st["ok"] else "error")
+        if not _connect.is_connected(n):
+            state = "off"
+        else:
+            state = ("checking" if _sync_state["running"] and not st else "waiting" if not st
+                     else "ok" if st["ok"] else "error")
         err = (st or {}).get("error", "")
-        fix = (f"Connect it in Terminal: python run.py auth {n}" if "auth" in err or "authori" in err.lower()
-               else f"Add the missing setting to .env" if "set " in err else "")
+        fix = ("Tap Reconnect to sign in again." if "authori" in err.lower() or "connect" in err.lower() else "")
         out.append({"name": n, "label": names.get(n, n), "state": state, "at": (st or {}).get("at"),
                     "count": (st or {}).get("count"), "error": err, "fix": fix})
     return out
@@ -98,7 +101,7 @@ def state():
     celebrate = [l for l in closed if l["outcome"] == "evidence" and not l.get("acked")]
     return {"loops": loops, "closed": closed, "celebrate": celebrate, "leads": shown(s), "areas": AREAS,
             "sync_every": C.AUTO_SYNC_MINUTES, "sources": _sources(), "accuracy": s.accuracy(), "sync": _sync_state,
-            "connectors": C.CONNECTORS, "ai": bool(os.getenv("ANTHROPIC_API_KEY")),
+            "connectors": _connect.connected(), "ai": bool(os.getenv("ANTHROPIC_API_KEY")),
             "last_msg": {str(r["loop_id"]): r["text"] for r in s.db.execute(
                 "SELECT loop_id, text FROM chat WHERE id IN (SELECT MAX(id) FROM chat WHERE role='agent' GROUP BY loop_id)")},
             "chase_every": C.CHASE_EVERY_MINUTES,
@@ -494,8 +497,8 @@ def reply(loop_id: int, body: Text):
 
 @app.post("/api/sync")
 def sync_now():
-    if not C.CONNECTORS:
-        raise HTTPException(400, "No connectors configured")
+    if not _connect.connected():
+        raise HTTPException(400, "Connect an account first: tap one at the top of the page.")
     threading.Thread(target=_run_sync, daemon=True).start()
     return {"started": True}
 
@@ -508,5 +511,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Loops v0.10 running at http://127.0.0.1:{C.PORT}")
+    print(f"Loops v0.11 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

@@ -36,7 +36,7 @@ class GmailConnector:
             creds.refresh(Request())
         if not creds or not creds.valid:
             if not interactive:
-                raise RuntimeError("not authorised, run: python run.py auth gmail")
+                raise RuntimeError("not authorised: connect it again from the app")
             creds = InstalledAppFlow.from_client_secrets_file(GMAIL_CREDENTIALS, SCOPES).run_local_server(port=0)
         os.makedirs(os.path.dirname(GMAIL_TOKEN) or ".", exist_ok=True)
         with open(GMAIL_TOKEN, "w") as f:

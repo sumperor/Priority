@@ -54,6 +54,17 @@ button{cursor:pointer}
 .src-chip.checking .d{background:var(--soon);animation:pulse 1.2s infinite}
 .src-chip span{color:var(--muted)}
 .src-chip.error span{color:var(--late)}
+.src-chip.off{box-shadow:0 0 0 1px var(--line);background:transparent}
+.src-chip.off span{color:var(--accent);font-weight:650}
+.src-chip.tip span{color:var(--muted)}
+.steps{margin:0 0 16px;padding-left:20px;font-size:.93rem;display:grid;gap:8px}
+.steps a{color:var(--ink);font-weight:600}
+.steps code,.copyrow code{background:var(--raised);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:.86rem;overflow-wrap:anywhere}
+.copyrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.drop{display:block;border:2px dashed var(--line);border-radius:16px;padding:22px;text-align:center;color:var(--muted);cursor:pointer;transition:border-color .2s,background .2s}
+.drop.over,.drop:hover{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.note{font-size:.86rem;color:var(--muted);margin:10px 0 0}
+.bigbtn{width:100%;justify-content:center;display:flex;gap:10px;align-items:center;padding:13px 18px;font-size:1rem}
 .focusbtn{display:inline-flex;align-items:center;gap:8px;border:0;background:var(--ink);color:var(--bg);border-radius:999px;padding:9px 16px 9px 12px;font-weight:650;font-size:.92rem;transition:transform .2s var(--ease)}
 .focusbtn:hover{transform:translateY(-1px)}
 .focusbtn .live{width:8px;height:8px;border-radius:50%;background:var(--accent)}
@@ -407,18 +418,131 @@ function renderStatus(){
   const run=S.sync.running, every=S.sync_every>0?`Checks every ${S.sync_every} min`:'Checks when you press refresh';
   const chips=(S.sources||[]).map(x=>{
     const st=run&&x.state!=='error'?'checking':x.state;
-    const t=st==='checking'?'checking now':st==='ok'?ago(x.at):st==='error'?'not connected':'not checked yet';
+    const t=st==='off'?'Connect':st==='checking'?'checking now':st==='ok'?ago(x.at):st==='error'?'needs attention':'not checked yet';
     return `<button class="src-chip ${st}" data-src="${esc(x.name)}"><i class="d"></i>${esc(x.label)} <span>${t}</span></button>`}).join('');
-  $('status').innerHTML=(chips?`${chips}<span>${every}</span>`:'<span class="src-chip"><i class="d"></i>No accounts connected</span>')
+  const anyOn=(S.sources||[]).some(x=>x.state!=='off');
+  const mail=(S.sources||[]).some(x=>x.name==='gmail'||x.name==='outlook');
+  $('status').innerHTML=(chips?`${chips}${mail?'<button class="src-chip tip" data-tip="linkedin"><i class="d"></i>LinkedIn <span>via email</span></button>':''}${anyOn?`<span>${every}</span>`:''}`:'<span class="src-chip"><i class="d"></i>No accounts available</span>')
     +(S.ai?'':'<span class="warn">Smart reading off, rules only</span>');
 }
 setInterval(renderStatus,30000);
 document.addEventListener('click',e=>{
-  const c=e.target.closest('[data-src]');if(!c||!S)return;
-  const x=S.sources.find(y=>y.name===c.dataset.src);if(!x)return;
-  toast(x.state==='ok'?`${x.label}: checked ${ago(x.at)} (${hm(x.at)}), ${x.count} message${x.count===1?'':'s'} from the last few days.`
-    :x.state==='error'?`${x.label} isn't working. ${x.fix||x.error}`:`${x.label}: waiting for the first check.`);
+  const c=e.target.closest('[data-src]');if(c&&S)return connectFlow(c.dataset.src);
+  if(e.target.closest('[data-tip=linkedin]'))return linkedinTip();
 });
+
+/* ---------- connecting accounts: click, sign in, done ---------- */
+const PORT=location.port||'8765';
+const EXT=(href,t)=>`<a href="${href}" target="_blank" rel="noopener">${t}</a>`;
+function copyBtn(text){return `<span class="copyrow"><code>${esc(text)}</code><button class="btn ghost" data-copy="${esc(text)}" style="padding:4px 10px">Copy</button></span>`}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-copy]');if(!b)return;try{await navigator.clipboard.writeText(b.dataset.copy);toast('Copied.')}catch(err){toast('Select it and copy instead.')}});
+async function connectFlow(name){
+  let list;try{list=await api('/api/connect')}catch(e){return toast(e.message)}
+  const st=list.find(x=>x.name===name), src=(S.sources||[]).find(x=>x.name===name)||{};
+  if(!st)return;
+  if(st.connected)return manageFlow(st,src);
+  ({gmail:gmailFlow,outlook:msFlow,teams:msFlow,slack:slackFlow,imessage:imessageFlow}[name])(st);
+}
+function manageFlow(st,src){
+  const line=src.state==='ok'?`Checked ${ago(src.at)} (${hm(src.at)}). ${src.count} message${src.count===1?'':'s'} from the last few days.`
+    :src.state==='error'?`It couldn't check: ${src.error}`:'Connected. The first check is on its way.';
+  const oauth=['gmail','outlook','teams'].includes(st.name);
+  const d=frame(`<p class="ctx">${esc(st.label)}</p><h2>${src.state==='error'?`${esc(st.label)} needs attention`:`${esc(st.label)} is connected`}</h2>
+    <p style="margin:0 0 6px">${esc(line)}</p>${src.fix?`<p class="note">${esc(src.fix)}</p>`:''}
+    <div class="srow">${src.state==='error'&&oauth?`<button class="btn pri" id="c-re">Reconnect</button>`:''}<button class="btn${src.state==='error'?'':' pri'}" id="c-now">Check now</button><button class="btn ghost" id="c-off">Disconnect</button></div>`);
+  if(d.querySelector('#c-re'))d.querySelector('#c-re').onclick=()=>{location.href=`/api/connect/${st.name}/start`};
+  d.querySelector('#c-now').onclick=async()=>{try{await api('/api/sync',{method:'POST'});closeS();toast('Checking now.');setTimeout(refresh,800)}catch(e){toast(e.message)}};
+  d.querySelector('#c-off').onclick=async()=>{await api(`/api/connect/${st.name}/disconnect`,{method:'POST'});closeS();toast(`${st.label} disconnected. Nothing more is read from it.`);refresh()};
+}
+function gmailFlow(st){
+  if(st.registered){
+    const d=frame(`<p class="ctx">Connect</p><h2>Connect Gmail</h2>
+      <p style="margin:0">You'll sign in with Google and allow Loops to read your email and calendar. It can't send, delete or change anything.</p>
+      <p class="note">Everything stays on this computer. If Google says the app isn't verified, press Continue: it's your own app.</p>
+      <div class="srow"><button class="btn pri bigbtn" id="c-go">Continue with Google</button></div>`);
+    d.querySelector('#c-go').onclick=()=>{location.href='/api/connect/gmail/start'};
+    return;
+  }
+  const d=frame(`<p class="ctx">One-time setup</p><h2>Register Loops with Google</h2>
+    <p class="note" style="margin:-8px 0 14px">Only the app's owner does this, once. After that, connecting is one click for anyone you add as a tester.</p>
+    <ol class="steps">
+      <li>${EXT('https://console.cloud.google.com/projectcreate','Create a Google Cloud project')} called Loops.</li>
+      <li>Turn on the ${EXT('https://console.cloud.google.com/apis/library/gmail.googleapis.com','Gmail API')} and the ${EXT('https://console.cloud.google.com/apis/library/calendar-json.googleapis.com','Google Calendar API')}.</li>
+      <li>In ${EXT('https://console.cloud.google.com/auth/overview','Google Auth Platform')}, name the app Loops, choose External, and add your Gmail address as a test user.</li>
+      <li>Under ${EXT('https://console.cloud.google.com/auth/clients','Clients')}, create a client of type <b>Desktop app</b> and download its file.</li>
+    </ol>
+    <label class="drop" id="c-drop">Drop the downloaded file here, or tap to choose it<input type="file" accept=".json,application/json" id="c-file" hidden></label>`);
+  const drop=d.querySelector('#c-drop'), inp=d.querySelector('#c-file');
+  const send=async f=>{if(!f)return;try{await api('/api/connect/gmail/app',{method:'POST',body:{json_text:await f.text()}});toast('Saved. Now sign in.');gmailFlow({...st,registered:true})}catch(e){toast(e.message)}};
+  drop.onclick=()=>inp.click();inp.onchange=()=>send(inp.files[0]);
+  drop.ondragover=e=>{e.preventDefault();drop.classList.add('over')};drop.ondragleave=()=>drop.classList.remove('over');
+  drop.ondrop=e=>{e.preventDefault();drop.classList.remove('over');send(e.dataTransfer.files[0])};
+}
+function msFlow(st){
+  const what=st.name==='teams'?'Teams chats':'Outlook email and calendar';
+  if(st.registered){
+    const d=frame(`<p class="ctx">Connect</p><h2>Connect ${esc(st.label)}</h2>
+      <p style="margin:0">You'll sign in with Microsoft and allow Loops to read your ${what}. It can't send or change anything.</p>
+      ${st.name==='teams'?'<p class="note">Works with work and university accounts. Personal Teams chats can\'t be read by apps.</p>':'<p class="note">A university or work account may ask for an admin\'s approval. A personal Outlook account connects straight away.</p>'}
+      <div class="srow"><button class="btn pri bigbtn" id="c-go">Continue with Microsoft</button></div>`);
+    d.querySelector('#c-go').onclick=()=>{location.href=`/api/connect/${st.name}/start`};
+    return;
+  }
+  const d=frame(`<p class="ctx">One-time setup</p><h2>Register Loops with Microsoft</h2>
+    <p class="note" style="margin:-8px 0 14px">Only the app's owner does this, once. It covers Outlook and Teams.</p>
+    <ol class="steps">
+      <li>In ${EXT('https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade','Azure App registrations')}, choose New registration. Name it Loops, and allow <b>any organisational directory and personal Microsoft accounts</b>.</li>
+      <li>Under Authentication, add the platform <b>Mobile and desktop applications</b> with this address, and turn on <b>Allow public client flows</b>:${copyBtn(`http://localhost:${PORT}/oauth/microsoft`)}</li>
+      <li>Under API permissions, add Microsoft Graph delegated permissions: <code>Mail.Read</code> <code>Calendars.Read</code> <code>Chat.Read</code> <code>User.Read</code></li>
+      <li>Copy the <b>Application (client) ID</b> from Overview and paste it here.</li>
+    </ol>
+    <div class="inrow"><textarea id="c-id" placeholder="Application (client) ID" style="min-height:48px"></textarea></div>
+    <div class="srow"><button class="btn pri" id="c-save">Save</button></div>`);
+  d.querySelector('#c-save').onclick=async()=>{try{await api('/api/connect/microsoft/app',{method:'POST',body:{client_id:d.querySelector('#c-id').value}});toast('Saved. Now sign in.');msFlow({...st,registered:true})}catch(e){toast(e.message)}};
+}
+function slackFlow(st){
+  const d=frame(`<p class="ctx">Connect</p><h2>Connect Slack</h2>
+    <p class="note" style="margin:-8px 0 14px">Slack only allows sign-in buttons on secure web addresses, so for an app on your laptop you paste a token once.</p>
+    <ol class="steps">
+      <li>${EXT('https://api.slack.com/apps?new_app=1','Create a Slack app')}, From scratch, in your workspace.</li>
+      <li>Under OAuth &amp; Permissions, add these <b>User Token Scopes</b>: <code>im:history</code> <code>im:read</code> <code>mpim:history</code> <code>mpim:read</code> <code>users:read</code></li>
+      <li>Install it to your workspace and copy the <b>User OAuth Token</b>. It starts with <code>xoxp-</code>.</li>
+    </ol>
+    <div class="inrow"><textarea id="c-tok" placeholder="xoxp-..." style="min-height:48px"></textarea></div>
+    <div class="srow"><button class="btn pri" id="c-save">Connect Slack</button><span class="nums" id="c-state"></span></div>
+    <p class="note">Loops reads your direct messages only, not channels. The token stays on this computer.</p>`);
+  d.querySelector('#c-save').onclick=async()=>{d.querySelector('#c-state').textContent='Checking with Slack';
+    try{const r=await api('/api/connect/slack',{method:'POST',body:{token:d.querySelector('#c-tok').value}});closeS();toast(`Slack connected as ${r.user} in ${r.team}. Checking now.`);refresh()}
+    catch(e){d.querySelector('#c-state').textContent='';toast(e.message)}};
+}
+function imessageFlow(st){
+  const d=frame(`<p class="ctx">Connect</p><h2>Connect iMessage</h2>
+    <p style="margin:0">Loops reads your Messages on this Mac, so texts like \u201ccan you send me the deck?\u201d become tasks. Nothing leaves your computer.</p>
+    <div class="srow"><button class="btn pri bigbtn" id="c-go">Connect iMessage</button></div><div id="c-help"></div>`);
+  d.querySelector('#c-go').onclick=async()=>{
+    try{await api('/api/connect/imessage',{method:'POST'});closeS();toast('iMessage connected. Checking now.');refresh()}
+    catch(e){d.querySelector('#c-help').innerHTML=`<p style="margin:16px 0 8px"><b>${esc(e.message)}</b></p><ol class="steps">
+      <li><a href="x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles">Open Full Disk Access settings</a> (System Settings, Privacy &amp; Security, Full Disk Access).</li>
+      <li>Turn on <b>Terminal</b> (the app running Loops). Use the + button if it isn't listed.</li>
+      <li>Quit Terminal, open it again, start Loops, and tap Connect iMessage again.</li></ol>`}};
+}
+function linkedinTip(){
+  const d=frame(`<p class="ctx">LinkedIn</p><h2>LinkedIn comes in through your email</h2>
+    <p style="margin:0">LinkedIn doesn't let apps read your messages. But it can email you about new messages and job alerts, and Loops reads those from your inbox: recruiter messages become tasks, and job alerts become checked leads.</p>
+    <ol class="steps" style="margin-top:14px">
+      <li>Open ${EXT('https://www.linkedin.com/mypreferences/d/categories/notifications','LinkedIn notification settings')}.</li>
+      <li>Turn on <b>email</b> for Messages and for Job alerts.</li>
+      <li>Use the same email address you've connected here.</li></ol>
+    <div class="srow"><button class="btn pri" id="c-x">Got it</button></div>`);
+  d.querySelector('#c-x').onclick=closeS;
+}
+(function(){
+  const q=new URLSearchParams(location.search), ok=q.get('connected'), bad=q.get('connect_failed');
+  const L={gmail:'Gmail',outlook:'Outlook',teams:'Teams',slack:'Slack',imessage:'iMessage'};
+  if(ok)setTimeout(()=>toast(`${L[ok]||ok} connected. Checking it now.`),400);
+  if(bad)setTimeout(()=>toast(`${L[bad]||bad} didn't connect. ${q.get('why')||''}`),400);
+  if(ok||bad)history.replaceState(null,'',location.pathname+location.hash);
+})();
 
 /* ---------- render ---------- */
 function render(){
