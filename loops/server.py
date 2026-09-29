@@ -159,9 +159,14 @@ def open_link(source, msg_id, thread_id=None):
 
 def _msg_info(m):
     import re
-    text = re.sub(r"\s+", " ", m["text"] or "").strip()
+    from .invites import clean, is_invite, parse, preview
+    from .models import Message
+    msg = Message(m["source"], m["msg_id"], m["thread_id"], m["sender"], m["sender_name"], bool(m["is_from_me"]),
+                  m["text"] or "", datetime.fromisoformat(m["ts"]), m["subject"] or "")
+    inv = parse(msg) if is_invite(msg) else None
+    text = preview(inv) if inv else re.sub(r"\s+", " ", clean(m["text"] or "")).strip()
     return {"source": m["source"], "from": m["sender_name"] or m["sender"], "address": m["sender"],
-            "subject": m["subject"] or "", "ts": m["ts"], "preview": text[:220] + ("\u2026" if len(text) > 220 else ""),
+            "subject": (f"Invite: {inv['title']}" if inv else m["subject"] or ""), "ts": m["ts"], "preview": text[:220] + ("\u2026" if len(text) > 220 else ""),
             "link": open_link(m["source"], m["msg_id"], m["thread_id"])}
 
 
@@ -190,15 +195,42 @@ def capture(body: Capture):
     if not body.text.strip():
         raise HTTPException(400, "Empty")
     d = parse(body.text.strip())  # importance is decided by the algorithm, never by the user
+    d["summary"] = tidy_summary(d["summary"])
     due = d.get("due") or (datetime.now(timezone.utc) +
                            timedelta(hours=C.DEFAULT_DUE_HOURS.get(d["type"], 48))).isoformat()
     s = db()
+    dup = _same_task(s, d["summary"])
+    if dup:
+        return {"id": dup, "duplicate": True, "questions": []}
     loop_id = s.create_loop(source="manual", thread_id="", type=d["type"], person=d.get("person", ""),
                             summary=d["summary"], done_when=d.get("done_when", ""), due=due, cost=d["cost"],
                             consequence=d.get("consequence", "minor"), reversible=int(bool(d.get("reversible", True))),
                             hard_deadline=int(bool(d.get("hard_deadline", False))), effort_h=d["effort_h"],
                             stakes=d.get("stakes", ""))
     return {"id": loop_id, "questions": followups(d)}
+
+
+_WHEN_TAIL = __import__("re").compile(
+    r"[\s,]*(\b(today|tonight|tomorrow( morning| afternoon| evening| night)?|this (morning|afternoon|evening|week|weekend)|"
+    r"next week|(on |by |this |next )?(mon|tues|wednes|thurs|fri|satur|sun)day|(at|by|before|around) \d{1,2}([:.]\d{2})?\s*(am|pm)?|"
+    r"in (\d+|a|an|one|two|few|couple)( of)? (minutes?|mins?|hours?|days?|weeks?))\b[\s,.]*)+$", __import__("re").I)
+
+
+def tidy_summary(text):
+    """'Buy groceries tomorrow' -> 'Buy groceries': the when is shown separately."""
+    t = _WHEN_TAIL.sub("", text.strip()).strip(" ,.")
+    return (t[:1].upper() + t[1:]) if len(t) >= 3 else text.strip()
+
+
+def _same_task(s, summary):
+    """An open task with the same wording already exists (double tap, or said twice)."""
+    import re
+    norm = lambda x: re.sub(r"[^a-z0-9 ]", "", x.lower()).strip()
+    n = norm(summary)
+    for r in s.loops():
+        if r["source"] == "manual" and norm(tidy_summary(r["summary"])) == n:
+            return r["id"]
+    return None
 
 
 def followups(d):
@@ -590,5 +622,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Loops v0.15 running at http://127.0.0.1:{C.PORT}")
+    print(f"Loops v0.16 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

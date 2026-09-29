@@ -465,6 +465,7 @@ async function refresh(){
 }
 function whenText(l){
   if(l.type==='waiting')return `Chase ${dayName(l.due)}`;
+  if(l.type==='meeting'){const d=new Date(l.due);return `${sameDay(d,new Date())?'Today':dayName(d).replace(/^./,c=>c.toUpperCase())} ${hm(d)}`}
   if(l.forecast.level==='late')return l.forecast.hours_left<0?'Overdue':'Start now';
   if(l.bucket==='Later')return `Due ${dayName(l.due)}`;
   const d=new Date(l.forecast.latest_start);
@@ -1009,12 +1010,15 @@ const grow=()=>{cap.style.height='auto';cap.style.height=Math.min(cap.scrollHeig
 cap.addEventListener('input',grow);
 cap.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();add()}});
 $('add').onclick=add;
+let adding=false;
 async function add(){
-  const text=cap.value.trim();if(!text)return;
+  const text=cap.value.trim();if(!text||adding)return;
+  adding=true;setTimeout(()=>adding=false,1500);
   stopAllMics();
   $('add').disabled=true;$('capstate').textContent='Working out what this is';
   try{const r=await api('/api/capture',{method:'POST',body:{text}});cap.value='';grow();$('capstate').textContent='';
     await refresh();
+    if(r.duplicate){toast('That\'s already on your list.');const el=document.querySelector(`[data-key="r${r.id}"],[data-key="h${r.id}"]`);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});motion(el,{scale:[1,1.03,1]},{duration:.5})}return}
     if(r.questions&&r.questions.length){const s=S.loops.find(x=>x.id===r.id);askMissing({id:r.id,summary:s?s.summary:text,questions:r.questions})}
     else toast('Added. It will chase you until it\'s done.')}
   catch(e){$('capstate').textContent='';toast(e.message)}

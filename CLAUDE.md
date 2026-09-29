@@ -20,7 +20,7 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - `loops/store.py` SQLite schema, migrations in `_migrate()`, accuracy stats
 - `loops/evidence.py` proof in the inbox that a loop is done (checked after sync and before every nudge)
 - `loops/leads.py` job-alert and recruiter emails: credibility, fit, "worth applying"; `loops/interviews.py` write-ups
-- `loops/areas.py` which section a loop lives in (rules only); `loops/explore.py` "Explore": who someone is, why you are meeting
+- `loops/areas.py` which section a loop lives in (rules only); `loops/explore.py` "Explore": who someone is, why you are meeting; `loops/invites.py` calendar invites become meetings
 - `loops/connect.py` Connect buttons: Google/Microsoft sign-in, Slack token, iMessage access, disconnect
 - `loops/connectors/` gmail, outlook, teams, slack, imessage (mail, chat, calendar); `loops/static/index.html` the whole UI, incl. focus mode (no build step)
 

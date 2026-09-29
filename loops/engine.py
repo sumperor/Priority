@@ -98,6 +98,17 @@ def _create_assessment(store, source, thread_id, msgs, m):
         trigger_ts=m.ts.isoformat())
 
 
+def _create_meeting(store, source, thread_id, m):
+    from .invites import parse, summary
+    inv = parse(m)
+    due = (inv["start"] or utcnow() + timedelta(hours=48)).isoformat()
+    return store.create_loop(
+        source=source, thread_id=thread_id, type="meeting", person=inv["organizer"], summary=summary(inv),
+        done_when="The meeting happened", due=due, cost=55, consequence="relationship", reversible=0,
+        hard_deadline=1, effort_h=0.17, stakes="It's at a fixed time. Missing it without a word looks bad.",
+        trigger_ts=m.ts.isoformat())
+
+
 def detect(store, decide, source, thread_id, msgs, extract=default_extract):
     if not msgs:
         return []
@@ -124,6 +135,20 @@ def detect(store, decide, source, thread_id, msgs, extract=default_extract):
                 if m is last:
                     store.mark_checked(f"detect:reply:{source}:{last.msg_id}")  # the assessment is the task, not a reply
 
+    # A calendar invite is a meeting at a fixed time, not something to reply to
+    from .invites import is_invite
+    if not last.is_from_me and is_invite(last):
+        key = f"invite:{source}:{last.msg_id}"
+        if not store.checked(key):
+            store.mark_checked(key)
+            store.mark_checked(f"detect:reply:{source}:{last.msg_id}")
+            if not store.open_loop(source, thread_id, "meeting"):
+                created.append(_create_meeting(store, source, thread_id, last))
+            old = store.open_loop(source, thread_id, "reply")   # made by older versions: it was never a reply
+            if old:
+                store.close_loop(old["id"], outcome="dismissed")
+                store.label_decision(old["id"], "detect", False)
+        return created
     from .leads import is_job_alert, looks_like_scam
     if not last.is_from_me:
         # Job alerts become leads, not replies; recruiter emails with scam signs are never chased
@@ -188,9 +213,11 @@ def ranked(store):
     loops = [dict(l) for l in store.loops()]
     from .areas import classify
     for l in loops:
-        if not l.get("area"):  # loops made before areas existed
-            l["area"] = classify(l["summary"], l["stakes"] or "", l["person"] or "", l["source"] or "", l["type"])
-            store.update_loop(l["id"], area=l["area"])
+        if not l.get("area") or l["area"] == "Other":  # made before areas existed, or rules have improved since
+            a = classify(l["summary"], l["stakes"] or "", l["person"] or "", l["source"] or "", l["type"])
+            if a != l.get("area"):
+                l["area"] = a
+                store.update_loop(l["id"], area=a)
     by_id = {l["id"]: l for l in loops}
     # A loop that holds others up carries part of their cost
     rows = []
@@ -241,7 +268,7 @@ def plan(rows):
     while queue:
         c = queue.pop(0)
         spare = (c["_ls"] - t).total_seconds() / 3600
-        candidates = sorted([o for o in others + queue if o["effort_adj"] <= 0.5],
+        candidates = sorted([o for o in others + queue if o["effort_adj"] <= 0.5 and o["type"] != "meeting"],
                             key=lambda o: (o not in queue, -o["ev_per_hour"]))
         budget = spare / 2
         for o in candidates:
@@ -261,6 +288,12 @@ def plan(rows):
     for o in others:
         o["why"] = "When you have a gap."
         out.append(o)
+    for r in out:
+        if r["type"] == "meeting":  # a meeting happens at its time; it isn't slotted in like a task
+            at = datetime.fromisoformat(r["due"]).astimezone()
+            day = "Today" if at.date() == now.astimezone().date() else "Tomorrow" \
+                if at.date() == (now.astimezone() + timedelta(days=1)).date() else f"{at:%A}"
+            r["why"] = f"{day} at {at:%H:%M}. Be ready a few minutes before." if at > now else "This was due to start."
     first_pressing = next((i for i, r in enumerate(out) if r in pressing), -1)
     for i, r in enumerate(out):
         r.pop("_ls", None)

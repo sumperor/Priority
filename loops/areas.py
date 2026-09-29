@@ -14,7 +14,7 @@ RULES = [
                         r"subscription|refund|form|doctor|gp|dentist|appointment|renew\w*|landlord|mortgage|loan)\b"),
     ("Work", r"\b(client|meeting|deck|report|manager|boss|team|project|stakeholder|pitch|demo|standup|"
              r"slides|proposal|contract|colleague|sprint|review)\b"),
-    ("Personal", r"\b(mum|mom|dad|mother|father|sister|brother|friend|birthday|gym|party|dinner|family|"
+    ("Personal", r"\b(groceries|grocery|shopping|shop for|supermarket|cook|dinner|laundry|clean(ing)?|haircut|pharmacy|mum|mom|dad|mother|father|sister|brother|friend|birthday|gym|party|dinner|family|"
                  r"partner|wedding|holiday|trip|flight|train|call \w+ back|ring)\b"),
 ]
 
