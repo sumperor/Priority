@@ -37,40 +37,6 @@ def test_walk_20_each_way_and_15_shopping_is_55_minutes(app):
     assert "20 min each way + 15 min there = 55 min" in l["note"]
 
 
-def test_travel_time_is_looked_up_not_asked(app, monkeypatch):
-    from loops import maps
-    calls = []
-
-    def fake_osm(origin, dest, mode):
-        calls.append((origin, dest, mode))
-        return 17 * 60 + 20, 1400          # 17 min 20 s -> rounded up to 18
-    monkeypatch.setattr(maps, "_osm", fake_osm)
-    r = app.post("/api/capture", json={"text": "Buy groceries tomorrow"}).json()
-    fields = [q["field"] for q in r["questions"]]
-    assert fields.index("home") < fields.index("place") < fields.index("travel_min")
-    i = r["id"]
-    app.patch(f"/api/loops/{i}", json={"travel_mode": "walk"})
-    app.patch(f"/api/loops/{i}", json={"home": "SW1A 1AA"})
-    p = app.patch(f"/api/loops/{i}", json={"place": "Tesco on the high street"}).json()
-    assert p["set"]["travel_min"] == 18 and p["route"]["via"] == "OpenStreetMap"
-    app.patch(f"/api/loops/{i}", json={"there_min": 15})
-    assert round(loop(app, i)["effort_h"] * 60) == 18 * 2 + 15
-    assert calls == [("SW1A 1AA", "Tesco on the high street", "walk")]
-    # home is remembered, so the next errand doesn't ask again
-    r2 = app.post("/api/capture", json={"text": "Pick up parcel from the post office"}).json()
-    assert "home" not in [q["field"] for q in r2["questions"]]
-
-
-def test_falls_back_to_asking_when_lookup_fails(app, monkeypatch):
-    from loops import maps
-    monkeypatch.setattr(maps, "_osm", lambda *a: None)
-    i = app.post("/api/capture", json={"text": "Buy groceries tomorrow"}).json()["id"]
-    app.patch(f"/api/loops/{i}", json={"home": "SW1A 1AA"})
-    app.patch(f"/api/loops/{i}", json={"travel_mode": "walk"})
-    p = app.patch(f"/api/loops/{i}", json={"place": "Somewhere unknown"}).json()
-    assert p["set"] == {} and p["route"] is None       # the UI then asks "how long one way?"
-
-
 def test_failed_lookup_says_why(app, monkeypatch):
     from loops import maps
     monkeypatch.setattr(maps, "_search", lambda q, near=None, bounded=False: [(51.5, -0.12, "x")] if q == "SW1A 1AA" else [])
@@ -81,33 +47,81 @@ def test_failed_lookup_says_why(app, monkeypatch):
     assert p["route_error"] == "couldn't find \"Tesco on the high street\" near you on the map"
 
 
-def test_uses_where_you_are_and_the_nearest_branch(app, monkeypatch):
+def _fake_map(monkeypatch, seen):
     from loops import maps
-    seen = {}
 
     def search(q, near=None, bounded=False):
         seen.setdefault("q", []).append(q)
-        if q == "Currys Vonbra":
-            return []
-        if q == "Currys":   # two branches: the far one first, like a real search might return
-            return [(51.75, -0.34, "Currys, St Albans, Hertfordshire"), (51.556, -0.281, "Currys, Wembley, London")]
+        if q in ("Halfords, Farnborough", "Currys"):   # two branches: the far one first, like a real search
+            return [(53.4, -2.2, "Far branch, Manchester, England"), (51.29, -0.755, "Halfords, Farnborough Gate, Farnborough")]
         return []
     monkeypatch.setattr(maps, "_search", search)
+    speed = {"foot": 725, "bike": 300, "car": 190}
 
     class R:
+        def __init__(self, url): self.url = url
         def raise_for_status(self): pass
-        def json(self): return {"routes": [{"duration": 725, "distance": 950}]}
-    monkeypatch.setattr(maps.requests, "get", lambda url, **kw: seen.update(url=url) or R())
+        def json(self):
+            prof = self.url.split("routed-")[1].split("/")[0]
+            return {"routes": [{"duration": speed[prof], "distance": 950}]}
+    monkeypatch.setattr(maps.requests, "get", lambda url, **kw: seen.setdefault("urls", []).append(url) or R(url))
 
-    r = app.post("/api/capture", json={"text": "Buy a charger from Curry's Vonbra"}).json()
-    home_q = next(q for q in r["questions"] if q["field"] == "home")
-    assert home_q["locate"] and home_q["skip_if_set"] == "here"      # the page tries your location first
+
+def test_one_question_at_a_time_then_the_estimate(app, monkeypatch):
+    from datetime import date, timedelta
+    seen = {}
+    _fake_map(monkeypatch, seen)
+    r = app.post("/api/capture", json={"text": "I need to buy skating shoes from Halfords in Farnborough"}).json()
     i = r["id"]
-    app.patch(f"/api/loops/{i}", json={"here": "51.5601,-0.2795"})
-    app.patch(f"/api/loops/{i}", json={"travel_mode": "walk"})
-    p = app.patch(f"/api/loops/{i}", json={"place": "Curry's Vonbra"}).json()
-    assert p["route"]["minutes"] == 13 and p["route"]["to"] == "Currys, Wembley"
-    assert "-0.2795,51.5601;-0.281,51.556" in seen["url"] and "routed-foot" in seen["url"]
-    # once it knows where you are, the next errand doesn't ask
-    r2 = app.post("/api/capture", json={"text": "Pick up parcel from the post office"}).json()
-    assert "home" not in [q["field"] for q in r2["questions"]]
+    nxt = lambda: app.get(f"/api/loops/{i}/next").json()
+    assert loop(app, i)["place"] == "Halfords in Farnborough"       # taken from the note, not asked
+
+    q = nxt(); assert q["kind"] == "calendar"
+    day = (date.today() + timedelta(days=2)).isoformat()
+    app.patch(f"/api/loops/{i}", json={"errand_day": day})
+    q = nxt(); assert q["field"] == "start_at" and q["options"][0]["label"] == "08:00"
+    ten = next(o for o in q["options"] if o["label"] == "10:00")
+    app.patch(f"/api/loops/{i}", json={"start_at": ten["value"]})
+
+    q = nxt(); assert q["field"] == "home" and q["locate"]            # the page sends your location here
+    app.patch(f"/api/loops/{i}", json={"here": "51.30,-0.75"})
+    q = nxt()
+    assert q["kind"] == "place" and "Farnborough Gate" in q["question"] and q["map"] == {"lat": 51.29, "lon": -0.755}
+    subs = {o["value"]: o.get("sub") for o in q["options"]}
+    assert subs["walk"] == "13 min each way" and subs["cycle"] == "5 min each way" and subs["drive"] == "4 min each way"
+    app.patch(f"/api/loops/{i}", json={"travel_mode": "cycle", "place_ok": True})
+
+    q = nxt(); assert q["field"] == "there_min" and "Halfords" in q["question"]
+    app.patch(f"/api/loops/{i}", json={"there_min": 30})
+    q = nxt(); assert q["kind"] == "summary"
+    assert q["lines"][0].startswith("Leave at 10:00") and "back about 10:40" in q["lines"][0]
+    assert q["lines"][1] == "5 min cycling each way + 30 min there = 40 min."
+    assert round(loop(app, i)["effort_h"] * 60) == 40
+
+
+def test_busy_times_are_not_offered(app, monkeypatch):
+    from datetime import date, datetime, timedelta
+    from loops import planner
+    day = date.today() + timedelta(days=3)
+    lec = datetime.combine(day, datetime.min.time()).astimezone()
+    monkeypatch.setattr(planner, "calendar_events", lambda a, b: [
+        {"title": "Lecture", "start": lec.replace(hour=9).isoformat(), "end": lec.replace(hour=12).isoformat()}])
+    i = app.post("/api/capture", json={"text": "Buy skating shoes"}).json()["id"]
+    cal = app.get(f"/api/loops/{i}/next").json()
+    assert next(o for o in cal["options"] if o["value"] == day.isoformat())["sub"] == "1 event"
+    app.patch(f"/api/loops/{i}", json={"errand_day": day.isoformat()})
+    labels = [o["label"] for o in app.get(f"/api/loops/{i}/next").json()["options"]]
+    assert "08:00" in labels and "09:00" not in labels and "11:00" not in labels and "12:00" in labels
+    assert labels[-1] == "Another day"
+
+
+def test_nearest_branch_and_wrong_place(app, monkeypatch):
+    seen = {}
+    _fake_map(monkeypatch, seen)
+    i = app.post("/api/capture", json={"text": "Buy a charger from Curry's Vonbra tomorrow at 3pm"}).json()["id"]
+    app.patch(f"/api/loops/{i}", json={"here": "51.30,-0.75"})
+    q = app.get(f"/api/loops/{i}/next").json()
+    assert q["kind"] == "place" and "Farnborough Gate" in q["question"]     # the closer of the two matches
+    app.patch(f"/api/loops/{i}", json={"travel_mode": "__wrong"})
+    q = app.get(f"/api/loops/{i}/next").json()
+    assert q["field"] == "place"

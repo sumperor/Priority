@@ -273,20 +273,39 @@ def capture(body: Capture):
     dup = _same_task(s, d["summary"])
     if dup:
         return {"id": dup, "duplicate": True, "questions": []}
-    from .errands import is_errand, parse as errand_parse, questions as errand_questions
+    from .errands import HAS_TIME, is_errand, parse as errand_parse
     errand = is_errand(body.text)
     known = errand_parse(body.text) if errand else {}
     loop_id = s.create_loop(source="manual", thread_id="", type=d["type"], person=d.get("person", ""),
                             summary=d["summary"], done_when=d.get("done_when", ""), due=due, cost=d["cost"],
                             consequence=d.get("consequence", "minor"), reversible=int(bool(d.get("reversible", True))),
                             hard_deadline=int(bool(d.get("hard_deadline", False))), effort_h=d["effort_h"],
-                            stakes=d.get("stakes", ""), base_h=known.get("base_h", d["effort_h"]) if errand else None)
+                            stakes=d.get("stakes", ""))
     if not errand:
         return {"id": loop_id, "questions": followups(d)}
-    from .maps import origin
-    if known:
-        _apply(s, loop_id, dict(known))
-    return {"id": loop_id, "questions": errand_questions(body.text, due, known, origin())}
+    # errands: keep what the note said, and never assume a day it didn't give
+    if d.get("due"):
+        when = datetime.fromisoformat(d["due"])
+        known["errand_day"] = when.astimezone().date().isoformat()
+        if HAS_TIME.search(body.text):
+            known["start_at"] = when.isoformat()
+    _apply(s, loop_id, known)
+    return {"id": loop_id, "errand": True, "questions": []}
+
+
+@app.get("/api/loops/{loop_id}/next")
+def errand_next(loop_id: int):
+    """The next errand question (one at a time), or the finished estimate."""
+    from .errands import next_step
+    from .maps import origin, travel
+    from .planner import calendar_events
+    s = db(); l = dict(_loop(s, loop_id))
+    now = datetime.now(timezone.utc)
+    try:
+        events = calendar_events(now - timedelta(hours=1), now + timedelta(days=15))
+    except Exception:
+        events = []
+    return next_step(l, origin(), events, now, lookup=lambda place, mode, start: travel(place, mode, start))
 
 
 _WHEN_TAIL = __import__("re").compile(
@@ -541,6 +560,8 @@ class Edit(BaseModel):
     there_min: int | None = None     # errands: time at the place
     home: str | None = None          # where errands set off from (saved once, not on the loop)
     here: str | None = None          # "lat,lon" from the browser's location, used as the starting point
+    errand_day: str | None = None    # YYYY-MM-DD picked on the calendar
+    place_ok: bool | None = None     # you confirmed the place found on the map
 
 
 @app.patch("/api/loops/{loop_id}")
@@ -566,12 +587,22 @@ def _apply(s, loop_id, f):
         f["cost"] = max(1, min(100, int(f["cost"])))
     if "effort_h" in f:
         f["effort_h"] = max(0.02, float(f["effort_h"]))
+    if f.get("start_at") == "__day":         # "Another day": back to the calendar
+        f.pop("start_at")
+        f.update(errand_day=None, commit_at=None)
+    if f.get("travel_mode") == "__wrong":    # "Wrong place": ask where again
+        f.pop("travel_mode")
+        f.update(place=None, place_ok=0, travel_min=None)
+    if "place_ok" in f:
+        f["place_ok"] = int(bool(f["place_ok"]))
     if "start_at" in f:
         d = datetime.fromisoformat(f.pop("start_at"))
         f["commit_at"] = (d if d.tzinfo else d.astimezone()).astimezone(timezone.utc).isoformat()
-    if "travel_min" in f:
+    if f.get("travel_min") is not None:
         f["travel_min"] = max(0, min(180, int(f["travel_min"])))
-    if "place" in f:
+    if f.get("place") == "delivery":
+        f.update(place=None, travel_mode="delivery")
+    elif f.get("place"):
         f["place"] = f["place"].strip()[:80]
     if "home" in f:
         from .maps import set_home
@@ -591,11 +622,14 @@ def _apply(s, loop_id, f):
         if not route:
             from .maps import last as maps_last
             f["_route_error"] = maps_last["error"]
+            if "travel_mode" in f:   # the old mode's minutes don't apply any more
+                s.update_loop(loop_id, travel_min=None)
+                cur["travel_min"] = None
         if route:
             s.update_loop(loop_id, travel_min=route["minutes"])
             cur["travel_min"] = f["travel_min"] = route["minutes"]
             f["_route"] = route
-    if ({"travel_mode", "travel_min", "place", "base_h"} & set(f)) or ("commit_at" in f and (cur.get("base_h") or cur.get("travel_mode"))):
+    if ({"travel_mode", "travel_min", "place", "base_h"} & set(f)) or ("commit_at" in f and (cur.get("base_h") or cur.get("travel_mode") or cur.get("errand_day"))):
         from .errands import recompute
         s.update_loop(loop_id, **recompute(cur))
     return f
@@ -1014,5 +1048,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.25 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.26 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

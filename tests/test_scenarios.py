@@ -48,16 +48,13 @@ def open_tasks(c):
 
 
 # 1
-def test_01_errand_asks_when_how_and_how_far(app):
+def test_01_errand_asks_the_day_first_on_a_calendar(app):
     c, _ = app
-    r = c.post("/api/capture", json={"text": "Buy groceries tomorrow"}).json()
-    fields = [q["field"] for q in r["questions"]]
-    assert "start_at" in fields, fields            # what time tomorrow?
-    assert "travel_mode" in fields, fields         # walking, cycling, driving, delivery?
-    assert "travel_min" in fields, fields          # how far?
-    assert "place" in fields, fields               # where?
-    assert "effort_h" not in fields                # it works out the time itself
-    assert open_tasks(c)[0]["summary"] == "Buy groceries"
+    r = c.post("/api/capture", json={"text": "Buy skating shoes"}).json()
+    assert r["errand"] and open_tasks(c)[0]["summary"] == "Buy skating shoes"
+    q = c.get(f"/api/loops/{r['id']}/next").json()
+    assert q["kind"] == "calendar" and q["field"] == "errand_day"      # no day given: don't assume one
+    assert len(q["options"]) >= 13
 
 
 # 2

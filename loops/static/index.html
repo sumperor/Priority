@@ -311,6 +311,15 @@ details.closed[open] summary::after{content:" \2212"}
 .choices{display:grid;gap:8px}
 .choices button{text-align:left;border:1px solid var(--line);background:var(--raised);padding:14px 16px;border-radius:14px;font-weight:560;transition:border-color .2s,transform .15s}
 .choices button:hover{border-color:var(--ink);transform:translateX(2px)}
+.choices button small{display:block;font-weight:450;color:var(--mute);font-size:12.5px;margin-top:2px}
+.choices button:disabled{opacity:.4;pointer-events:none}
+.choices.grid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+.choices.grid button{padding:12px;text-align:center}
+.choices.grid button:hover{transform:translateY(-2px)}
+.mapbox{margin-top:14px;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.mapbox iframe{display:block;width:100%;height:210px;border:0}
+.mapbox .maplinks{display:flex;gap:14px;padding:8px 12px;font-size:13px;background:var(--raised)}
+.plan-lines p{font-size:17px;margin:8px 0}
 .sheet textarea,.field input,.field select{width:100%;border:1px solid var(--line);background:var(--raised);border-radius:12px;padding:12px;font-size:1rem}
 .sheet textarea{min-height:92px;resize:vertical}
 .srow{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
@@ -1207,17 +1216,17 @@ function frame(html){
   }else{const kids=[...d.children];kids.forEach((k,i)=>motion(k,{opacity:[0,1],x:[30,0]},{bounce:.3,vd:.4,delay:i*.03}))}
   return d;
 }
-function step({ctx,q,kind='choice',options=[],n=1,of=1,skip=false,skipLabel='',placeholder=''}){
+function step({ctx,q,kind='choice',options=[],n=1,of=1,skip=false,skipLabel='',placeholder='',extra='',grid=false}){
   return new Promise(res=>{
     pending=res;
     const bar=`<div class="progress"><i style="width:${Math.round(100*(n-1)/of)}%"></i></div>`;
     const body=kind==='choice'
-      ?`<div class="choices">${options.map((o,k)=>`<button data-k="${k}">${esc(o.label)}</button>`).join('')}</div>${skip?`<div class="srow"><button class="btn ghost" id="s-skip">${skipLabel||'Skip'}</button></div>`:''}`
+      ?`${extra}<div class="choices${grid?' grid':''}">${options.map((o,k)=>`<button data-k="${k}"${o.off?' disabled':''}>${esc(o.label)}${o.sub?`<small>${esc(o.sub)}</small>`:''}</button>`).join('')}</div>${skip?`<div class="srow"><button class="btn ghost" id="s-skip">${skipLabel||'Skip'}</button></div>`:''}`
       :`<div class="inrow"><textarea id="s-text" placeholder="${esc(placeholder)}"></textarea><button class="mic" id="s-mic" aria-label="Dictate">${MIC}</button></div><div class="srow"><button class="btn pri" id="s-save">Next</button>${skip?`<button class="btn ghost" id="s-skip">${skipLabel||'Nothing to add'}</button>`:''}</div>`;
     const d=frame(`${of>1?bar:''}${ctx?`<p class="ctx">${esc(ctx)}</p>`:''}<h2>${esc(q)}</h2>${body}`);
     if(of>1)requestAnimationFrame(()=>{const i=d.querySelector('.progress i');if(i)i.style.width=Math.round(100*n/of)+'%'});
     const done=v=>{stopAllMics();pending=null;res(v)};
-    if(kind==='choice'){d.querySelector('.choices').onclick=e=>{const b=e.target.closest('button');if(b)done(options[+b.dataset.k].value)};d.querySelector('.choices button').focus()}
+    if(kind==='choice'){d.querySelector('.choices').onclick=e=>{const b=e.target.closest('button');if(b)done(options[+b.dataset.k].value)};(d.querySelector('.choices button:not([disabled])')||d.querySelector('.choices button')).focus()}
     else{const t=d.querySelector('#s-text');t.focus();attachMic(d.querySelector('#s-mic'),t);d.querySelector('#s-save').onclick=()=>done(t.value.trim());
       t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();done(t.value.trim())}})}
     const sk=d.querySelector('#s-skip');if(sk)sk.onclick=()=>done('');
@@ -1290,7 +1299,39 @@ async function notDoneFlow(l){
 }
 function whereAmI(){return new Promise(ok=>{if(!navigator.geolocation)return ok(null);
   navigator.geolocation.getCurrentPosition(p=>ok(p.coords.latitude.toFixed(5)+','+p.coords.longitude.toFixed(5)),()=>ok(null),{timeout:10000,maximumAge:600000})})}
+function mapBox(m){if(!m||m.lat==null)return '';const b=[m.lon-.008,m.lat-.005,m.lon+.008,m.lat+.005].map(x=>x.toFixed(5)).join(',');
+  return `<div class="mapbox"><iframe loading="lazy" title="Map" src="https://www.openstreetmap.org/export/embed.html?bbox=${b}&layer=mapnik&marker=${m.lat},${m.lon}"></iframe>
+  <div class="maplinks"><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${m.lat},${m.lon}">Open in Google Maps</a><a target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${m.lat}&mlon=${m.lon}#map=17/${m.lat}/${m.lon}">OpenStreetMap</a></div></div>`}
+async function errandFlow(c){
+  // one question at a time; the server decides what's still unknown
+  for(let n=1;n<12;n++){
+    let q;try{q=await api(`/api/loops/${c.id}/next`)}catch(e){closeS();return toast(e.message)}
+    if(q.kind==='summary'){
+      const v=await step({ctx:q.ctx,q:q.question,extra:`<div class="plan-lines">${q.lines.map(x=>`<p>${esc(x)}</p>`).join('')}</div>`,
+        options:[{label:'Looks right',value:'ok'},{label:'Change the time',value:'time'}]});
+      if(v==='time'){await api(`/api/loops/${c.id}`,{method:'PATCH',body:{start_at:'__day'}});continue}
+      break}
+    let v;
+    if(q.locate){loading('Finding where you are');const at=await whereAmI();
+      if(at){await api(`/api/loops/${c.id}`,{method:'PATCH',body:{here:at}});loading('Looking it up on the map');continue}}
+    if(q.kind==='text'){
+      const ex=(q.extra||[])[0];
+      v=await step({ctx:q.ctx,q:q.question,kind:'text',placeholder:q.placeholder||'',skip:!!ex,skipLabel:ex?ex.label:''});
+      if(v==='')v=ex?ex.value:'';
+    }else{
+      v=await step({ctx:q.ctx,q:q.question,options:q.options,grid:q.kind==='calendar',extra:q.kind==='place'?mapBox(q.map):''});
+    }
+    if(v===null)return refresh();
+    if(v==='')break;
+    const body={[q.field]:v};
+    if(q.kind==='place'&&v!=='__wrong')body.place_ok=true;
+    if(q.field==='place'||q.field==='home')loading('Looking it up on the map');
+    await api(`/api/loops/${c.id}`,{method:'PATCH',body});
+  }
+  closeS();toast('Got it. Plan updated.');refresh();
+}
 async function askMissing(c){
+  if(c.errand)return errandFlow(c);
   const got={};
   const qs=c.questions;
   for(let i=0;i<qs.length;i++){
@@ -1517,7 +1558,7 @@ async function add(){
   try{const r=await api('/api/capture',{method:'POST',body:{text}});cap.value='';grow();$('capstate').textContent='';
     await refresh();
     if(r.duplicate){toast('That\'s already on your list.');const el=document.querySelector(`[data-key="r${r.id}"],[data-key="h${r.id}"]`);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});motion(el,{scale:[1,1.03,1]},{duration:.5})}return}
-    if(r.questions&&r.questions.length){const s=S.loops.find(x=>x.id===r.id);askMissing({id:r.id,summary:s?s.summary:text,questions:r.questions})}
+    if(r.errand||(r.questions&&r.questions.length)){const s=S.loops.find(x=>x.id===r.id);askMissing({id:r.id,errand:r.errand,summary:s?s.summary:text,questions:r.questions})}
     else toast('Added. It will chase you until it\'s done.')}
   catch(e){$('capstate').textContent='';toast(e.message)}
 }

@@ -20,6 +20,7 @@ MODES = {"walk": "foot", "cycle": "bike", "drive": "car"}
 UA = {"User-Agent": "Sparrow/1.0 (local task app)"}
 HERE_FRESH_S = 6 * 3600
 last = {"error": ""}
+_geo_memo, _clock = {}, {"t": 0.0}
 FILLER = re.compile(r"\b(on|in|at|near|by|the|my|local|nearest|closest|one)\b", re.I)
 COORDS = re.compile(r"^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$")
 
@@ -71,9 +72,17 @@ def _search(q, near=None, bounded=False):
         params["viewbox"] = f"{lon - 0.15},{lat + 0.1},{lon + 0.15},{lat - 0.1}"
         if bounded:
             params["bounded"] = 1
+    key = (q.lower(), tuple(round(x, 2) for x in near[:2]) if near else None, bounded)
+    if key in _geo_memo:
+        return _geo_memo[key]
+    wait = 1.05 - (time.time() - _clock["t"])   # OpenStreetMap asks for at most one search a second
+    if wait > 0:
+        time.sleep(wait)
+    _clock["t"] = time.time()
     r = requests.get("https://nominatim.openstreetmap.org/search", params=params, headers=UA, timeout=15)
     r.raise_for_status()
-    return [(float(h["lat"]), float(h["lon"]), h.get("display_name", "")) for h in r.json()]
+    _geo_memo[key] = out = [(float(h["lat"]), float(h["lon"]), h.get("display_name", "")) for h in r.json()]
+    return out
 
 
 def _geocode(q, near=None):
@@ -82,8 +91,9 @@ def _geocode(q, near=None):
     m = COORDS.match(q or "")
     if m:
         return float(m.group(1)), float(m.group(2)), "where you are"
-    clean = re.sub(r"\s+", " ", FILLER.sub(" ", q.replace("'", "").replace("’", ""))).strip()
-    tries = [q, clean] + ([clean.split(" ")[0]] if near and clean else [])
+    town = re.sub(r"\s+in\s+", ", ", q)   # "Halfords in Farnborough" -> "Halfords, Farnborough"
+    clean = re.sub(r"\s+", " ", FILLER.sub(" ", town.replace("'", "").replace("\u2019", ""))).strip(" ,")
+    tries = [q, town, clean] + ([clean.split(" ")[0].strip(",")] if near and clean else [])
     for t in dict.fromkeys(x for x in tries if x):
         for bounded in ((True, False) if near else (False,)):
             hits = _search(t, near, bounded)
@@ -127,7 +137,7 @@ def _osm(start, dest, mode):
     routes = r.json().get("routes") or []
     if not routes:
         raise LookupError("found both places but no route between them")
-    return int(routes[0]["duration"]), int(routes[0]["distance"]), b[2]
+    return int(routes[0]["duration"]), int(routes[0]["distance"]), b[2], b[0], b[1]
 
 
 def travel(dest, mode, origin_=None):
@@ -160,7 +170,9 @@ def travel(dest, mode, origin_=None):
     secs, metres = found[0], found[1]
     name = found[2] if len(found) > 2 else ""
     out = {"minutes": max(1, -(-secs // 60)), "km": round((metres or 0) / 1000, 1),
-           "to": ", ".join(name.split(", ")[:2]), "via": "OpenStreetMap"}
+           "to": ", ".join(name.split(", ")[:3]), "via": "OpenStreetMap"}
+    if len(found) > 4:
+        out.update(lat=found[3], lon=found[4])
     d = _places()
     d.setdefault("routes", {})[k] = out
     C.write_secret("places.json", d)
