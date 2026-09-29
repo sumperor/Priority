@@ -81,7 +81,9 @@ def _create_assessment(store, source, thread_id, msgs, m):
     behalf = re.search(r"on behalf of\s+(.+)", company, re.I)   # "SHL on behalf of Shell" -> Shell
     if behalf:
         company = behalf.group(1).strip()
-    kind = ASSESS.search(f"{m.subject} {m.text}").group(1)
+    found = ASSESS.findall(f"{m.subject} {m.text}")
+    generic = {"online assessment", "online test", "assessment centre", "assessment center"}
+    kind = next((k for k in found if k.lower() not in generic), found[0])  # "numerical reasoning" beats "online assessment"
     due = None
     try:
         d = default_extract(thread_state(msgs), "task")
@@ -101,6 +103,8 @@ def _create_assessment(store, source, thread_id, msgs, m):
 def _create_meeting(store, source, thread_id, m):
     from .invites import parse, summary
     inv = parse(m)
+    if inv["start"] and (inv["end"] or inv["start"]) < utcnow():
+        return None   # it already happened: nothing to do
     due = (inv["start"] or utcnow() + timedelta(hours=48)).isoformat()
     return store.create_loop(
         source=source, thread_id=thread_id, type="meeting", person=inv["organizer"], summary=summary(inv),
@@ -143,7 +147,9 @@ def detect(store, decide, source, thread_id, msgs, extract=default_extract):
             store.mark_checked(key)
             store.mark_checked(f"detect:reply:{source}:{last.msg_id}")
             if not store.open_loop(source, thread_id, "meeting"):
-                created.append(_create_meeting(store, source, thread_id, last))
+                mid = _create_meeting(store, source, thread_id, last)
+                if mid:
+                    created.append(mid)
             old = store.open_loop(source, thread_id, "reply")   # made by older versions: it was never a reply
             if old:
                 store.close_loop(old["id"], outcome="dismissed")
@@ -210,6 +216,10 @@ def ranked(store):
     """Priority = P(miss) x cost / effort, with irreversible high-cost loops always first.
     Cost is adjusted by what you've told it mattered more or less than expected."""
     from .forecast import forecast
+    now = utcnow()
+    for l in store.loops("open"):
+        if l["type"] == "meeting" and datetime.fromisoformat(l["due"]) < now - timedelta(hours=1):
+            store.close_loop(l["id"], outcome="passed")   # a meeting that's over needs nothing from you
     loops = [dict(l) for l in store.loops()]
     from .areas import classify
     for l in loops:
@@ -232,7 +242,13 @@ def ranked(store):
         rows.append({**loop, "p_miss": pm, "effort_adj": round(effort, 2), "cost_adj": round(cost_total, 1),
                      "ev_per_hour": pm * cost_total / effort, "tier": tier,
                      "forecast": forecast(loop, pm, effort, cost_total, by_id)})
-    return plan(rows)
+    # Past their deadline by over an hour: out of the plan, into a quiet list. Asked about once, then left alone.
+    past = [r for r in rows if r["type"] != "waiting" and datetime.fromisoformat(r["due"]) < now - timedelta(hours=1)]
+    for r in past:
+        r["past_deadline"] = True
+        r["bucket"] = "Past"
+        r["why"] = f"The deadline was {datetime.fromisoformat(r['due']).astimezone():%a %d %b, %H:%M}."
+    return plan([r for r in rows if r not in past]) + past
 
 
 def _dur(h):

@@ -50,7 +50,9 @@ class Store:
                                 ("loops", "note", "TEXT"), ("loops", "started_at", "TEXT"),
                                 ("loops", "commit_at", "TEXT"), ("loops", "last_nudge", "TEXT"),
                                 ("loops", "area", "TEXT"), ("loops", "evidence", "TEXT"),
-                                ("loops", "acked", "INTEGER")]:
+                                ("loops", "acked", "INTEGER"), ("loops", "place", "TEXT"),
+                                ("loops", "travel_mode", "TEXT"), ("loops", "travel_min", "INTEGER"),
+                                ("loops", "base_h", "REAL")]:
             cols = {r["name"] for r in self.db.execute(f"PRAGMA table_info({table})")}
             if col not in cols:
                 self.db.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
@@ -131,7 +133,7 @@ class Store:
         closed = datetime.now(timezone.utc)
         # Dismissed loops weren't real tasks, so they don't count toward the on-time rate
         on_time = (int(closed <= datetime.fromisoformat(loop["due"]))
-                   if loop["due"] and outcome not in ("dismissed", "dropped") else None)
+                   if loop["due"] and outcome not in ("dismissed", "dropped", "passed") else None)
         self.update_loop(loop_id, status="closed", outcome=outcome, closed_at=closed.isoformat(),
                          on_time=on_time, close_confidence=confidence, actual_h=actual_h)
 

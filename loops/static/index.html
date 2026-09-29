@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sparrow</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%20aria-hidden%3D%22true%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22lg%22%20x1%3D%220%22%20y1%3D%221%22%20x2%3D%221%22%20y2%3D%220%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234F46E5%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230E7C66%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%2215%22%20fill%3D%22url%28%23lg%29%22/%3E%3Cpath%20d%3D%22M7.5%2022.5%2022%2010%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22/%3E%3Cpath%20d%3D%22M16%209.4h6.6V16%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3Cpath%20d%3D%22M7.5%2022.5c.2-2.4%201.3-4%203.3-4.7M7.5%2022.5c2.4-.2%204-1.3%204.7-3.3%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%22.85%22/%3E%3Cpath%20d%3D%22M11.8%2017.7c1.2-3.3%204.2-5.4%207.6-5.6-1.3%203.1-4.2%205.3-7.6%205.6Z%22%20fill%3D%22%23fff%22%20opacity%3D%22.9%22/%3E%3Ccircle%20cx%3D%2219.6%22%20cy%3D%2212.3%22%20r%3D%22.9%22%20fill%3D%22%234F46E5%22/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22spg%22%20x1%3D%220%22%20y1%3D%221%22%20x2%3D%221%22%20y2%3D%220%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%231F1D4D%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%233B34C9%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2216%22%20fill%3D%22url%28%23spg%29%22/%3E%3Cpath%20d%3D%22M9%2055l7-7M5%2047l6-6M17%2059l5-5%22%20stroke%3D%22%238FF0D0%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%22.9%22/%3E%3Cpath%20d%3D%22M49.5%2014.5%2043.8%2016.2C39.6%2012.4%2032.6%2013.6%2029.8%2019.2%2026.2%2026.6%2021%2031.4%2013%2034.2l6.4%202.6-3.6%207.6%2011-5.6C35.6%2038%2042%2032.6%2044.4%2025c.9-2.9%201.3-5.2%205.1-10.5z%22%20fill%3D%22%23fff%22/%3E%3Cpath%20d%3D%22M34.6%2025.4C31.2%2018%2025.6%2013.6%2017.6%2012.2c2.6%207.2%207.4%2013%2013.6%2016.2z%22%20fill%3D%22%238FF0D0%22/%3E%3Cpath%20d%3D%22M36.2%2031.5c3.2-.6%205.6-2.6%206.9-5.4%22%20stroke%3D%22%23E8B27A%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22/%3E%3Ccircle%20cx%3D%2240.2%22%20cy%3D%2218.6%22%20r%3D%221.8%22%20fill%3D%22%231F1D4D%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
@@ -43,7 +43,8 @@ button{cursor:pointer}
 @keyframes orbit{from{transform:rotate(0deg) translateX(18vmax) rotate(0deg)}to{transform:rotate(360deg) translateX(18vmax) rotate(-360deg)}}
 @media (prefers-color-scheme:dark){.aura i{opacity:.12}}
 .brand{display:flex;align-items:center;gap:10px;font-weight:780;font-size:1.25rem;letter-spacing:-.02em}
-.brand .logo{width:32px;height:32px;flex:none;filter:drop-shadow(0 4px 10px color-mix(in srgb,var(--jobs) 35%,transparent))}
+.brand .logo{width:34px;height:34px;flex:none;border-radius:9px;filter:drop-shadow(0 6px 14px rgba(59,52,201,.35));transition:transform .4s var(--ease)}
+.brand:hover .logo{transform:rotate(-8deg) scale(1.08)}
 .wrap{position:relative;z-index:1}
 .composer{z-index:5}
 .wrap{max-width:720px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top,0px)) 16px 190px}
@@ -340,7 +341,7 @@ details.closed[open] summary::after{content:" \2212"}
 <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
 <main class="wrap">
   <header class="top">
-    <div class="brand"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="var(--jobs)"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs><circle cx="16" cy="16" r="15" fill="url(#lg)"/><path d="M7.5 22.5 22 10" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M16 9.4h6.6V16" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 22.5c.2-2.4 1.3-4 3.3-4.7M7.5 22.5c2.4-.2 4-1.3 4.7-3.3" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".85"/><path d="M11.8 17.7c1.2-3.3 4.2-5.4 7.6-5.6-1.3 3.1-4.2 5.3-7.6 5.6Z" fill="#fff" opacity=".9"/><circle cx="19.6" cy="12.3" r=".9" fill="var(--jobs)"/></svg><span>Sparrow</span></div>
+    <div class="brand"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="spg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#1F1D4D"/><stop offset="1" stop-color="#3B34C9"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#spg)"/><path d="M9 55l7-7M5 47l6-6M17 59l5-5" stroke="#8FF0D0" stroke-width="2.6" stroke-linecap="round" opacity=".9"/><path d="M49.5 14.5 43.8 16.2C39.6 12.4 32.6 13.6 29.8 19.2 26.2 26.6 21 31.4 13 34.2l6.4 2.6-3.6 7.6 11-5.6C35.6 38 42 32.6 44.4 25c.9-2.9 1.3-5.2 5.1-10.5z" fill="#fff"/><path d="M34.6 25.4C31.2 18 25.6 13.6 17.6 12.2c2.6 7.2 7.4 13 13.6 16.2z" fill="#8FF0D0"/><path d="M36.2 31.5c3.2-.6 5.6-2.6 6.9-5.4" stroke="#E8B27A" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="40.2" cy="18.6" r="1.8" fill="#1F1D4D"/></svg><span>Sparrow</span></div>
     <div class="icons">
       <button class="focusbtn" id="focusbtn"><span class="live" id="focuslive" hidden></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span id="focuslabel">Focus</span></button>
       <button class="ib" id="sync" aria-label="Check now" title="Check now"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg></button>
@@ -356,6 +357,7 @@ details.closed[open] summary::after{content:" \2212"}
   <section id="wins" aria-live="polite"></section>
   <section id="hero" aria-live="polite"></section>
   <div id="areas"></div>
+  <details class="closed" id="pastSec" hidden><summary id="pastSum">Past deadline</summary><p class="nums" style="margin:6px 0 0">These passed their deadline, so Sparrow has stopped chasing them. Tick one off, move it, or drop it.</p><div id="past" style="margin-top:8px"></div></details>
   <details class="closed" id="closedSec" hidden><summary id="closedSum">Done recently</summary><div id="closed" style="margin-top:8px"></div></details>
 </main>
 
@@ -734,7 +736,7 @@ requestAnimationFrame(tickClock);
 /* ---------- render ---------- */
 function render(){
   const before=snap(), newbies=[];
-  const L=S.loops, open=L.filter(l=>l.status==='open');
+  const L=S.loops, past=L.filter(l=>l.status==='open'&&l.past_deadline), open=L.filter(l=>l.status==='open'&&!l.past_deadline);
   const active=open.filter(l=>l.type!=='waiting');
   const top=active[0];
   const hr=new Date().getHours();
@@ -762,7 +764,7 @@ function render(){
   const heroHTML=top?`<article class="hero" style="--c:${AREA_C[top.area]||AREA_C.Other}">
       <p class="lead"><span>Do this next</span><span class="chip">${esc(top.area||'Other')}</span></p>
       <h1>${esc(top.summary)}</h1>
-      ${originLine(top.origin,{quote:true})}
+      ${originLine(top.origin,{quote:true})}${!top.origin&&top.note?`<p class="origin"><span>${esc(top.note)}</span></p>`:''}
       <p class="why${top.forecast.level==='late'?' late':''}">${esc(top.why||top.forecast.headline)}</p>
       <div class="heroacts"><button class="closer" data-act="close" data-id="${top.id}"><span class="ring">${TICK}</span>Done</button>
         ${canExplore(top)?`<button class="btn${exploreFirst(top)?'':' ghost'}" data-act="explore" data-id="${top.id}">${SPARK_I} Explore</button>`:''}
@@ -817,6 +819,10 @@ function render(){
     prev=sec;
   });
 
+  $('pastSec').hidden=!past.length;
+  $('pastSum').textContent=`Past deadline (${past.length})`;
+  $('past').innerHTML=past.map(l=>`<div class="crow"><div><span>${esc(l.summary)}</span><small>${esc(l.why||'')}</small></div>
+    <div class="links" style="margin:0"><button class="link" data-act="close" data-id="${l.id}">Done</button><button class="link" data-act="later" data-id="${l.id}">Move it</button><button class="link" data-act="dismiss" data-id="${l.id}">Drop it</button></div></div>`).join('');
   $('closedSec').hidden=!S.closed.length;
   $('closedSum').textContent=`Done recently (${S.closed.length})`;
   $('closed').innerHTML=S.closed.map(l=>`<div class="crow"><div><span class="t">${esc(l.summary)}</span><small>${esc(OUT[l.outcome]||l.outcome||'Closed')}${l.note?'. '+esc(l.note):''}</small></div>
@@ -954,10 +960,14 @@ async function notDoneFlow(l){
   try{await api(`/api/loops/${l.id}/not-done`,{method:'POST',body:{left,due}});toast('Got it. It\'s back on your list.');refresh()}catch(e){toast(e.message)}
 }
 async function askMissing(c){
-  for(let i=0;i<c.questions.length;i++){
-    const q=c.questions[i];
-    const v=await step({ctx:c.summary,q:q.question,options:q.options,n:i+1,of:c.questions.length,skip:true});
+  const got={};
+  const qs=c.questions;
+  for(let i=0;i<qs.length;i++){
+    const q=qs[i];
+    if(q.skip_if&&Object.entries(q.skip_if).every(([k,v])=>got[k]===v))continue;
+    const v=await step({ctx:c.summary,q:q.question,kind:q.kind||'choice',options:q.options||[],n:i+1,of:qs.length,skip:true,placeholder:q.placeholder||''});
     if(v===null)return;
+    got[q.field]=v;
     if(v!=='')await api(`/api/loops/${c.id}`,{method:'PATCH',body:{[q.field]:v}});
   }
   closeS();toast('Got it. Plan updated.');refresh();

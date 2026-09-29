@@ -66,6 +66,8 @@ def due_nudges(store, rows):
             if commit:
                 msg = f"You said you'd start {_q(r['summary'])} at {_t(commit)}. Have you started?"
             elif left_min <= 0:
+                if last and last >= due:
+                    continue  # asked once after the deadline; don't keep chasing something that's past
                 msg = f"The deadline for {_q(r['summary'])} has passed. Did it happen?"
             else:
                 opener = OPENERS[min(n, len(OPENERS) - 1)]

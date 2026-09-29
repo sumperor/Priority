@@ -120,6 +120,7 @@ def state():
     import json, os
     from .areas import AREAS
     from .leads import shown
+    _merge_duplicates(s)
     closed = [dict(r) for r in s.closed_loops()]
     loops = ranked(s)
     for l in loops + closed:
@@ -203,12 +204,14 @@ def capture(body: Capture):
     dup = _same_task(s, d["summary"])
     if dup:
         return {"id": dup, "duplicate": True, "questions": []}
+    from .errands import is_errand, questions as errand_questions
+    errand = is_errand(body.text)
     loop_id = s.create_loop(source="manual", thread_id="", type=d["type"], person=d.get("person", ""),
                             summary=d["summary"], done_when=d.get("done_when", ""), due=due, cost=d["cost"],
                             consequence=d.get("consequence", "minor"), reversible=int(bool(d.get("reversible", True))),
                             hard_deadline=int(bool(d.get("hard_deadline", False))), effort_h=d["effort_h"],
-                            stakes=d.get("stakes", ""))
-    return {"id": loop_id, "questions": followups(d)}
+                            stakes=d.get("stakes", ""), base_h=d["effort_h"] if errand else None)
+    return {"id": loop_id, "questions": errand_questions(body.text, due) if errand else followups(d)}
 
 
 _WHEN_TAIL = __import__("re").compile(
@@ -221,6 +224,23 @@ def tidy_summary(text):
     """'Buy groceries tomorrow' -> 'Buy groceries': the when is shown separately."""
     t = _WHEN_TAIL.sub("", text.strip()).strip(" ,.")
     return (t[:1].upper() + t[1:]) if len(t) >= 3 else text.strip()
+
+
+def _merge_duplicates(s):
+    """Same task typed twice (from older versions, or a double tap): keep the first, drop the rest quietly."""
+    import re
+    seen = {}
+    for r in sorted(s.loops("open"), key=lambda r: r["id"]):
+        if r["source"] != "manual":
+            continue
+        k = re.sub(r"[^a-z0-9 ]", "", tidy_summary(r["summary"]).lower()).strip()
+        if k in seen:
+            s.close_loop(r["id"], outcome="dismissed")
+            s.update_loop(r["id"], note=f"Duplicate of task {seen[k]}")
+        else:
+            seen[k] = r["id"]
+            if tidy_summary(r["summary"]) != r["summary"]:
+                s.update_loop(r["id"], summary=tidy_summary(r["summary"]))
 
 
 def _same_task(s, summary):
@@ -439,6 +459,10 @@ class Edit(BaseModel):
     blocks: int | None = None       # 0 clears
     hard_deadline: bool | None = None
     reversible: bool | None = None
+    start_at: str | None = None      # errands: when you'll go
+    travel_mode: str | None = None   # walk | cycle | drive | transit | delivery
+    travel_min: int | None = None    # one way
+    place: str | None = None
 
 
 @app.patch("/api/loops/{loop_id}")
@@ -463,8 +487,18 @@ def _apply(s, loop_id, f):
         f["cost"] = max(1, min(100, int(f["cost"])))
     if "effort_h" in f:
         f["effort_h"] = max(0.02, float(f["effort_h"]))
+    if "start_at" in f:
+        d = datetime.fromisoformat(f.pop("start_at"))
+        f["commit_at"] = (d if d.tzinfo else d.astimezone()).astimezone(timezone.utc).isoformat()
+    if "travel_min" in f:
+        f["travel_min"] = max(0, min(180, int(f["travel_min"])))
+    if "place" in f:
+        f["place"] = f["place"].strip()[:80]
     if f:
         s.update_loop(loop_id, **f)
+    if {"commit_at", "travel_mode", "travel_min", "place"} & set(f):
+        from .errands import recompute
+        s.update_loop(loop_id, **recompute(dict(s.get_loop(loop_id))))
     return f
 
 
@@ -679,5 +713,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.17 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.18 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

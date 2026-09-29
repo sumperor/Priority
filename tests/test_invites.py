@@ -87,8 +87,9 @@ def test_old_reply_task_for_an_invite_is_replaced(tmp_path, monkeypatch):
     from loops.decisions import RuleDecisions
     from loops.engine import detect
     s = db()
+    soon = datetime.now(timezone.utc) + timedelta(days=2)
     m = Message("gmail", "i3", "i3", "mahan@vcpulse.io", "Mahan Agabegi", False, GOOGLE_INVITE,
-                datetime.now(timezone.utc) - timedelta(hours=1), "Invitation: Meeting @ Wed 1 Oct 2025 3pm - 3:30pm (BST)")
+                datetime.now(timezone.utc) - timedelta(hours=1), f"Invitation: Meeting @ {soon:%a %d %b %Y} 3pm - 3:30pm (BST)")
     s.upsert_messages([m])
     s.create_loop(source="gmail", thread_id="i3", type="reply", person="Mahan Agabegi", summary="Reply to Mahan",
                   done_when="", due=datetime.now(timezone.utc).isoformat(), cost=30, consequence="minor", reversible=1,

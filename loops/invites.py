@@ -6,7 +6,8 @@ who organised it and how to join, and strips the email's boilerplate so previews
 import re
 from datetime import datetime, timedelta, timezone
 
-SUBJECT = re.compile(r"^(?:updated\s+)?invitation(?:\s+updated)?\s*:\s*(.+?)\s*@\s*(.+?)(?:\s*\(([^()]*@[^()]*)\))?\s*$", re.I)
+PREFIX = r"^(?:updated\s+|new\s+)?invitation(?:\s+updated)?(?:\s+from\s+an?\s+unknown\s+sender)?\s*:\s*"
+SUBJECT = re.compile(PREFIX + r"(.+?)\s*@\s*(.+?)(?:\s*\(([^()]*@[^()]*)\))?\s*$", re.I)
 BODY_HINT = re.compile(r"(calendar\.google\.com/calendar/event|invitation from google calendar|join with google meet|"
                        r"microsoft teams meeting|join the meeting now|zoom\.us/j/|\.ics\b)", re.I)
 BOILER = re.compile(r"(this event isn't in your calendar yet|you haven't interacted with|do you want to automatically add|"
@@ -82,7 +83,7 @@ def clean(text):
 
 def parse(m):
     sm = SUBJECT.match(m.subject or "")
-    title = (sm.group(1) if sm else re.sub(r"^(updated\s+)?invitation\s*:\s*", "", m.subject or "", flags=re.I)).strip()
+    title = (sm.group(1) if sm else re.sub(PREFIX, "", m.subject or "", flags=re.I)).strip()
     start, end = when(sm.group(2) if sm else "")
     if not start:
         start, end = when(m.text)
@@ -102,7 +103,8 @@ def summary(inv):
     who = inv["organizer"]
     if inv["generic"] or not inv["title"]:
         return f"Meeting with {who}, topic not given"
-    return f"Meeting with {who}: {inv['title']}"[:120]
+    t = inv["title"] if len(inv["title"]) <= 60 else inv["title"][:60].rsplit(" ", 1)[0] + "\u2026"
+    return f"Meeting with {who}: {t}"
 
 
 def preview(inv):
