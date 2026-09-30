@@ -21,7 +21,7 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - `loops/evidence.py` proof in the inbox that a loop is done (checked after sync and before every nudge)
 - `loops/leads.py` job-alert and recruiter emails: credibility, fit, "worth applying"; `loops/interviews.py` write-ups
 - `loops/areas.py` which section a loop lives in (rules only); `loops/explore.py` "Explore": who someone is, why you are meeting; `loops/invites.py` calendar invites become meetings
-- `loops/jobs.py` jobs from the inbox: scan 14 days, verdict vs CV/LinkedIn, firm research, tailored CV (PDF page, Word, text)
+- `loops/jobs.py` jobs from the inbox: scan 14 days lists every job (HTML alerts too) without judging; "Check relevance" (one or all, background) reads the posting and compares with CV/LinkedIn/interests; firm research, tailored CV
 - `loops/planner.py` the calendar: events, meetings, deadlines and planned task blocks in free time (08:00 to 22:00); drag keeps a time
 - `loops/errands.py` errands: one question at a time via `next_step` (`GET /api/loops/{id}/next`): calendar day, free time, place from the note or asked, map with walk/cycle/drive minutes, time there, then the estimate; `loops/maps.py` travel time from where you are (browser location, else the Mac via CoreLocationCLI, else asked) to the nearest match on OpenStreetMap (walk, cycle, drive); Claude web search tidies misheard names if a key is set; asks for bus/train or if the lookup fails
 - `tests/test_scenarios.py` 20 end-to-end edge cases; run them before shipping
@@ -30,7 +30,7 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - `loops/static/vendor/motion.js` Motion 12 (animations); page falls back to built-in animations
 - `loops/static/welcome.html` landing page (/welcome) with Motion scenes and pricing; `loops/static/login.html` + `loops/account.py` local accounts (hashed passwords), no checkout yet
 - `loops/connect.py` Connect buttons: Google/Microsoft sign-in, Slack token, iMessage access, disconnect
-- `loops/connectors/` gmail, outlook, teams, slack, imessage (mail, chat, calendar); `loops/static/index.html` the whole UI, incl. focus mode (no build step)
+- `loops/connectors/` gmail (All Mail, every tab; bulk mail only if actionable: bookings, orders, appointments), outlook, teams, slack, imessage (mail, chat, calendar); `loops/static/index.html` the whole UI, incl. focus mode (no build step)
 
 ## Rules
 - Every Claude call must have a non-AI fallback; the app must work with no API key

@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 
 from .store import now_iso
 
-MAX_AI_LEADS = 3
+MAX_AI_LEADS = 0     # jobs are listed first; relevance is checked when you ask
 SHOW_FIT = 60
 
 JOB_BOARDS = ("linkedin", "indeed", "glassdoor", "totaljobs", "reed.co.uk", "cv-library", "prospects.ac.uk",
@@ -52,7 +52,7 @@ def is_recruiter(m):
     return not m.is_from_me and bool(RECRUITER.search(f"{m.subject}\n{m.text}"))
 
 
-def parse_alert(m, limit=10):
+def parse_alert(m, limit=60):
     """Pull (title, company, location, url) out of a job-alert email's plain text."""
     lines = [l.strip() for l in (m.text or "").splitlines()]
     out, seen = [], set()
@@ -64,8 +64,19 @@ def parse_alert(m, limit=10):
                 continue
             seen.add(key)
             ctx, before = [], URL.sub("", line).strip(" :-|")
-            if before and not SKIP_LINE.match(before):
-                ctx.append(before)
+            if before and not SKIP_LINE.match(before) and len(before) > 3:
+                # HTML emails: the link text is the job title; company and location follow it
+                ctx = [before]
+                for t in lines[i + 1:i + 5]:
+                    if URL.search(t) or len(ctx) >= 3:
+                        break
+                    if t and not SKIP_LINE.match(t) and 1 < len(t) < 120:
+                        ctx.append(t)
+                out.append({"title": ctx[0], "company": ctx[1] if len(ctx) > 1 else "",
+                            "location": ctx[2] if len(ctx) > 2 else "", "url": u, "snippet": " · ".join(ctx)})
+                if len(out) >= limit:
+                    return out
+                continue
             j = i - 1
             while j >= 0 and len(ctx) < 4 and i - j <= 6:
                 t = lines[j]

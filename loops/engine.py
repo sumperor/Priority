@@ -331,7 +331,7 @@ def sync(store, connectors, decide, extract=default_extract):
             msgs = c.fetch(since, known=store.known_ids(c.name)) if incremental else c.fetch(since)
             store.upsert_messages(msgs)
             for mid in getattr(c, "skipped", []):
-                store.mark_checked(f"seen:{c.name}:{mid}")
+                store.mark_checked(f"seen2:{c.name}:{mid}")  # seen2: skipped under the current rules
             SOURCES[c.name] = {"ok": True, "at": utcnow().isoformat(), "count": len(msgs),
                                "new_only": incremental, "note": getattr(c, "note", "")}
             print(f"{c.name}: {len(msgs)} messages")

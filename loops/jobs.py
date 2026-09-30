@@ -12,8 +12,8 @@ from datetime import datetime, timedelta, timezone
 from . import config as C
 from .store import now_iso
 
-AUTO_REVIEW = 8          # after a scan, Claude checks the best-looking jobs up to this many
-scan_state = {"running": False, "found": 0, "checked": 0, "error": "", "done_at": None}
+scan_state = {"running": False, "found": 0, "checked": 0, "error": "", "done_at": None, "emails": 0}
+check_state = {"running": False, "done": 0, "total": 0, "error": ""}
 
 PROCESS = [
     (r"\b(online (test|assessment)|psychometric|numerical|verbal|logical reasoning|situational judg\w+|game[- ]based)\b", "Online tests"),
@@ -28,6 +28,13 @@ PROCESS = [
 def prefs():
     d = C.read_secret("profile.json")
     d.setdefault("compare_with", "cv")
+    return d
+
+
+def set_interests(text):
+    d = prefs()
+    d["interests"] = (text or "").strip()[:1500]
+    C.write_secret("profile.json", d)
     return d
 
 
@@ -47,7 +54,16 @@ def _doc(store, kind):
 
 
 def profile(store):
-    """(text, label) for whatever you chose to be compared with."""
+    """(text, label): what you chose to be compared with, plus what you said you're looking for."""
+    text, label = _profile_docs(store)
+    want = prefs().get("interests", "")
+    if want:
+        text = f"{text}\n\nWHAT I'M LOOKING FOR:\n{want}".strip()
+        label = f"{label} and what you're looking for" if label else "what you're looking for"
+    return text, label
+
+
+def _profile_docs(store):
     cmp = prefs()["compare_with"]
     cv, li = _doc(store, "cv"), _doc(store, "linkedin")
     if cmp == "linkedin" and li[1]:
@@ -112,15 +128,8 @@ def scan_inbox(store_factory, days=14):
         store.db.commit()
         scan(store, since, use_ai=False)
         scan_state["found"] = store.db.execute("SELECT COUNT(*) n FROM leads").fetchone()["n"] - before
-        if _ai():
-            rows = store.db.execute("SELECT id FROM leads WHERE status='new' AND credible!='suspicious' AND review IS NULL "
-                                    "ORDER BY COALESCE(fit,0) DESC, id DESC LIMIT ?", (AUTO_REVIEW,)).fetchall()
-            for r in rows:
-                try:
-                    review(store, r["id"])
-                    scan_state["checked"] += 1
-                except Exception as e:
-                    scan_state["error"] = str(e)[:200]
+        scan_state["emails"] = store.db.execute("SELECT COUNT(DISTINCT msg_id) n FROM leads").fetchone()["n"]
+        # nothing is judged here: the jobs are listed, and relevance is checked when you ask
     except Exception as e:
         scan_state["error"] = str(e)[:200]
     finally:
@@ -224,6 +233,30 @@ def review(store, lead_id, use_ai=None):
     store.db.execute("UPDATE leads SET review=? WHERE id=?", (json.dumps(out), lead_id))
     store.db.commit()
     return out
+
+
+def check_all(store_factory):
+    """Background: check the relevance of every job not checked yet, one at a time."""
+    if check_state["running"]:
+        return
+    store = store_factory()
+    ids = [r["id"] for r in store.db.execute("SELECT id FROM leads WHERE status NOT IN ('skipped') AND review IS NULL "
+                                             "AND credible!='suspicious' ORDER BY id DESC LIMIT 60")]
+    check_state.update(running=True, done=0, total=len(ids), error="")
+
+    def run():
+        try:
+            st = store_factory()
+            for i in ids:
+                try:
+                    review(st, i)
+                except Exception as e:
+                    check_state["error"] = str(e)[:200]
+                check_state["done"] += 1
+        finally:
+            check_state["running"] = False
+    import threading
+    threading.Thread(target=run, daemon=True).start()
 
 
 def all_jobs(store):

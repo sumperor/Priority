@@ -69,7 +69,7 @@ class Store:
     def known_ids(self, source):
         """Messages already downloaded (or looked at and skipped), so a sync only fetches new ones."""
         ids = {r[0] for r in self.db.execute("SELECT msg_id FROM messages WHERE source=?", (source,))}
-        p = f"seen:{source}:"
+        p = f"seen2:{source}:"   # emails skipped under older, stricter rules get one more look
         ids |= {r[0][len(p):] for r in self.db.execute("SELECT key FROM checks WHERE key LIKE ?", (p + "%",))}
         return ids
 

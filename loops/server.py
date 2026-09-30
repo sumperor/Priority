@@ -787,17 +787,22 @@ def get_profile():
     from . import jobs
     s = _session_db()
     cv, li = jobs._doc(s, "cv"), jobs._doc(s, "linkedin")
-    return {"compare_with": jobs.prefs()["compare_with"], "cv": cv[0], "linkedin": li[0], "ai": _ai()}
+    return {"compare_with": jobs.prefs()["compare_with"], "cv": cv[0], "linkedin": li[0], "ai": _ai(),
+            "interests": jobs.prefs().get("interests", "")}
 
 
 class Compare(BaseModel):
-    compare_with: str
+    compare_with: str | None = None
+    interests: str | None = None      # roles, sectors and places you want, in your words
 
 
 @app.post("/api/profile")
 def set_profile(body: Compare):
     from . import jobs
-    jobs.set_compare(body.compare_with)
+    if body.compare_with is not None:
+        jobs.set_compare(body.compare_with)
+    if body.interests is not None:
+        jobs.set_interests(body.interests)
     return get_profile()
 
 
@@ -840,7 +845,16 @@ def jobs_list():
     for x in out:
         m = s.db.execute("SELECT * FROM messages WHERE source=? AND msg_id=?", (x["source"], x["msg_id"])).fetchone()
         x["origin"] = _msg_info(m) if m else None
-    return {"jobs": out, "scan": jobs.scan_state, "profile": get_profile()}
+    emails = len({(x["source"], x["msg_id"]) for x in out})
+    return {"jobs": out, "emails": emails, "scan": jobs.scan_state, "check": jobs.check_state, "profile": get_profile()}
+
+
+@app.post("/api/jobs/check-all")
+def jobs_check_all():
+    """Check the relevance of every job not checked yet, in the background."""
+    from . import jobs
+    jobs.check_all(_session_db)
+    return jobs.check_state
 
 
 @app.post("/api/leads/{lead_id}/review")
@@ -1074,5 +1088,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.29 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.30 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

@@ -836,20 +836,24 @@ async function jobsFlow(){
     <h3>${esc(x.title)}</h3><p class="co" style="margin:0;color:var(--muted);font-size:.9rem">${esc([x.company,x.location].filter(Boolean).join(', '))}</p>
     ${originLine(x.origin)}${v?`<p class="v" style="margin:6px 0 0;font-size:.92rem">${esc(x.review.why)}</p>`:''}
     ${x.credible==='suspicious'?`<p class="note" style="color:var(--late)">Looks like a scam: ${esc((x.flags||[]).join('; '))}</p>`:''}
-    <div class="acts"><button class="btn pri" data-j="check" data-id="${x.id}">${v?'Full check':'Check it'}</button><button class="btn" data-j="cv" data-id="${x.id}">Make my CV for this</button>
+    <div class="acts"><button class="btn pri" data-j="check" data-id="${x.id}">${v?'See the check':'Check relevance'}</button><button class="btn" data-j="cv" data-id="${x.id}">Make my CV for this</button>
     ${x.url&&/^https?:/.test(x.url)?`<a class="btn ghost" href="${esc(x.url)}" target="_blank" rel="noopener" style="text-decoration:none">Open job</a>`:''}</div></div>`};
   const list=J.jobs.length?groups.map(([k,t])=>{const xs=J.jobs.filter(x=>((x.review&&x.review.verdict)||null)===k);return xs.length?`<h4 style="margin:16px 0 0;font-size:.84rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em">${t} (${xs.length})</h4>${xs.map(item).join('')}`:''}).join('')
     :'<p class="nums">No job emails found yet. Scan your inbox to start.</p>';
-  const d=frame(`<p class="ctx">Jobs in your inbox</p><h2>Which of these are worth your time?</h2>
+  const ck=J.check||{}, unchecked=J.jobs.filter(x=>!x.review&&x.credible!=='suspicious').length;
+  const d=frame(`<p class="ctx">Jobs in your inbox</p><h2>${J.jobs.length?`${J.jobs.length} job${J.jobs.length>1?'s':''} from ${J.emails} email${J.emails>1?'s':''}`:'Jobs in your inbox'}</h2>
     <p class="note" style="margin:-8px 0 12px">Comparing with <b>${esc(cmp)}</b>${have?'':' (not added yet)'}. <button class="link" id="j-prof">Change</button>
       ${P.ai?'':'<br>Without your API key, checks use word matching only. Add it for a real judgement and firm research.'}</p>
     <div class="srow" style="margin-top:0"><button class="btn pri" id="j-scan"${sc.running?' disabled':''}>${sc.running?'Scanning your inbox…':'Scan the last 14 days'}</button>
-      <span class="nums">${sc.running?`Found ${sc.found} so far${sc.checked?`, checked ${sc.checked}`:''}`:sc.done_at?`Last scan ${ago(sc.done_at)}${sc.error?`. Problem: ${esc(sc.error)}`:''}`:''}</span></div>
+      <span class="nums">${sc.running?`Found ${sc.found} so far`:sc.done_at?`Last scan ${ago(sc.done_at)}${sc.error?`. Problem: ${esc(sc.error)}`:''}`:''}</span></div>
+    ${J.jobs.length?`<div class="srow" style="margin-top:4px">${ck.running?`<span class="nums">Checking relevance: ${ck.done} of ${ck.total} done. You can close this.</span>`
+      :unchecked?`<button class="btn" id="j-all">Check relevance for all ${unchecked}</button><span class="nums">${P.ai?'Reads each job and compares it with your profile. About 30 seconds and a few pence each.':'Uses word matching without an API key.'}</span>`:''}</div>`:''}
     <div id="j-list">${list}</div>`);
   d.querySelector('#j-prof').onclick=()=>profileFlow();
+  const all=d.querySelector('#j-all');if(all)all.onclick=async()=>{try{await api('/api/jobs/check-all',{method:'POST'});jobsFlow()}catch(e){toast(e.message)}};
   d.querySelector('#j-scan').onclick=async()=>{try{await api('/api/jobs/scan',{method:'POST',body:{days:14}});jobsFlow()}catch(e){toast(e.message)}};
   d.querySelectorAll('[data-j]').forEach(b=>b.onclick=()=>b.dataset.j==='check'?reviewFlow(+b.dataset.id):cvFlow(+b.dataset.id));
-  clearTimeout(jobsPoll);if(sc.running)jobsPoll=setTimeout(()=>{if($('j-list'))jobsFlow()},2500);
+  clearTimeout(jobsPoll);if(sc.running||ck.running)jobsPoll=setTimeout(()=>{if($('j-list'))jobsFlow()},2500);
 }
 async function reviewFlow(id){
   loading('Checking this job'+(S&&S.ai?': reading the posting and researching the firm. About 30 seconds.':''));
@@ -896,6 +900,9 @@ async function profileFlow(){
   const opt=(v,t)=>`<label class="check"><input type="radio" name="cmp" value="${v}"${P.compare_with===v?' checked':''}> ${t}</label>`;
   const d=frame(`<p class="ctx">Your profile</p><h2>What should jobs be compared with?</h2>
     ${opt('cv','My CV')}${opt('linkedin','My LinkedIn profile')}${opt('both','Both')}
+    <h4 style="margin:14px 0 6px;font-size:.84rem;color:var(--muted)">What you're looking for</h4>
+    <div class="inrow"><textarea id="p-want" placeholder="e.g. graduate consulting or strategy roles in London, interested in energy and tech, no sales" style="min-height:60px">${esc(P.interests||'')}</textarea></div>
+    <div class="srow" style="margin-top:6px"><button class="btn" id="p-want-save">Save</button></div>
     <h4 style="margin:14px 0 6px;font-size:.84rem;color:var(--muted)">CV</h4>
     <p style="margin:0 0 8px">${P.cv?`Using <b>${esc(P.cv)}</b>`:'Not added yet.'} <button class="link" id="p-cv">${P.cv?'Replace':'Upload CV'}</button></p>
     <h4 style="margin:14px 0 6px;font-size:.84rem;color:var(--muted)">LinkedIn</h4>
@@ -913,6 +920,7 @@ async function profileFlow(){
   d.querySelector('#p-read').onclick=async()=>{const url=d.querySelector('#p-url').value.trim();if(!url)return toast('Paste your profile link first.');
     toast('Reading your public profile. About 20 seconds.');
     try{const r=await api('/api/profile/linkedin-url',{method:'POST',body:{url:/^https?:/.test(url)?url:'https://'+url}});toast(r.warning||'LinkedIn profile saved.');profileFlow()}catch(e){toast(e.message)}};
+  d.querySelector('#p-want-save').onclick=async()=>{try{await api('/api/profile',{method:'POST',body:{interests:d.querySelector('#p-want').value}});toast('Saved. Relevance checks will use this.')}catch(e){toast(e.message)}};
   d.querySelector('#p-done').onclick=()=>jobsFlow();
 }
 
@@ -1202,7 +1210,7 @@ function leadCard(x){
     <p class="co">${esc([x.company,x.location].filter(Boolean).join(', '))}</p>${originLine(x.origin)}
     ${v?`<p class="v">${esc(x.review.why)}</p>`:x.verdict?`<p class="v">${esc(x.verdict)}</p>`:''}${x.fit==null?'<p class="v nums">Upload your CV in Focus so I can judge fit.</p>':''}
     ${reasons?`<ul>${reasons}</ul>`:''}
-    <div class="acts"><button class="btn pri" data-act="lead-check" data-id="${x.id}">${v?'See the full check':'Check this job'}</button><button class="btn" data-act="lead-apply" data-id="${x.id}">Add to my list</button>
+    <div class="acts"><button class="btn pri" data-act="lead-check" data-id="${x.id}">${v?'See the full check':'Check relevance'}</button><button class="btn" data-act="lead-apply" data-id="${x.id}">Add to my list</button>
     ${x.url&&/^https?:/.test(x.url)?`<a class="btn" href="${esc(x.url)}" target="_blank" rel="noopener" style="text-decoration:none">Open job</a>`:''}
     <button class="btn ghost" data-act="lead-skip" data-id="${x.id}">Skip</button></div></li>`;
 }

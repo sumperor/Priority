@@ -1,6 +1,8 @@
 """Gmail: read-only. Personal use runs as an unverified 'testing' app (you as a test user)."""
 import base64
+import html
 import os
+import re
 import time
 from datetime import datetime, timezone
 from email.utils import parseaddr
@@ -15,18 +17,45 @@ _BOARDS = ["linkedin.com", "indeed.com", "glassdoor.com", "glassdoor.co.uk", "to
            "gradcracker.com", "brightnetwork.co.uk", "targetjobs.co.uk", "prospects.ac.uk", "milkround.com", "otta.com",
            "welcometothejungle.com", "efinancialcareers.com", "ratemyplacement.co.uk", "joinhandshake.com"]
 JOB_QUERY = ("{from:(" + " OR ".join(_BOARDS) + ") "
-             'subject:("job alert" OR "jobs for you" OR "new jobs" OR "is hiring" OR "recommended jobs" OR "jobs matching")}')
+             'subject:("job alert" OR "jobs for you" OR "new jobs" OR "is hiring" OR "recommended jobs" OR "jobs matching" OR '
+             '"new roles" OR "vacancies" OR "graduate jobs" OR "internships" OR "opportunities for you")}')
+# Bulk mail (it has an unsubscribe link) is only read when it looks like something you have to act on:
+# bookings, tickets, orders, appointments, payments, deadlines, interviews, assessments.
+ACTIONABLE = re.compile(r"\b(book(ing|ed)|confirm(ed|ation)|reservation|ticket|your order|order (number|#)|dispatched|delivery|"
+                        r"appointment|reminder|invoice|payment|bill (is|due)|renew|expir(es|ing)|deadline|due (on|by|date)|"
+                        r"action (required|needed)|verify|registration|registered|rsvp|invitation|invite|event|webinar|"
+                        r"interview|assessment|application|offer|shortlist|next steps?|complete your|reset your password)\b", re.I)
 
 
-def _body(payload) -> str:
-    """Depth-first search for the first text/plain part."""
-    if payload.get("mimeType") == "text/plain" and payload.get("body", {}).get("data"):
+def _part(payload, mime):
+    """Depth-first search for the first part of this type."""
+    if payload.get("mimeType") == mime and payload.get("body", {}).get("data"):
         return base64.urlsafe_b64decode(payload["body"]["data"]).decode("utf-8", "ignore")
     for part in payload.get("parts", []) or []:
-        t = _body(part)
+        t = _part(part, mime)
         if t:
             return t
     return ""
+
+
+def html_text(h):
+    """HTML email to plain lines, keeping links as 'text url' so every job in an alert can be found."""
+    h = re.sub(r"(?is)<(script|style|head)[^>]*>.*?</\1>", " ", h)
+    h = re.sub(r'(?is)<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',
+               lambda m: f"\n{re.sub('<[^>]+>', ' ', m.group(2)).strip()} {m.group(1)}\n", h)
+    h = re.sub(r"(?i)<br\s*/?>|</(p|div|tr|li|h[1-6]|table|td)>", "\n", h)
+    h = html.unescape(re.sub(r"<[^>]+>", " ", h))
+    lines = [re.sub(r"[ \t\u00a0]+", " ", l).strip() for l in h.splitlines()]
+    return "\n".join(l for l in lines if l)
+
+
+def _body(payload) -> str:
+    """The plain-text part, or the HTML part turned into text when there's no plain version."""
+    t = _part(payload, "text/plain")
+    if t.strip():
+        return t
+    h = _part(payload, "text/html")
+    return html_text(h) if h else ""
 
 
 class GmailConnector:
@@ -62,9 +91,8 @@ class GmailConnector:
         me = svc.users().getProfile(userId="me").execute(num_retries=2)["emailAddress"].lower()
         from ..config import write_secret
         write_secret("gmail_account.json", {"email": me})  # so "Open in Gmail" opens the right account
-        # Social and Promotions are skipped, except job alerts, which often land there
-        ids = self._list(svc, f"after:{int(since.timestamp())} -category:promotions -category:social -category:forums", known)
-        ids += [i for i in self._list(svc, f"after:{int(since.timestamp())} {JOB_QUERY}", known, 100) if i not in ids]
+        # All Mail, every tab (Primary, Promotions, Social, Updates, Forums); Gmail leaves out spam and bin
+        ids = self._list(svc, f"after:{int(since.timestamp())}", known)
         return self._get(svc, me, ids)
 
     def fetch_jobs(self, since, known=frozenset()):
@@ -102,8 +130,9 @@ class GmailConnector:
             h = {x["name"].lower(): x["value"] for x in m["payload"].get("headers", [])}
             name, addr = parseaddr(h.get("from", ""))
             addr = addr.lower()
-            if "list-unsubscribe" in h and addr != me and not is_job_alert(addr, name, h.get("subject", "")):
-                self.skipped.append(mid)  # newsletters and bulk mail never create loops; job alerts become leads
+            if "list-unsubscribe" in h and addr != me and not is_job_alert(addr, name, h.get("subject", "")) \
+                    and not ACTIONABLE.search(f"{h.get('subject', '')} {m.get('snippet', '')}"):
+                self.skipped.append(mid)  # newsletters never create loops; bookings, orders and job alerts do
                 continue
             out.append(Message(
                 source="gmail", msg_id=mid, thread_id=m["threadId"], sender=addr,
