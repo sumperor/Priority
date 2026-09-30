@@ -1159,5 +1159,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.37 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.38 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

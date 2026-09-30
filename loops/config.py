@@ -79,3 +79,6 @@ PORT = int(os.getenv("PORT", "8765"))
 # Chasing: how often to nag once a loop should have started, and how early to give a heads-up
 CHASE_EVERY_MINUTES = float(os.getenv("CHASE_EVERY_MINUTES", "2"))
 HEADS_UP_MINUTES = float(os.getenv("HEADS_UP_MINUTES", "15"))
+REMIND_EVERY_MINUTES = float(os.getenv("REMIND_EVERY_MINUTES", "60"))   # gentle reminder about the next thing, at most this often
+TASK_REMIND_HOURS = float(os.getenv("TASK_REMIND_HOURS", "3"))          # the same task comes up again after this long
+OVERDUE_EVERY_HOURS = float(os.getenv("OVERDUE_EVERY_HOURS", "3"))

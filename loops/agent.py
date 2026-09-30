@@ -35,8 +35,10 @@ def due_nudges(store, rows):
     """Called every ~30s by the app. Returns new nudges and records them in the chat."""
     now, out = utcnow(), []
     for r in rows:
-        if r["status"] != "open" or r["type"] == "waiting" or r.get("started_at") or r["bucket"] == "Later":
+        if r["status"] != "open" or r["type"] == "waiting" or r.get("started_at"):
             continue
+        if r["bucket"] == "Later" or r.get("due_guess"):
+            continue                   # not urgent: the gentle reminder below keeps these moving
         ls = datetime.fromisoformat(r["forecast"]["latest_start"])
         due = datetime.fromisoformat(r["due"])
         commit = datetime.fromisoformat(r["commit_at"]) if r.get("commit_at") else None
@@ -66,8 +68,9 @@ def due_nudges(store, rows):
             if commit:
                 msg = f"You said you'd start {_q(r['summary'])} at {_t(commit)}. Have you started?"
             elif left_min <= 0:
-                if last and last >= due:
-                    continue  # asked once after the deadline; don't keep chasing something that's past
+                if last and last >= due and ((now - last) < timedelta(hours=C.OVERDUE_EVERY_HOURS)
+                                             or _asked_since(store, r["id"], due) >= 3):
+                    continue  # past deadlines: ask every few hours, 3 times at most, then leave it on the list
                 msg = f"The deadline for {_q(r['summary'])} has passed. Did it happen?"
             else:
                 opener = OPENERS[min(n, len(OPENERS) - 1)]
@@ -78,7 +81,50 @@ def due_nudges(store, rows):
         store.add_chat(r["id"], "agent", msg)
         store.update_loop(r["id"], last_nudge=now.isoformat())
         out.append({"id": r["id"], "summary": r["summary"], "text": msg})
+    if not out:
+        g = _gentle(store, rows, now)
+        if g:
+            out.append(g)
     return out
+
+
+def _asked_since(store, loop_id, since):
+    return store.db.execute("SELECT COUNT(*) n FROM chat WHERE loop_id=? AND role='agent' AND ts>=?",
+                            (loop_id, since.isoformat())).fetchone()["n"]
+
+
+def _gentle(store, rows, now):
+    """Nothing urgent: every so often, bring up the next thing on the list so it doesn't sit there forever.
+    One task at a time, top of the list first, not in quiet hours, not something you just added."""
+    from .caller import _quiet, settings
+    if _quiet(settings(), now):
+        return None
+    latest = store.db.execute("SELECT MAX(ts) t FROM chat WHERE role='agent'").fetchone()["t"]
+    if latest and now - datetime.fromisoformat(latest) < timedelta(minutes=C.REMIND_EVERY_MINUTES):
+        return None
+    for r in sorted(rows, key=lambda x: (bool(x.get("due_guess")), datetime.fromisoformat(x["due"]))):   # real deadlines first, soonest first
+        if r["status"] != "open" or r["type"] in ("waiting", "meeting") or r.get("started_at"):
+            continue
+        if datetime.fromisoformat(r["due"]) <= now:
+            continue               # past deadlines are asked about above, a few times only
+        if r.get("commit_at") and now < datetime.fromisoformat(r["commit_at"]):
+            continue
+        if r.get("created") and now - datetime.fromisoformat(r["created"]) < timedelta(minutes=30):
+            continue               # you only just added it
+        last = datetime.fromisoformat(r["last_nudge"]) if r.get("last_nudge") else None
+        if last and now - last < timedelta(hours=C.TASK_REMIND_HOURS):
+            continue
+        need = _dur(r["effort_adj"] * 60)
+        if r.get("due_guess"):
+            msg = f"Still on your list: {_q(r['summary'])}. It takes about {need}. Do it now, or tell me when."
+        else:
+            due = datetime.fromisoformat(r["due"]).astimezone()
+            msg = (f"Coming up: {_q(r['summary'])}, due {due:%a} {_t(due)}. It takes about {need}. "
+                   f"Got a gap now, or tell me when?")
+        store.add_chat(r["id"], "agent", msg)
+        store.update_loop(r["id"], last_nudge=now.isoformat())
+        return {"id": r["id"], "summary": r["summary"], "text": msg}
+    return None
 
 
 # ---------------------------------------------------------------- understanding your reply
