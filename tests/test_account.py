@@ -14,7 +14,10 @@ def test_pages_and_accounts(tmp_path, monkeypatch):
     from loops.server import app
     c = TestClient(app)
     w = c.get("/welcome")
-    assert w.status_code == 200 and "Start finishing" in w.text and "£6" in w.text
+    import re
+    visible = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", w.text))
+    assert w.status_code == 200 and "Start finishing." in visible and "£6" in w.text
+    assert c.get("/static/vendor/gsap/gsap.min.js").status_code == 200
     assert c.get("/login").status_code == 200
     assert c.get("/pricing", follow_redirects=False).headers["location"] == "/welcome#pricing"
     assert c.get("/static/vendor/motion.js").status_code == 200
