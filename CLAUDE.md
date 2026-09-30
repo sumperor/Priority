@@ -30,7 +30,7 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - `loops/static/vendor/motion.js` Motion 12 (animations); page falls back to built-in animations
 - `loops/static/welcome.html` landing page (/welcome), "paper planner" art direction: paper grain, Fraunces + Source Serif + Caveat handwriting + Plex Mono, no gradients/blobs/glass/pills. GSAP (bundled in `loops/static/vendor/gsap/`) writes, ticks, strikes and stamps; one pinned scroll story on a notebook page; index-card pricing; static fallback without JS or with reduced motion. Design skill: `.claude/skills/ui-ux-pro-max`; `loops/static/login.html` + `loops/account.py` local accounts (hashed passwords), no checkout yet
 - `loops/connect.py` Connect buttons: Google/Microsoft sign-in, Slack token, iMessage access, disconnect
-- `loops/connectors/` gmail (All Mail, every tab; bulk mail only if actionable: bookings, orders, appointments), outlook, teams, slack, imessage (mail, chat, calendar); `loops/static/index.html` the whole UI, incl. focus mode (no build step)
+- `loops/connectors/` gmail (All Mail, every tab; bulk mail only if actionable: bookings, orders, appointments), outlook, teams, slack, imessage (mail, chat, calendar); `loops/static/index.html` the whole UI, incl. focus mode (no build step); styled in the same paper planner theme as /welcome (theme block at the end of its <style>). Login/payment pages untouched until real auth and payments are added
 
 ## Rules
 - Every Claude call must have a non-AI fallback; the app must work with no API key

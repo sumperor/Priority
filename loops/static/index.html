@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sparrow</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22spg%22%20x1%3D%220%22%20y1%3D%221%22%20x2%3D%221%22%20y2%3D%220%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%231F1D4D%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%233B34C9%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2216%22%20fill%3D%22url%28%23spg%29%22/%3E%3Cpath%20d%3D%22M9%2055l7-7M5%2047l6-6M17%2059l5-5%22%20stroke%3D%22%238FF0D0%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20opacity%3D%22.9%22/%3E%3Cpath%20d%3D%22M49.5%2014.5%2043.8%2016.2C39.6%2012.4%2032.6%2013.6%2029.8%2019.2%2026.2%2026.6%2021%2031.4%2013%2034.2l6.4%202.6-3.6%207.6%2011-5.6C35.6%2038%2042%2032.6%2044.4%2025c.9-2.9%201.3-5.2%205.1-10.5z%22%20fill%3D%22%23fff%22/%3E%3Cpath%20d%3D%22M34.6%2025.4C31.2%2018%2025.6%2013.6%2017.6%2012.2c2.6%207.2%207.4%2013%2013.6%2016.2z%22%20fill%3D%22%238FF0D0%22/%3E%3Cpath%20d%3D%22M36.2%2031.5c3.2-.6%205.6-2.6%206.9-5.4%22%20stroke%3D%22%23E8B27A%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22/%3E%3Ccircle%20cx%3D%2240.2%22%20cy%3D%2218.6%22%20r%3D%221.8%22%20fill%3D%22%231F1D4D%22/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%231F2330%22/%3E%3Cpath d=%22M49.5 14.5 43.8 16.2C39.6 12.4 32.6 13.6 29.8 19.2 26.2 26.6 21 31.4 13 34.2l6.4 2.6-3.6 7.6 11-5.6C35.6 38 42 32.6 44.4 25c.9-2.9 1.3-5.2 5.1-10.5z%22 fill=%22%23FBF8F1%22/%3E%3Cpath d=%22M34.6 25.4C31.2 18 25.6 13.6 17.6 12.2c2.6 7.2 7.4 13 13.6 16.2z%22 fill=%22%23F4DC6B%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..800,50;1,9..144,300..800,50&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Caveat:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#F4F2EE;--surface:#FFFFFF;--raised:#FBFAF8;--ink:#17181C;--muted:#62656E;--faint:#9A9CA3;--line:#E4E1DB;
@@ -417,13 +417,161 @@ details.closed[open] summary::after{content:" \2212"}
 #fx .choices{margin-top:18px}
 @media (max-width:480px){.hero{padding:22px 18px 18px}.dial{width:150px;height:150px}.dial .num{font-size:2.1rem}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ================= paper planner theme (same art direction as /welcome) =================
+   Paper and ink, serif type, handwriting for the things you have to do, typewriter for times.
+   Overrides the styles above; the markup and scripts are unchanged. */
+:root{--bg:#F3EDE1;--surface:#FBF8F1;--raised:#F4EFE4;--ink:#1F2330;--muted:#555A66;--faint:#8C8F97;--line:color-mix(in srgb,#1F2330 14%,transparent);
+  --accent:#2E6A4C;--accent-ink:#FBF8F1;--accent-soft:#E2EDDF;--late:#B8402B;--soon:#9A6A12;
+  --jobs:#2A4A94;--study:#8A5A1C;--work:#2F6A7A;--money:#8E3A5C;--personal:#2E6A4C;--other:#5B5B5B;
+  --rule:#CFDAE6;--margin:#E6AFA6;--marker:#F4DC6B;--hatch:#B9B3A6;--tape:rgba(222,208,168,.72);
+  --shadow:0 1px 0 rgba(31,35,48,.06),0 10px 24px -14px rgba(31,35,48,.38);
+  --font:"Source Serif 4",Georgia,serif;--serif:"Fraunces",Georgia,serif;--hand:"Caveat","Bradley Hand","Segoe Print",cursive;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#191814;--surface:#23211C;--raised:#2A2823;--ink:#ECE5D6;--muted:#B4AD9F;--faint:#857F73;--line:color-mix(in srgb,#ECE5D6 14%,transparent);
+  --accent:#7CC39A;--accent-ink:#191814;--accent-soft:#233A2C;--late:#E07A63;--soon:#E0B45A;
+  --jobs:#8FA8E8;--study:#E0A96A;--work:#7FC0CF;--money:#E08AAE;--personal:#7CC39A;--other:#B4AD9F;
+  --rule:#34383F;--margin:#6A3A33;--marker:#8C7722;--hatch:#5E5A51;--tape:rgba(120,108,80,.55);--shadow:0 12px 28px -14px rgba(0,0,0,.7)}}
+:root[data-theme="dark"]{--bg:#191814;--surface:#23211C;--raised:#2A2823;--ink:#ECE5D6;--muted:#B4AD9F;--faint:#857F73;--line:color-mix(in srgb,#ECE5D6 14%,transparent);
+  --accent:#7CC39A;--accent-ink:#191814;--accent-soft:#233A2C;--late:#E07A63;--soon:#E0B45A;
+  --jobs:#8FA8E8;--study:#E0A96A;--work:#7FC0CF;--money:#E08AAE;--personal:#7CC39A;--other:#B4AD9F;
+  --rule:#34383F;--margin:#6A3A33;--marker:#8C7722;--hatch:#5E5A51;--tape:rgba(120,108,80,.55);--shadow:0 12px 28px -14px rgba(0,0,0,.7)}
+body{font-size:17px;background-color:var(--bg);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .055 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+:focus-visible{outline-color:var(--jobs);border-radius:4px}
+.aura{display:none}
+.brand{font-family:var(--serif);font-weight:600;font-size:1.3rem;letter-spacing:-.01em}
+.brand .logo{border-radius:8px;filter:none;width:30px;height:30px}
+.hello{font-family:var(--mono);font-size:.8rem;letter-spacing:.01em}
+.miniclock{font-family:var(--mono);font-weight:500;border-radius:4px;background:transparent;border:1px solid var(--line);color:var(--ink)}
+.ib{border-radius:6px} .ib:hover{background:color-mix(in srgb,var(--ink) 7%,transparent)}
+h1,h2,h3,.sheet h2,.hero h1,.intake h1,.shead h1,#fx h2,.empty h1{font-family:var(--serif);font-weight:500;font-variation-settings:"opsz" 144,"SOFT" 50;letter-spacing:-.02em}
+
+/* labels, chips and counters: typed, not pills */
+.src-chip,.chip,.count,.tag,.verdict,.pchip,.seg button,.xbtn{border-radius:4px;font-family:var(--mono);font-size:.74rem;font-weight:500;letter-spacing:.01em}
+.src-chip{background:transparent;box-shadow:0 0 0 1px var(--line)}
+.chip{background:transparent;box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--c,var(--other)) 55%,transparent);padding:2px 4px;border-radius:0;text-transform:uppercase}
+.count{background:transparent;color:var(--c);padding:0 2px}
+.verdict{background:transparent!important;border:1.5px solid currentColor;transform:rotate(-2deg)}
+.tag{background:transparent}
+.eyebrow{font-family:var(--mono);font-weight:500;font-size:.74rem;color:var(--accent)}
+.nums,.meta,.src,.dl,.calfoot,.gutter span,.dayhead,.cstate{font-family:var(--mono)}
+.nums,.meta{font-size:.78rem} .when{font-weight:500}
+
+/* buttons: ink on paper */
+.btn,.closer,.add,.focusbtn,.quick button,.choices button{border-radius:8px}
+.btn{border:1.5px solid var(--ink);background:transparent;color:var(--ink);font-weight:600}
+.btn:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.btn.pri,.btn.dark{background:var(--ink);border-color:var(--ink);color:var(--bg);box-shadow:3px 3px 0 color-mix(in srgb,var(--ink) 25%,transparent)}
+.btn.ghost{border-color:transparent}
+.closer{background:var(--ink);color:var(--bg);box-shadow:3px 3px 0 color-mix(in srgb,var(--ink) 25%,transparent);padding:8px 18px 8px 10px}
+.closer .ring{border-radius:4px;border-width:2px;width:26px;height:26px}
+.closer:hover .ring svg{color:var(--marker)}
+.add{border-radius:8px;background:var(--ink)}
+.focusbtn{background:var(--ink);box-shadow:3px 3px 0 color-mix(in srgb,var(--ink) 25%,transparent)}
+.focusbtn .live{background:var(--marker)}
+.link{text-decoration-color:color-mix(in srgb,var(--ink) 35%,transparent)}
+
+/* cards are sheets of paper */
+.hero,.area,.win,.calpane,.panel,.helper,.clock,.lead-card,.empty{border-radius:3px}
+.hero{animation:none;border:0;background-color:var(--surface);
+  background-image:linear-gradient(90deg,transparent 30px,var(--margin) 30px,var(--margin) 32px,transparent 32px),repeating-linear-gradient(to bottom,transparent 0 33px,var(--rule) 33px 34px);
+  padding:30px 24px 22px 48px;overflow:visible}
+.hero::after{content:"";position:absolute;top:-12px;left:50%;width:96px;height:24px;margin-left:-48px;background:var(--tape);transform:rotate(-2deg)}
+.hero:hover,.area:hover,.win:hover{transform:none;box-shadow:var(--shadow)}
+.hero .lead{font-family:var(--mono);font-size:.76rem}
+.side .hero h1,.hero h1{font-family:var(--hand);font-weight:700;font-size:clamp(2rem,3vw,2.8rem);line-height:1.02;letter-spacing:0;color:var(--jobs)}
+.hero .why{font-size:1rem;color:var(--muted)}
+.hero .why.late{color:var(--late);font-family:var(--hand);font-size:1.35rem}
+.say{border-radius:3px;background:var(--surface);border:0;border-left:3px solid var(--late);box-shadow:var(--shadow);font-family:var(--hand);font-size:1.3rem;line-height:1.15;color:var(--late)}
+.empty{border:0;background:transparent}
+.empty h1{font-family:var(--hand);font-weight:700;color:var(--jobs)}
+.win::before{display:none}
+.win{background:var(--surface)}
+.badge{border-radius:4px;background:transparent;color:var(--accent);border:2px solid var(--accent);transform:rotate(-4deg)}
+.badge.q{border-style:dashed}
+.lead-card{background:var(--surface);border:1.5px dashed color-mix(in srgb,var(--ink) 30%,transparent);box-shadow:none}
+.lead-card .eyebrow{color:var(--jobs)}
+
+/* lists: ruled lines and square boxes you tick */
+.area{background:var(--surface)}
+.ahead h2{font-family:var(--serif);font-weight:600;font-size:1.08rem}
+.ahead .dot{border-radius:2px}
+.row{border-radius:0;border-top:1px solid var(--rule)}
+.rows .row:first-child{border-top:0}
+.row:hover{background:color-mix(in srgb,var(--marker) 16%,transparent)}
+.tick{border-radius:3px;border:1.8px solid var(--ink);width:24px;height:24px;margin-top:4px;color:var(--accent)}
+.tick:hover{border-color:var(--accent)}
+.row.ticking .tick{background:transparent;border-color:var(--ink);transform:none}
+.row.ticking .tick svg{width:22px;height:22px;overflow:visible}
+.row.ticking .title{text-decoration-color:var(--late);text-decoration-thickness:2px;color:var(--muted)}
+.title{font-weight:600}
+.quote{border-left:2px solid var(--margin);font-style:italic}
+.more .in{background:var(--raised);border-radius:3px}
+.pen,.del{border-radius:6px}
+.crow .t{text-decoration-color:var(--late)}
+
+/* calendar: a diary page */
+.calpane{background:var(--surface)}
+.calhead h2{font-family:var(--serif);font-weight:600}
+.seg{border-radius:6px;background:transparent;box-shadow:0 0 0 1px var(--line)}
+.seg button.on{background:var(--ink);color:var(--bg);box-shadow:none}
+.navb{border-radius:6px;background:transparent;box-shadow:0 0 0 1px var(--line)}
+.dayhead{background:var(--surface)}
+.dayhead b{font-family:var(--serif);font-weight:600}
+.dayhead.today b{background:transparent;color:var(--late);border:2px solid var(--late);border-radius:50% 45% 55% 48%}
+.allday{background:var(--surface)}
+.daycol.today{background:color-mix(in srgb,var(--marker) 9%,transparent)}
+.hline{border-top-color:var(--rule)}
+.blk{border-radius:3px}
+.blk b{font-family:var(--hand);font-size:1.02rem;font-weight:700;line-height:1}
+.blk small{font-family:var(--mono);font-size:.66rem}
+.blk.event{background:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in srgb,var(--hatch) 50%,transparent) 6px 7px),var(--surface);border-left-color:var(--faint)}
+.blk.event b{font-family:var(--font);font-size:.76rem;font-weight:600;color:var(--muted)}
+.dl{border-radius:3px}
+.mcell{border-radius:3px;background:var(--raised)}
+.mcell.today{box-shadow:0 0 0 2px var(--late) inset}
+.nowline{border-top-color:var(--late)}
+
+/* composer: write it down */
+.composer .in{border-radius:6px;background:var(--surface);
+  background-image:linear-gradient(90deg,transparent 12px,var(--margin) 12px,var(--margin) 13.5px,transparent 13.5px)}
+.composer textarea{font-family:var(--hand);font-size:1.45rem;line-height:1.1;color:var(--jobs);padding:6px 0 4px}
+.composer textarea::placeholder{color:var(--faint)}
+.mic{border-radius:8px;background:transparent;box-shadow:0 0 0 1px var(--line)}
+
+/* sheets and dialogs */
+.scrim{background:rgba(25,24,20,.4);backdrop-filter:none}
+.sheet{border-radius:4px 4px 0 0;background:var(--surface)}
+@media (min-width:720px){.sheet{border-radius:3px}}
+.sheet h2{font-weight:500}
+.progress{border-radius:0;height:3px;background:var(--rule)}
+.progress i{background:var(--ink)}
+.choices button{background:transparent;border:1.5px solid var(--line)}
+.choices button:hover{border-color:var(--ink);background:color-mix(in srgb,var(--marker) 18%,transparent)}
+.sheet textarea,.field input,.field select,.intake textarea,.helper textarea,.addapp textarea,.why-ask input{border-radius:4px;background:var(--bg)}
+.msg{border-radius:4px}
+.msg.agent,.msg.coach{background:var(--bg);border:0;border-left:3px solid var(--late);font-family:var(--hand);font-size:1.25rem;line-height:1.15}
+.msg.you{border-radius:4px}
+.quick button{background:transparent;border:1.5px solid var(--line)}
+#toast{border-radius:6px;font-family:var(--mono);font-size:.82rem}
+.cvprev{border-radius:2px}
+.mapbox{border-radius:3px}
+
+/* focus mode */
+#focus,#fx{background-color:var(--bg)}
+.dial .arc{stroke:var(--ink)} .clock.brk .arc{stroke:var(--accent)}
+.dial .num{font-family:var(--serif);font-weight:500}
+.tally span{border-radius:3px;border-color:var(--ink)}
+.tally span.on{background:transparent;border-color:var(--accent);box-shadow:inset 0 0 0 4px var(--surface),inset 0 0 0 20px var(--accent)}
+.objs li::before{border-radius:2px;border-color:var(--ink)}
+#fx .big{font-family:var(--serif);font-weight:500;color:var(--ink)}
 </style>
 </head>
 <body>
 <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
 <main class="wrap">
   <header class="top">
-    <div class="brand"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="spg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#1F1D4D"/><stop offset="1" stop-color="#3B34C9"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#spg)"/><path d="M9 55l7-7M5 47l6-6M17 59l5-5" stroke="#8FF0D0" stroke-width="2.6" stroke-linecap="round" opacity=".9"/><path d="M49.5 14.5 43.8 16.2C39.6 12.4 32.6 13.6 29.8 19.2 26.2 26.6 21 31.4 13 34.2l6.4 2.6-3.6 7.6 11-5.6C35.6 38 42 32.6 44.4 25c.9-2.9 1.3-5.2 5.1-10.5z" fill="#fff"/><path d="M34.6 25.4C31.2 18 25.6 13.6 17.6 12.2c2.6 7.2 7.4 13 13.6 16.2z" fill="#8FF0D0"/><path d="M36.2 31.5c3.2-.6 5.6-2.6 6.9-5.4" stroke="#E8B27A" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="40.2" cy="18.6" r="1.8" fill="#1F1D4D"/></svg><span>Sparrow</span><time class="miniclock" id="ctime" aria-label="Time now"></time></div>
+    <div class="brand"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1F2330"/><path d="M49.5 14.5 43.8 16.2C39.6 12.4 32.6 13.6 29.8 19.2 26.2 26.6 21 31.4 13 34.2l6.4 2.6-3.6 7.6 11-5.6C35.6 38 42 32.6 44.4 25c.9-2.9 1.3-5.2 5.1-10.5z" fill="#FBF8F1"/><path d="M34.6 25.4C31.2 18 25.6 13.6 17.6 12.2c2.6 7.2 7.4 13 13.6 16.2z" fill="#F4DC6B"/><circle cx="40.2" cy="18.6" r="1.8" fill="#1F2330"/></svg><span>Sparrow</span><time class="miniclock" id="ctime" aria-label="Time now"></time></div>
     <div class="icons">
       <button class="focusbtn" id="focusbtn"><span class="live" id="focuslive" hidden></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span id="focuslabel">Focus</span></button>
       <button class="ib" id="sync" aria-label="Check now" title="Check now"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg></button>
