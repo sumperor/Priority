@@ -28,7 +28,7 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - `loops/caller.py` last-resort phone call (ElevenLabs agent + Twilio): deadline close, 2 reminders ignored, not in an event/focus/quiet hours; transcript read back as a reply
 - `loops/notify.py` reminders to Mac notifications and phone (ntfy), sent by a server timer
 - `loops/static/vendor/motion.js` Motion 12 (animations); page falls back to built-in animations
-- `loops/static/welcome.html` landing page (/welcome) with Motion scenes and pricing; `loops/static/login.html` + `loops/account.py` local accounts (hashed passwords), no checkout yet
+- `loops/static/welcome.html` landing page (/welcome): GSAP (bundled in `loops/static/vendor/gsap/`, free standard licence) with ScrollTrigger, SplitText, MotionPath, DrawSVG; WebGL gradient hero, one pinned scroll story (reads, plans, chases, checks, jobs), pricing; static fallback without JS or with reduced motion; `loops/static/login.html` + `loops/account.py` local accounts (hashed passwords), no checkout yet
 - `loops/connect.py` Connect buttons: Google/Microsoft sign-in, Slack token, iMessage access, disconnect
 - `loops/connectors/` gmail (All Mail, every tab; bulk mail only if actionable: bookings, orders, appointments), outlook, teams, slack, imessage (mail, chat, calendar); `loops/static/index.html` the whole UI, incl. focus mode (no build step)
 

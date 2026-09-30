@@ -10,395 +10,471 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#F4F2EE;--surface:#fff;--raised:#FBFAF8;--ink:#17181C;--muted:#62656E;--faint:#9A9CA3;--line:#E4E1DB;
-  --accent:#0E7C66;--accent-ink:#fff;--accent-soft:#DDF1EA;--late:#C2410C;--soon:#A16207;--jobs:#4F46E5;--study:#B45309;--money:#BE185D;--personal:#15803D;
-  --night:#14133A;--mint:#8FF0D0;--shadow:0 1px 2px rgba(23,24,28,.04),0 10px 30px rgba(23,24,28,.08);
+  --accent:#0E7C66;--accent-ink:#fff;--late:#C2410C;--soon:#A16207;--jobs:#4F46E5;--study:#B45309;--money:#BE185D;--personal:#15803D;
+  --night:#14133A;--mint:#8FF0D0;--shadow:0 1px 2px rgba(23,24,28,.05),0 18px 50px rgba(23,24,28,.10);
   --font:"Bricolage Grotesque",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E0F13;--surface:#17181D;--raised:#1D1F25;--ink:#ECEDEF;--muted:#A2A5AD;--faint:#6E717A;--line:#2A2C33;
-  --accent:#34C6A5;--accent-ink:#06201A;--accent-soft:#12332B;--jobs:#8B85FF;--study:#F0A04B;--money:#F06AA8;--personal:#4ACB7A;--shadow:0 10px 30px rgba(0,0,0,.4)}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B0C10;--surface:#16171C;--raised:#1C1E24;--ink:#ECEDEF;--muted:#A2A5AD;--faint:#6E717A;--line:#2A2C33;
+  --accent:#34C6A5;--accent-ink:#06201A;--jobs:#8B85FF;--study:#F0A04B;--money:#F06AA8;--personal:#4ACB7A;--shadow:0 18px 50px rgba(0,0,0,.5)}}
+:root[data-theme="dark"]{--bg:#0B0C10;--surface:#16171C;--raised:#1C1E24;--ink:#ECEDEF;--muted:#A2A5AD;--faint:#6E717A;--line:#2A2C33;
+  --accent:#34C6A5;--accent-ink:#06201A;--jobs:#8B85FF;--study:#F0A04B;--money:#F06AA8;--personal:#4ACB7A;--shadow:0 18px 50px rgba(0,0,0,.5)}
 *,*::before,*::after{box-sizing:border-box}
-html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-a{color:inherit}
-button{font:inherit;cursor:pointer}
-.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
-#bar{position:fixed;top:0;left:0;height:3px;width:100%;background:linear-gradient(90deg,var(--jobs),var(--accent));transform-origin:0 50%;transform:scaleX(0);z-index:50}
-nav{position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg) 75%,transparent)}
-nav .wrap{display:flex;align-items:center;gap:22px;height:66px}
+a{color:inherit} button{font:inherit;cursor:pointer}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:100%;background:linear-gradient(90deg,var(--jobs),var(--accent),var(--study));transform-origin:0 50%;transform:scaleX(0);z-index:60}
+
+/* nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:50;transition:background .3s,box-shadow .3s}
+nav.solid{background:color-mix(in srgb,var(--bg) 78%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 1px 0 var(--line)}
+nav .wrap{display:flex;align-items:center;gap:22px;height:68px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.2rem;letter-spacing:-.02em;text-decoration:none}
 .brand svg{width:34px;height:34px;border-radius:9px}
 nav .links{margin-left:auto;display:flex;gap:22px;align-items:center;font-weight:600;font-size:.95rem}
 nav .links a{text-decoration:none;color:var(--muted)} nav .links a:hover{color:var(--ink)}
-.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:12px 22px;font-weight:700;text-decoration:none;font-size:1rem}
-.btn.pri{background:var(--ink);color:var(--bg)} .btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:13px 24px;font-weight:700;text-decoration:none;font-size:1rem;will-change:transform}
+.btn.pri{background:var(--ink);color:var(--bg)} .btn.ghost{background:color-mix(in srgb,var(--surface) 60%,transparent);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line);backdrop-filter:blur(8px)}
 .btn.sm{padding:9px 16px;font-size:.92rem}
 @media (max-width:720px){nav .links a.hide{display:none}}
 
 /* hero */
-.hero{padding:70px 0 40px;text-align:center;position:relative}
-.hero h1{font-size:clamp(2.6rem,7.4vw,5.6rem);line-height:.98;letter-spacing:-.045em;margin:0 auto;max-width:13ch;font-weight:800;font-variation-settings:"opsz" 96}
-.hero h1 .w{display:inline-block}
-.hero h1 em{font-style:normal}
-.hero h1 em,.hero h1 em .w{background:linear-gradient(90deg,var(--jobs),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero h1 em .w{padding-bottom:.08em}
-.hero p{font-size:clamp(1.05rem,2vw,1.3rem);color:var(--muted);max-width:40ch;margin:22px auto 30px}
+.hero{position:relative;min-height:100vh;min-height:100svh;display:grid;place-items:center;text-align:center;overflow:hidden;padding:110px 0 70px}
+#bg{position:absolute;inset:0;width:100%;height:100%;z-index:0;-webkit-mask:linear-gradient(#000 70%,transparent);mask:linear-gradient(#000 70%,transparent)}
+.aura{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.aura i{position:absolute;width:44vw;height:44vw;border-radius:50%;filter:blur(90px);opacity:.3}
+.aura i:nth-child(1){background:var(--jobs);left:8%;top:10%} .aura i:nth-child(2){background:var(--accent);right:6%;top:30%} .aura i:nth-child(3){background:var(--study);left:40%;top:55%;opacity:.16}
+.webgl .aura{display:none}
+.hero .inner{position:relative;z-index:2}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:7px 14px;border-radius:999px;background:color-mix(in srgb,var(--surface) 70%,transparent);box-shadow:inset 0 0 0 1px var(--line);font-weight:650;font-size:.88rem;color:var(--muted);backdrop-filter:blur(8px)}
+.eyebrow b{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}
+.hero h1{font-size:clamp(2.9rem,8.6vw,7.4rem);line-height:.92;letter-spacing:-.05em;margin:22px auto 0;max-width:12ch;font-weight:800;font-variation-settings:"opsz" 96}
+.hero h1 em{font-style:normal;background:linear-gradient(95deg,var(--jobs),var(--accent) 60%,var(--study));-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.06em}
+.hero h1 .ch{display:inline-block;will-change:transform}
+.hero h1 em .ch{background-image:linear-gradient(95deg,var(--jobs),var(--accent) 60%,var(--study));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lede{font-size:clamp(1.08rem,2vw,1.35rem);color:var(--muted);max-width:40ch;margin:24px auto 32px}
 .ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.aura{position:absolute;inset:-10% 0 auto;height:620px;pointer-events:none;z-index:-1;overflow:hidden}
-.aura i{position:absolute;width:520px;height:520px;border-radius:50%;filter:blur(90px);opacity:.28;left:50%;top:40%;margin:-260px}
-.aura i:nth-child(1){background:var(--jobs)} .aura i:nth-child(2){background:var(--accent)} .aura i:nth-child(3){background:var(--study);opacity:.16}
+.flight{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;overflow:visible}
+.flight .trail{fill:none;stroke:url(#trailg);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:2 10;opacity:.7}
+.float{position:absolute;z-index:1;padding:11px 14px;border-radius:14px;background:color-mix(in srgb,var(--surface) 82%,transparent);box-shadow:var(--shadow);font-weight:650;font-size:.88rem;display:flex;gap:9px;align-items:center;backdrop-filter:blur(10px);white-space:nowrap}
+.float i{width:9px;height:9px;border-radius:50%;flex:none}
+.float small{color:var(--muted);font-weight:600}
+@media (max-width:900px){.float{display:none}}
+.scrollcue{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:2;font-size:.8rem;color:var(--faint);font-weight:650;letter-spacing:.06em;text-transform:uppercase;display:grid;justify-items:center;gap:8px}
+.scrollcue span{width:22px;height:34px;border-radius:12px;box-shadow:inset 0 0 0 2px var(--faint);position:relative}
+.scrollcue span::after{content:"";position:absolute;left:50%;top:7px;width:4px;height:7px;border-radius:2px;background:var(--faint);transform:translateX(-50%);animation:cue 1.6s infinite}
+@keyframes cue{0%{opacity:0;transform:translate(-50%,0)}40%{opacity:1}100%{opacity:0;transform:translate(-50%,12px)}}
 
-/* stage: inbox -> sparrow -> calendar */
-.stage{position:relative;margin:54px auto 0;max-width:980px;height:360px;display:grid;grid-template-columns:1fr 1.25fr;gap:60px}
-@media (max-width:760px){.stage{grid-template-columns:1fr;height:auto;gap:24px}}
-.panel{background:var(--surface);border-radius:22px;box-shadow:var(--shadow);padding:16px;text-align:left;position:relative;overflow:hidden}
-.panel h4{margin:0 0 10px;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.mail{display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px;background:var(--raised);margin-bottom:8px;font-size:.88rem;opacity:0}
-.mail .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:.8rem;flex:none}
-.mail b{display:block;font-size:.86rem}
-.mail span{color:var(--muted);font-size:.8rem}
-.cal{display:grid;grid-template-columns:36px repeat(5,1fr);grid-auto-rows:44px;gap:4px;position:relative}
-.cal .h{font-size:.66rem;color:var(--faint);text-align:right;padding-right:4px}
-.cal .d{font-size:.72rem;color:var(--muted);text-align:center;font-weight:700}
-.cal .slot{border-radius:8px;background:var(--raised)}
-.ev{position:absolute;border-radius:9px;padding:5px 7px;font-size:.72rem;font-weight:650;background:var(--raised);box-shadow:inset 3px 0 0 var(--faint);color:var(--muted)}
-.blk{position:absolute;border-radius:9px;padding:5px 8px;font-size:.74rem;font-weight:700;color:var(--ink);opacity:0;display:flex;align-items:center;gap:6px}
-.blk .ck{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;display:grid;place-items:center;flex:none}
-.blk .ck svg{opacity:0}
-.blk.done .ck{background:var(--accent);border-color:var(--accent)} .blk.done .ck svg{opacity:1}
-.bird{position:absolute;width:54px;height:54px;left:0;top:0;z-index:5;pointer-events:none;filter:drop-shadow(0 10px 18px rgba(59,52,201,.35))}
-.spark{position:absolute;width:7px;height:7px;border-radius:2px;pointer-events:none;z-index:6}
+/* ticker */
+.ticker{overflow:hidden;border-block:1px solid var(--line);padding:18px 0;position:relative;z-index:2;background:var(--bg)}
+.ticker .row{display:flex;gap:56px;width:max-content;font-weight:750;font-size:1.3rem;color:var(--muted);letter-spacing:-.01em}
+.ticker .row span{display:flex;align-items:center;gap:56px}
+.ticker .row span::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);opacity:.6}
 
-/* scenes */
-section.scene{padding:120px 0 40px}
-.scene .grid{display:grid;grid-template-columns:1fr 1.1fr;gap:60px;align-items:center}
-.scene.flip .grid{grid-template-columns:1.1fr 1fr}
-.scene.flip .copy{order:2}
-@media (max-width:860px){.scene .grid,.scene.flip .grid{grid-template-columns:1fr}.scene.flip .copy{order:0}}
-.kicker{font-size:.8rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
-.scene h2{font-size:clamp(2rem,4.6vw,3.4rem);line-height:1.02;letter-spacing:-.035em;margin:10px 0 14px;font-weight:800}
-.scene p{font-size:1.15rem;color:var(--muted);margin:0;max-width:34ch}
-.box{background:var(--surface);border-radius:26px;box-shadow:var(--shadow);min-height:340px;position:relative;overflow:hidden;padding:22px}
-.chip{position:absolute;padding:9px 13px;border-radius:12px;font-size:.86rem;font-weight:650;background:var(--raised);box-shadow:var(--shadow);white-space:nowrap}
-.col{position:absolute;bottom:18px;width:30%;height:58%;border-radius:16px;border:2px dashed var(--line);padding:8px;font-size:.74rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.note{position:absolute;left:50%;width:min(92%,380px);margin-left:max(-46%,-190px);background:var(--raised);border-radius:18px;padding:12px 14px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:center;opacity:0}
-.note .ic{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;overflow:hidden}
-.note b{display:block;font-size:.84rem} .note span{font-size:.84rem;color:var(--muted)}
-.phone{position:absolute;right:26px;bottom:24px;width:120px;height:120px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);opacity:0}
-.ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent)}
-.mailbig{position:absolute;left:22px;right:22px;top:26px;background:var(--raised);border-radius:16px;padding:14px;box-shadow:var(--shadow);opacity:0}
-.task{position:absolute;left:22px;right:22px;bottom:34px;background:var(--surface);border-radius:16px;padding:16px;box-shadow:0 0 0 1.5px var(--line);display:flex;gap:12px;align-items:center;font-weight:700}
-.task .ck{width:30px;height:30px;border-radius:50%;border:2.5px solid var(--line);display:grid;place-items:center;color:#fff;flex:none}
-.task .ck path{stroke-dasharray:24;stroke-dashoffset:24}
-.badge{font-size:.72rem;font-weight:800;border-radius:999px;padding:3px 9px;text-transform:uppercase;letter-spacing:.03em}
-.b-apply{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)} .b-maybe{background:color-mix(in srgb,var(--soon) 16%,transparent);color:var(--soon)}
-.b-skip{background:var(--raised);color:var(--muted)}
-.job{position:absolute;left:22px;width:52%;background:var(--raised);border-radius:14px;padding:11px 13px;box-shadow:var(--shadow);font-size:.86rem;opacity:0}
-.job b{display:block} .job .badge{margin-top:6px;display:inline-block;opacity:0}
-.cv{position:absolute;right:22px;top:22px;bottom:22px;width:38%;background:#fff;border-radius:10px;box-shadow:var(--shadow);padding:14px 12px}
-.cv i{display:block;height:6px;border-radius:3px;background:#E3E1EA;margin:6px 0;transform-origin:0 50%;transform:scaleX(0)}
-.cv i.t{height:10px;background:#2C2A7A;width:60%}
-.cv i.h{background:#8B85FF;width:35%;margin-top:12px}
+/* story: one pinned stage that plays as you scroll */
+.story{position:relative}
+.story-pin{height:100vh;height:100svh;display:grid;grid-template-columns:1fr 1.15fr;align-items:center;gap:60px;max-width:1200px;margin:0 auto;padding:80px 20px 30px}
+@media (max-width:900px){.story-pin{grid-template-columns:1fr;gap:18px;align-content:center;padding-top:84px}}
+.steps{position:relative;min-height:280px}
+@media (max-width:900px){.steps{min-height:170px}}
+.step{position:absolute;inset:0 0 auto}
+.step .k{font-size:.8rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.step h2{font-size:clamp(2rem,4.6vw,3.8rem);line-height:1;letter-spacing:-.04em;margin:12px 0 16px;font-weight:800}
+.step p{font-size:1.18rem;color:var(--muted);margin:0;max-width:32ch}
+@media (max-width:900px){.step h2{font-size:1.9rem;margin:6px 0 8px}.step p{font-size:1rem}}
+.rail{display:flex;gap:8px;margin-top:26px}
+.rail i{height:4px;flex:1;max-width:54px;border-radius:2px;background:var(--line);overflow:hidden;position:relative}
+.rail i b{position:absolute;inset:0;background:var(--accent);transform:scaleX(0);transform-origin:0 50%}
+@media (max-width:900px){.rail{position:absolute;bottom:-14px;margin:0}}
+
+.device{position:relative;width:100%;max-width:620px;aspect-ratio:5/4;justify-self:center;border-radius:28px;background:var(--surface);box-shadow:var(--shadow),0 0 0 1px var(--line);overflow:hidden;
+  transform-style:preserve-3d;will-change:transform}
+@media (max-width:900px){.device{max-width:520px}}
+.chrome{position:absolute;left:0;right:0;top:0;height:11%;display:flex;align-items:center;gap:7px;padding:0 4%;border-bottom:1px solid var(--line);font-weight:750;font-size:clamp(.72rem,1.4vw,.92rem)}
+.chrome i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.chrome .ttl{position:relative;margin-left:10px;height:1.2em;flex:1}
+.chrome .ttl span{position:absolute;left:0;top:0;white-space:nowrap}
+.L{position:absolute;font-size:clamp(.62rem,1.35vw,.9rem)}
+.mail{left:5%;width:90%;height:14%;border-radius:14px;background:var(--raised);display:flex;align-items:center;gap:3%;padding:0 3%;box-shadow:0 0 0 1px var(--line)}
+.mail .av{width:2.4em;height:2.4em;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;flex:none}
+.mail b{display:block} .mail span{color:var(--muted)}
+.mail em{margin-left:auto;font-style:normal;color:var(--faint);font-size:.9em}
+.colh{top:15%;width:26.7%;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:clamp(.56rem,1.1vw,.74rem);padding-left:.4em}
+.card{border-radius:12px;display:flex;align-items:center;gap:.45em;padding:0 .6em;font-weight:720;overflow:hidden;line-height:1.12}
+.card .ck{width:1.35em;height:1.35em;border-radius:50%;border:2px solid currentColor;flex:none;display:grid;place-items:center;opacity:.7}
+.card .ck svg{width:.9em;height:.9em}
+.card .ck path{stroke-dasharray:24;stroke-dashoffset:24}
+.card span.t{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.card.slim .ck{display:none}
+.week{left:11%;top:20%;width:85%;height:72%;border-radius:10px;
+  background-image:linear-gradient(90deg,var(--line) 1px,transparent 1px),linear-gradient(var(--line) 1px,transparent 1px);background-size:20% 100%,100% 25%;box-shadow:inset -1px -1px 0 var(--line)}
+.dayh{top:14%;width:17%;text-align:center;font-weight:750;color:var(--muted);font-size:clamp(.58rem,1.1vw,.78rem)}
+.hr{left:2%;width:8%;text-align:right;color:var(--faint);font-size:clamp(.52rem,1vw,.7rem)}
+.ev{border-radius:9px;background:var(--raised);box-shadow:inset 3px 0 0 var(--faint),0 0 0 1px var(--line);color:var(--muted);font-weight:650;padding:.35em .5em;font-size:clamp(.56rem,1.05vw,.76rem)}
+.toast{left:36%;width:59%;border-radius:16px;background:var(--raised);box-shadow:var(--shadow),0 0 0 1px var(--line);padding:.8em 1em;display:flex;gap:.8em;align-items:center}
+.toast svg{width:2.3em;height:2.3em;border-radius:.6em;flex:none}
+.toast b{display:block} .toast span{color:var(--muted)}
+.phone{left:9%;top:52%;width:22%;aspect-ratio:1;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;text-align:center;font-weight:800;line-height:1.1}
+.phone .ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent);animation:ring 1.4s infinite ease-out}
+.phone .ring:nth-child(2){animation-delay:.45s} .phone .ring:nth-child(3){animation-delay:.9s}
+@keyframes ring{from{transform:scale(1);opacity:.8}to{transform:scale(1.9);opacity:0}}
+.conf{left:8%;top:17%;width:84%;border-radius:16px;background:var(--raised);box-shadow:var(--shadow),0 0 0 1px var(--line);padding:1em 1.1em}
+.conf b{display:block} .conf span{color:var(--muted)}
+.bravo{left:8%;top:84%;width:84%;text-align:center;font-weight:750;color:var(--accent)}
+.job{left:5%;width:53%;border-radius:14px;background:var(--raised);box-shadow:0 0 0 1px var(--line);padding:.7em .9em}
+.job b{display:block} .job span{color:var(--muted)}
+.badge{display:inline-block;margin-top:.4em;font-size:.78em;font-weight:800;border-radius:999px;padding:.2em .7em;text-transform:uppercase;letter-spacing:.03em}
+.b-apply{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)} .b-maybe{background:color-mix(in srgb,var(--soon) 16%,transparent);color:var(--soon)} .b-skip{background:var(--line);color:var(--muted)}
+.cv{left:62%;top:16%;width:33%;height:76%;border-radius:10px;background:#fff;box-shadow:var(--shadow),0 0 0 1px #E8E6EF;padding:6% 5%}
+.cv i{display:block;height:5px;border-radius:3px;background:#E3E1EA;margin:9% 0;transform-origin:0 50%}
+.cv i.t{height:9px;background:#2C2A7A;width:62%} .cv i.h{background:#8B85FF;width:36%;margin-top:16%}
+.spark{position:absolute;width:7px;height:7px;border-radius:2px;pointer-events:none;z-index:9}
+
+/* without animation (no script, or reduced motion): the steps read as a list, the device shows the week */
+html:not(.anim) .steps{min-height:0} html:not(.anim) .step{position:static;margin-bottom:34px}
+html:not(.anim) .story-pin{height:auto;align-items:start}
+html:not(.anim) .rail,html:not(.anim) .L.x{display:none}
+html:not(.anim) .scrollcue{display:none}
+html:not(.anim) .chrome .ttl span:not(:nth-child(3)){display:none}
 
 /* pricing */
-#pricing{padding:130px 0 40px;text-align:center}
-#pricing h2{font-size:clamp(2rem,4.6vw,3.4rem);letter-spacing:-.035em;margin:0 0 10px}
-#pricing>div>p{color:var(--muted);font-size:1.15rem;margin:0 0 40px}
-.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;text-align:left}
+#pricing{padding:140px 0 40px;text-align:center}
+#pricing h2{font-size:clamp(2.2rem,5vw,4rem);letter-spacing:-.04em;margin:0 0 10px;line-height:1}
+#pricing>div>p{color:var(--muted);font-size:1.18rem;margin:0 0 34px}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;text-align:left;perspective:1200px}
 @media (max-width:900px){.plans{grid-template-columns:1fr}}
-.plan{background:var(--surface);border-radius:26px;padding:26px;box-shadow:var(--shadow);position:relative;opacity:0}
+.plan{background:var(--surface);border-radius:26px;padding:28px;box-shadow:var(--shadow);position:relative;transform-style:preserve-3d;will-change:transform}
 .plan.pop{background:var(--night);color:#fff}
 .plan.pop .muted,.plan.pop li{color:#C9C7F2}
 .plan .tag{position:absolute;top:18px;right:18px;background:var(--mint);color:var(--night);font-size:.72rem;font-weight:800;border-radius:999px;padding:4px 10px}
 .plan h3{margin:0;font-size:1.1rem}
-.price{font-size:3rem;font-weight:800;letter-spacing:-.04em;margin:10px 0 0}
+.price{font-size:3.2rem;font-weight:800;letter-spacing:-.04em;margin:10px 0 0;display:flex;align-items:baseline;gap:6px}
 .price small{font-size:1rem;font-weight:600;color:var(--muted)}
 .plan.pop .price small{color:#C9C7F2}
 .muted{color:var(--muted);font-size:.95rem;margin:4px 0 18px}
 .plan ul{list-style:none;margin:0 0 24px;padding:0;display:grid;gap:9px;font-size:.95rem}
 .plan li{display:flex;gap:9px;align-items:flex-start;color:var(--muted)}
-.plan li::before{content:"";width:16px;height:16px;border-radius:50%;background:var(--accent);flex:none;margin-top:2px;
-  -webkit-mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" stroke="black" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>') center/12px no-repeat,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.plan li svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--accent)}
+.plan.pop li svg{color:var(--mint)}
 .plan .btn{width:100%;justify-content:center}
 .plan.pop .btn.pri{background:var(--mint);color:var(--night)}
-.toggle{display:inline-flex;background:var(--surface);border-radius:999px;padding:4px;box-shadow:var(--shadow);margin:0 0 30px}
-.toggle button{border:0;background:none;border-radius:999px;padding:8px 18px;font-weight:700;color:var(--muted)}
-.toggle button.on{background:var(--ink);color:var(--bg)}
+.toggle{display:inline-flex;background:var(--surface);border-radius:999px;padding:4px;box-shadow:var(--shadow);margin:0 0 30px;position:relative}
+.toggle button{border:0;background:none;border-radius:999px;padding:9px 18px;font-weight:700;color:var(--muted);position:relative;z-index:1;transition:color .2s}
+.toggle button.on{color:var(--bg)}
+.toggle .pill{position:absolute;top:4px;bottom:4px;left:4px;border-radius:999px;background:var(--ink)}
 
-.final{padding:130px 0 90px;text-align:center}
-.final h2{font-size:clamp(2.2rem,5.4vw,4rem);letter-spacing:-.04em;margin:0 0 26px;line-height:1}
+.final{padding:150px 0 110px;text-align:center;position:relative;overflow:hidden}
+.final h2{font-size:clamp(2.4rem,6.4vw,5.4rem);letter-spacing:-.045em;margin:0 auto 32px;line-height:.98;max-width:16ch}
+.final h2 .w{display:inline-block}
 footer{border-top:1px solid var(--line);padding:26px 0;color:var(--muted);font-size:.88rem}
 footer .wrap{display:flex;gap:18px;flex-wrap:wrap;justify-content:space-between}
-.js .scene .copy>*,.js .final h2{opacity:0}
-@media (prefers-reduced-motion:reduce){.mail,.blk,.note,.phone,.mailbig,.job,.job .badge,.plan{opacity:1!important}.cv i{transform:none!important}}
 </style>
 </head>
 <body>
 <div id="bar"></div>
-<svg width="0" height="0" style="position:absolute"><defs>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="logo" viewBox="0 0 64 64"><defs><linearGradient id="spg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#1F1D4D"/><stop offset="1" stop-color="#3B34C9"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#spg)"/><path d="M9 55l7-7M5 47l6-6M17 59l5-5" stroke="#8FF0D0" stroke-width="2.6" stroke-linecap="round" opacity=".9"/><path d="M49.5 14.5 43.8 16.2C39.6 12.4 32.6 13.6 29.8 19.2 26.2 26.6 21 31.4 13 34.2l6.4 2.6-3.6 7.6 11-5.6C35.6 38 42 32.6 44.4 25c.9-2.9 1.3-5.2 5.1-10.5z" fill="#fff"/><path d="M34.6 25.4C31.2 18 25.6 13.6 17.6 12.2c2.6 7.2 7.4 13 13.6 16.2z" fill="#8FF0D0"/><path d="M36.2 31.5c3.2-.6 5.6-2.6 6.9-5.4" stroke="#E8B27A" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="40.2" cy="18.6" r="1.8" fill="#1F1D4D"/></symbol>
   <symbol id="tick" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </defs></svg>
 
-<nav><div class="wrap">
+<nav id="nav"><div class="wrap">
   <a class="brand" href="/welcome"><svg><use href="#logo"/></svg>Sparrow</a>
   <div class="links"><a class="hide" href="#how">How it works</a><a class="hide" href="#pricing">Pricing</a><a href="/login">Log in</a><a class="btn pri sm" href="/login?mode=signup">Start free</a></div>
 </div></nav>
 
-<header class="hero"><div class="aura" aria-hidden="true"><i></i><i></i><i></i></div><div class="wrap">
-  <h1 id="h1">Stop remembering. <em>Start finishing.</em></h1>
-  <p>Sparrow turns your inbox into a plan and chases you until it's done.</p>
-  <div class="ctas"><a class="btn pri" href="/login?mode=signup">Start free</a><a class="btn ghost" href="#how">See how it works</a></div>
-  <div class="stage" id="stage" aria-hidden="true">
-    <div class="panel"><h4>Your inbox</h4><div id="mails"></div></div>
-    <div class="panel"><h4>Your week</h4>
-      <div class="cal" id="cal"><span></span><span class="d">Mon</span><span class="d">Tue</span><span class="d">Wed</span><span class="d">Thu</span><span class="d">Fri</span></div>
+<header class="hero" id="top">
+  <canvas id="bg" aria-hidden="true"></canvas>
+  <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
+  <svg class="flight" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs><linearGradient id="trailg" x1="0" x2="1"><stop offset="0" stop-color="#8B85FF" stop-opacity="0"/><stop offset="1" stop-color="#34C6A5"/></linearGradient></defs>
+    <path id="fpath" class="trail" d="M-80 700 C 180 520, 320 760, 560 560 S 900 180, 1120 330 S 1400 520, 1540 220"/>
+    <g id="fbird"><use href="#logo" x="-28" y="-28" width="56" height="56"/></g>
+  </svg>
+  <div class="float" data-depth="1.2" style="left:7%;top:24%"><i style="background:var(--jobs)"></i>Apply to Monzo <small>Fri</small></div>
+  <div class="float" data-depth="0.7" style="right:8%;top:20%"><i style="background:var(--study)"></i>Essay draft <small>Thu 17:00</small></div>
+  <div class="float" data-depth="1.6" style="left:10%;bottom:20%"><i style="background:var(--late)"></i>Shell test <small>50 min left</small></div>
+  <div class="float" data-depth="0.9" style="right:10%;bottom:24%"><i style="background:var(--personal)"></i>Reply to Priya <small>done</small></div>
+  <div class="inner wrap">
+    <span class="eyebrow"><b></b>For job hunters and students</span>
+    <h1 id="h1">Stop remembering. <em>Start finishing.</em></h1>
+    <p class="lede">Sparrow turns your inbox into a plan and chases you until it's done.</p>
+    <div class="ctas"><a class="btn pri mag" href="/login?mode=signup">Start free</a><a class="btn ghost" href="#how">See how it works</a></div>
+  </div>
+  <div class="scrollcue" aria-hidden="true"><span></span>Scroll</div>
+</header>
+
+<div class="ticker" aria-label="Works with"><div class="row" id="tick"><span>Gmail</span><span>Outlook</span><span>Slack</span><span>Teams</span><span>iMessage</span><span>Google Calendar</span><span>Job alerts</span><span>Your CV</span></div></div>
+
+<section class="story" id="how">
+  <div class="story-pin">
+    <div>
+      <div class="steps">
+        <div class="step"><div class="k">Reads</div><h2>Your inbox becomes a to-do list.</h2><p>Emails, Slack and texts turn into tasks, sorted by what matters.</p></div>
+        <div class="step"><div class="k">Plans</div><h2>It plans around your life.</h2><p>Every task lands in a free gap, before its deadline, never in a lecture.</p></div>
+        <div class="step"><div class="k">Chases</div><h2>It chases you. Honestly.</h2><p>Real maths, not vague nudges. Ignore it near a deadline and it calls you.</p></div>
+        <div class="step"><div class="k">Checks</div><h2>It knows when you're done.</h2><p>A confirmation lands in your inbox, and the task ticks itself off.</p></div>
+        <div class="step"><div class="k">Job hunt</div><h2>Built for getting hired.</h2><p>Every job alert checked against your CV, then a CV written for the ones worth it.</p></div>
+      </div>
+      <div class="rail" aria-hidden="true"><i><b></b></i><i><b></b></i><i><b></b></i><i><b></b></i><i><b></b></i></div>
     </div>
-    <svg class="bird" id="bird"><use href="#logo"/></svg>
+    <div class="device" id="dev" aria-hidden="true">
+      <div class="chrome"><i></i><i></i><i></i><div class="ttl"><span>Inbox</span><span>Sorted</span><span>Your week</span><span>Reminders</span><span>Done</span><span>Jobs</span></div></div>
+      <!-- inbox -->
+      <div class="L x mail" style="top:15%"><div class="av" style="background:#4F46E5">M</div><div><b>Monzo Careers</b><span>Graduate analyst: apply by Friday</span></div><em>9:02</em></div>
+      <div class="L x mail" style="top:32%"><div class="av" style="background:#B45309">D</div><div><b>Dr Patel</b><span>Essay draft due Thursday 5pm</span></div><em>8:40</em></div>
+      <div class="L x mail" style="top:49%"><div class="av" style="background:#BE185D">S</div><div><b>SHL for Shell</b><span>Complete your online test</span></div><em>Tue</em></div>
+      <div class="L x mail" style="top:66%"><div class="av" style="background:#15803D">P</div><div><b>Priya</b><span>Send me the slides?</span></div><em>Mon</em></div>
+      <!-- sorted -->
+      <div class="L x colh" style="left:5%">Jobs</div><div class="L x colh" style="left:36.7%">Study</div><div class="L x colh" style="left:68.3%">Life</div>
+      <!-- week -->
+      <div class="L week"></div>
+      <div class="L dayh" style="left:11%">Mon</div><div class="L dayh" style="left:28%">Tue</div><div class="L dayh" style="left:45%">Wed</div><div class="L dayh" style="left:62%">Thu</div><div class="L dayh" style="left:79%">Fri</div>
+      <div class="L hr" style="top:21%">9:00</div><div class="L hr" style="top:39%">11:00</div><div class="L hr" style="top:57%">13:00</div><div class="L hr" style="top:75%">15:00</div>
+      <div class="L ev" style="left:11.6%;top:20.6%;width:15.8%;height:16.8%">Lecture</div>
+      <div class="L ev" style="left:28.6%;top:38.6%;width:15.8%;height:16.8%">Lecture</div>
+      <div class="L ev" style="left:62.6%;top:20.6%;width:15.8%;height:16.8%">Seminar</div>
+      <div class="L ev" style="left:45.6%;top:74.6%;width:15.8%;height:16.8%">Gym</div>
+      <!-- tasks: they start as emails, get sorted, then land in the week -->
+      <div class="L card" data-c="#4F46E5" style="left:11.6%;top:38.6%;width:15.8%;height:16.8%"><span class="ck"><svg><use href="#tick"/></svg></span><span class="t">Apply: Monzo</span></div>
+      <div class="L card" data-c="#B45309" style="left:45.6%;top:38.6%;width:15.8%;height:16.8%"><span class="ck"><svg><use href="#tick"/></svg></span><span class="t">Essay draft</span></div>
+      <div class="L card" data-c="#4F46E5" style="left:28.6%;top:20.6%;width:15.8%;height:16.8%"><span class="ck"><svg><use href="#tick"/></svg></span><span class="t">Shell test</span></div>
+      <div class="L card" data-c="#15803D" style="left:79.6%;top:56.6%;width:15.8%;height:16.8%"><span class="ck"><svg><use href="#tick"/></svg></span><span class="t">Slides to Priya</span></div>
+      <!-- chases -->
+      <div class="L x toast" style="top:16%"><svg><use href="#logo"/></svg><div><b>Heads up</b><span>Shell test should start by 14:00.</span></div></div>
+      <div class="L x toast" style="top:36%"><svg><use href="#logo"/></svg><div><b>Still there?</b><span>50 min left. It needs 60.</span></div></div>
+      <div class="L x toast" style="top:56%"><svg><use href="#logo"/></svg><div><b>This one matters</b><span>Start now or you'll be 10 min short.</span></div></div>
+      <div class="L x phone"><i class="ring"></i><i class="ring"></i><i class="ring"></i><span>Sparrow<br>calling</span></div>
+      <!-- checks -->
+      <div class="L x conf"><b>Monzo Careers</b><span>Thanks for applying. We've received your application.</span></div>
+      <div class="L x bravo">Nice one. Your Monzo application went in.</div>
+      <!-- jobs -->
+      <div class="L x job" style="top:16%"><b>Graduate Data Analyst</b><span>Monzo, London</span><br><span class="badge b-apply">Apply</span></div>
+      <div class="L x job" style="top:40%"><b>Brand Designer</b><span>Canva, Sydney</span><br><span class="badge b-skip">Skip</span></div>
+      <div class="L x job" style="top:64%"><b>Risk Analyst</b><span>Barclays, London</span><br><span class="badge b-maybe">Maybe</span></div>
+      <div class="L x cv"><i class="t"></i><i style="width:45%"></i><i class="h"></i><i></i><i></i><i style="width:80%"></i><i class="h"></i><i></i><i style="width:70%"></i><i class="h"></i><i style="width:60%"></i></div>
+    </div>
   </div>
-</div></header>
-
-<section class="scene" id="how"><div class="wrap grid">
-  <div class="copy"><div class="kicker">Reads</div><h2>Your inbox becomes a to-do list.</h2><p>Emails, Slack and texts turn into tasks, sorted by what matters.</p></div>
-  <div class="box" id="s1" aria-hidden="true">
-    <div class="col" style="left:4%">Jobs</div><div class="col" style="left:35%">Study</div><div class="col" style="left:66%">Life</div>
-  </div>
-</div></section>
-
-<section class="scene flip"><div class="wrap grid">
-  <div class="copy"><div class="kicker">Plans</div><h2>It plans around your life.</h2><p>Every task lands in a free gap, before its deadline, never in a lecture.</p></div>
-  <div class="box" id="s2" aria-hidden="true"></div>
-</div></section>
-
-<section class="scene"><div class="wrap grid">
-  <div class="copy"><div class="kicker">Chases</div><h2>It chases you. Honestly.</h2><p>Real maths, not vague nudges. Ignore it near a deadline and it calls you.</p></div>
-  <div class="box" id="s3" aria-hidden="true"></div>
-</div></section>
-
-<section class="scene flip"><div class="wrap grid">
-  <div class="copy"><div class="kicker">Checks</div><h2>It knows when you're done.</h2><p>A confirmation lands in your inbox, and the task ticks itself off.</p></div>
-  <div class="box" id="s4" aria-hidden="true"></div>
-</div></section>
-
-<section class="scene"><div class="wrap grid">
-  <div class="copy"><div class="kicker">Job hunt</div><h2>Built for getting hired.</h2><p>Every job alert checked against your CV, then a CV written for the ones worth it.</p></div>
-  <div class="box" id="s5" aria-hidden="true"><div class="cv" id="cv"></div></div>
-</div></section>
+</section>
 
 <section id="pricing"><div class="wrap">
   <h2>Simple pricing.</h2><p>Free to start. Upgrade when it's getting you hired.</p>
-  <div class="toggle"><button class="on" data-bill="m">Monthly</button><button data-bill="y">Yearly, 2 months free</button></div>
+  <div class="toggle"><span class="pill"></span><button class="on" data-bill="m">Monthly</button><button data-bill="y">Yearly, 2 months free</button></div>
   <div class="plans">
     <div class="plan"><h3>Free</h3><div class="price">£0</div><p class="muted">For getting organised.</p>
-      <ul><li>One inbox, plus calendar</li><li>Tasks, plan and reminders</li><li>Proof-of-done checks</li><li>Runs on your laptop</li></ul>
+      <ul><li><svg><use href="#tick"/></svg>One inbox, plus calendar</li><li><svg><use href="#tick"/></svg>Tasks, plan and reminders</li><li><svg><use href="#tick"/></svg>Proof-of-done checks</li><li><svg><use href="#tick"/></svg>Runs on your laptop</li></ul>
       <a class="btn ghost" href="/login?mode=signup&plan=free">Start free</a></div>
-    <div class="plan pop"><span class="tag">Most popular</span><h3>Pro</h3><div class="price" data-m="£6" data-y="£60"><span>£6</span><small data-m="/ month" data-y="/ year"> / month</small></div><p class="muted">For the application season.</p>
-      <ul><li>Everything in Free</li><li>Claude reads, plans and researches</li><li>Every job checked against your CV</li><li>Tailored CVs, PDF or Word</li><li>All your accounts</li><li>Phone calls near deadlines</li></ul>
+    <div class="plan pop"><span class="tag">Most popular</span><h3>Pro</h3><div class="price" data-m="£6" data-y="£60"><span>£6</span><small>/ month</small></div><p class="muted">For the application season.</p>
+      <ul><li><svg><use href="#tick"/></svg>Everything in Free</li><li><svg><use href="#tick"/></svg>Claude reads, plans and researches</li><li><svg><use href="#tick"/></svg>Every job checked against your CV</li><li><svg><use href="#tick"/></svg>Tailored CVs, PDF or Word</li><li><svg><use href="#tick"/></svg>All your accounts</li><li><svg><use href="#tick"/></svg>Phone calls near deadlines</li></ul>
       <a class="btn pri" href="/login?mode=signup&plan=pro">Get Pro</a></div>
-    <div class="plan"><h3>Campus</h3><div class="price" style="font-size:2.2rem;padding:8px 0 5px">Let's talk</div><p class="muted">For university careers services.</p>
-      <ul><li>Pro for every student</li><li>Cohort view, with consent</li><li>Deadline and application insights</li><li>Onboarding and support</li></ul>
+    <div class="plan"><h3>Campus</h3><div class="price" style="font-size:2.3rem;padding:8px 0 5px">Let's talk</div><p class="muted">For university careers services.</p>
+      <ul><li><svg><use href="#tick"/></svg>Pro for every student</li><li><svg><use href="#tick"/></svg>Cohort view, with consent</li><li><svg><use href="#tick"/></svg>Deadline and application insights</li><li><svg><use href="#tick"/></svg>Onboarding and support</li></ul>
       <a class="btn ghost" href="mailto:hello@sparrow.app?subject=Sparrow%20for%20our%20students">Contact us</a></div>
   </div>
 </div></section>
 
 <section class="final"><div class="wrap">
-  <h2>Your deadlines won't wait.<br>Neither will Sparrow.</h2>
-  <a class="btn pri" href="/login?mode=signup">Start free</a>
+  <h2 id="fin">Your deadlines won't wait. Neither will Sparrow.</h2>
+  <a class="btn pri mag" href="/login?mode=signup">Start free</a>
 </div></section>
 <footer><div class="wrap"><span>Sparrow. Your inbox stays on your laptop.</span><span><a href="/login">Log in</a> &nbsp; <a href="/">Open the app</a></span></div></footer>
 
-<script src="/static/vendor/motion.js"></script>
+<script src="/static/vendor/gsap/gsap.min.js"></script>
+<script src="/static/vendor/gsap/ScrollTrigger.min.js"></script>
+<script src="/static/vendor/gsap/SplitText.min.js"></script>
+<script src="/static/vendor/gsap/MotionPathPlugin.min.js"></script>
+<script src="/static/vendor/gsap/DrawSVGPlugin.min.js"></script>
 <script>
 (function(){
-const M=window.Motion||{}, RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
-if(M.inView&&!RM)document.documentElement.classList.add('js');
-const $=s=>document.querySelector(s);
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const TICK='<svg width="10" height="10"><use href="#tick"/></svg>';
-function go(el,kf,o={}){
-  if(RM||!el)return Promise.resolve();
-  if(M.animate){try{const opts=o.duration!=null?{duration:o.duration,delay:o.delay||0,ease:o.ease||[.2,.8,.2,1]}:{type:M.spring,bounce:o.bounce??.35,visualDuration:o.vd??.5,delay:o.delay||0};
-    return Promise.resolve(M.animate(el,kf,opts))}catch(e){}}
-  const keys=Object.keys(kf), n=Math.max(...keys.map(k=>Array.isArray(kf[k])?kf[k].length:1));
-  const frames=[...Array(n)].map((_,i)=>{const f={},t=[];keys.forEach(k=>{const v=Array.isArray(kf[k])?kf[k][Math.min(i,kf[k].length-1)]:kf[k];
-    if(k==='x')t.push(`translateX(${v}px)`);else if(k==='y')t.push(`translateY(${v}px)`);else if(k==='scale')t.push(`scale(${v})`);else if(k==='rotate')t.push(`rotate(${v}deg)`);else f[k]=v});
-    if(t.length)f.transform=t.join(' ');return f});
-  return el.animate(frames,{duration:(o.duration||.6)*1000,delay:(o.delay||0)*1000,easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'}).finished;
-}
-function burst(host,x,y,n=16){
-  if(RM)return;const cols=['#8FF0D0','#8B85FF','#F0A04B','#F06AA8','#4ACB7A','#FFD166'];
-  for(let i=0;i<n;i++){const s=document.createElement('i');s.className='spark';s.style.background=cols[i%cols.length];s.style.left=x+'px';s.style.top=y+'px';host.appendChild(s);
-    const a=Math.random()*Math.PI*2,d=30+Math.random()*50;s.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d+30}px) rotate(${Math.random()*300}deg)`,opacity:0}],{duration:800+Math.random()*400,easing:'cubic-bezier(.1,.7,.3,1)'}).finished.then(()=>s.remove())}
-}
-/* when a scene is visible, run its loop; stop when it leaves */
-function whenSeen(el,loop){
-  let on=false;const run=async()=>{while(on){await loop()}};
-  if(M.inView&&!RM){M.inView(el,()=>{on=true;run();return()=>{on=false}},{amount:.35})}else{on=!RM;run()}
-}
+const $=s=>document.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const nav=$('#nav');addEventListener('scroll',()=>nav.classList.toggle('solid',scrollY>30),{passive:true});
 
-/* ---- scroll progress bar ---- */
-if(M.scroll&&!RM)M.scroll(M.animate('#bar',{scaleX:[0,1]},{ease:'linear'}));
+/* ---------- live gradient background (WebGL, drawn at low resolution, sharp at any screen size) ---------- */
+(function(){
+  const c=$('#bg'), gl=c.getContext('webgl',{antialias:false,premultipliedAlpha:false});
+  if(!gl)return;
+  document.documentElement.classList.add('webgl');
+  const vs='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+  const fs=`precision mediump float;uniform vec2 r;uniform float t;uniform vec3 bg,c1,c2,c3;
+    float blob(vec2 p,vec2 c,float s){return smoothstep(s,0.,length(p-c));}
+    void main(){vec2 p=gl_FragCoord.xy/r.y;float a=r.x/r.y;
+      vec2 w=p+.06*vec2(sin(p.y*3.+t*.4),cos(p.x*2.5-t*.3));
+      vec3 col=bg;
+      col=mix(col,c1,.62*blob(w,vec2(a*(.28+.1*sin(t*.21)),.72+.1*cos(t*.17)),.75));
+      col=mix(col,c2,.55*blob(w,vec2(a*(.78+.08*cos(t*.19)),.46+.12*sin(t*.23)),.7));
+      col=mix(col,c3,.35*blob(w,vec2(a*(.52+.15*sin(t*.13+1.)),.18+.08*cos(t*.29)),.6));
+      float g=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453);
+      gl_FragColor=vec4(col+(g-.5)*.025,1.);}`;
+  const sh=(t,s)=>{const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);return x};
+  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+  gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  const U=n=>gl.getUniformLocation(pr,n);
+  const rgb=v=>{const d=document.createElement('i');d.style.color=v;document.body.appendChild(d);const m=getComputedStyle(d).color.match(/\d+/g).map(x=>x/255);d.remove();return m.slice(0,3)};
+  const css=getComputedStyle(document.documentElement);
+  const setCols=()=>{gl.uniform3fv(U('bg'),rgb(css.getPropertyValue('--bg')));gl.uniform3fv(U('c1'),rgb(css.getPropertyValue('--jobs')));
+    gl.uniform3fv(U('c2'),rgb(css.getPropertyValue('--accent')));gl.uniform3fv(U('c3'),rgb(css.getPropertyValue('--study')))};
+  setCols();matchMedia('(prefers-color-scheme: dark)').addEventListener('change',setCols);
+  const size=()=>{const s=.5*Math.min(devicePixelRatio||1,2);c.width=Math.max(1,c.clientWidth*s|0);c.height=Math.max(1,c.clientHeight*s|0);gl.viewport(0,0,c.width,c.height);gl.uniform2f(U('r'),c.width,c.height)};
+  size();addEventListener('resize',size);
+  let on=true,t0=performance.now();
+  new IntersectionObserver(e=>{on=e[0].isIntersecting;if(on&&!RM)requestAnimationFrame(draw)}).observe(c);
+  function draw(now){gl.uniform1f(U('t'),RM?8:(now-t0)/1000);gl.drawArrays(gl.TRIANGLES,0,3);if(on&&!RM)requestAnimationFrame(draw)}
+  requestAnimationFrame(draw);
+})();
 
-/* ---- hero: words rise, aura drifts ---- */
-const h1=$('#h1');
-if(!RM){h1.innerHTML=[['Stop remembering.',0],['Start finishing.',1]].map(([t,em])=>{const w=t.split(' ').map(x=>`<span class="w">${x}</span>`).join(' ');return em?`<em>${w}</em>`:w}).join(' ');
-  h1.querySelectorAll('.w').forEach((w,i)=>go(w,{opacity:[0,1],y:[60,0],rotate:[6,0],filter:['blur(8px)','blur(0px)']},{bounce:.4,vd:.8,delay:.1+i*.07}));
-  document.querySelectorAll('.hero p,.ctas').forEach((e,i)=>go(e,{opacity:[0,1],y:[20,0]},{vd:.6,delay:.6+i*.12}));
-  document.querySelectorAll('.aura i').forEach((b,i)=>b.animate([{transform:`rotate(0deg) translateX(${160+i*40}px)`},{transform:`rotate(${i%2?-360:360}deg) translateX(${160+i*40}px)`}],{duration:22000+i*9000,iterations:Infinity}));}
+/* task colours, needed with or without animation */
+document.querySelectorAll('#dev .card').forEach(c=>{c.style.background=`color-mix(in srgb,${c.dataset.c} 18%,var(--surface))`;c.style.boxShadow=`inset 3px 0 0 ${c.dataset.c}`;c.style.color='var(--ink)'});
 
-/* ---- hero stage: email arrives, the sparrow carries it into the week, it gets done ---- */
-const MAILS=[['M','#4F46E5','Monzo Careers','Graduate analyst: apply by Friday',1,1,'Apply to Monzo','var(--jobs)'],
-  ['D','#B45309','Dr Patel','Essay draft due Thursday 5pm',3,2,'Essay draft','var(--study)'],
-  ['S','#BE185D','SHL for Shell','Complete your online test',2,3,'Shell test','var(--jobs)'],
-  ['P','#15803D','Priya','Send me the slides?',4,1,'Send Priya the slides','var(--personal)']];
-const cal=$('#cal');
-for(let r=0;r<4;r++){const s=document.createElement('span');s.className='h';s.textContent=`${9+r*2}:00`;cal.appendChild(s);for(let c=0;c<5;c++)cal.appendChild(Object.assign(document.createElement('span'),{className:'slot'}))}
-const EV=[[0,0,'Lecture'],[2,2,'Seminar'],[4,3,'Gym']];
-function cellRect(day,row){const cells=cal.querySelectorAll('.slot');const el=cells[row*5+day];const cr=cal.getBoundingClientRect(),r=el.getBoundingClientRect();return {left:r.left-cr.left,top:r.top-cr.top,width:r.width,height:r.height}}
-function placeEv(){cal.querySelectorAll('.ev').forEach(e=>e.remove());EV.forEach(([d,r,t])=>{const p=cellRect(d,r);const e=document.createElement('div');e.className='ev';Object.assign(e.style,{left:p.left+'px',top:p.top+'px',width:p.width+'px',height:p.height+'px'});e.textContent=t;cal.appendChild(e)})}
-placeEv();addEventListener('resize',placeEv);
-const stage=$('#stage'), mails=$('#mails'), bird=$('#bird');
-let mi=0;
-async function heroLoop(){
-  const [ini,col,from,subj,day,row,title,c]=MAILS[mi++%MAILS.length];
-  const m=document.createElement('div');m.className='mail';m.innerHTML=`<div class="av" style="background:${col}">${ini}</div><div><b>${from}</b><span>${subj}</span></div>`;
-  mails.prepend(m);while(mails.children.length>4)mails.lastChild.remove();
-  await go(m,{opacity:[0,1],y:[-30,0],scale:[.9,1]},{bounce:.45,vd:.5});
-  await sleep(350);
-  const sr=stage.getBoundingClientRect(), mr=m.getBoundingClientRect(), p=cellRect(day,row), cr=cal.getBoundingClientRect();
-  const x0=mr.left-sr.left+mr.width-40, y0=mr.top-sr.top-6, x1=cr.left-sr.left+p.left+p.width/2-27, y1=cr.top-sr.top+p.top-10;
-  bird.style.opacity=1;
-  await go(bird,{x:[x0,(x0+x1)/2,x1],y:[y0,Math.min(y0,y1)-80,y1],rotate:[-20,5,20],scale:[.6,1.1,.8]},{duration:1.1,ease:[.5,0,.2,1]});
-  go(bird,{opacity:[1,0],scale:[.8,.4]},{duration:.25});
-  const b=document.createElement('div');b.className='blk';b.innerHTML=`<span class="ck">${TICK}</span>${title}`;
-  Object.assign(b.style,{left:p.left+'px',top:p.top+'px',width:p.width+'px',height:p.height+'px',background:`color-mix(in srgb,${c} 22%,var(--surface))`,boxShadow:`inset 3px 0 0 ${c}`});
-  cal.appendChild(b);
-  await go(b,{opacity:[0,1],scale:[.4,1]},{bounce:.55,vd:.55});
-  await sleep(700);
-  b.classList.add('done');go(b.querySelector('.ck'),{scale:[.5,1.4,1]},{bounce:.6,vd:.45});
-  burst(cal,p.left+14,p.top+p.height/2);
-  await sleep(1300);
-  go(b,{opacity:[1,0],scale:[1,.9]},{duration:.4}).then(()=>b.remove());
-  await sleep(200);
-}
-whenSeen(stage,heroLoop);
+const G=window.gsap;
+if(!G||RM)return;   // the page reads fine without animation
+document.documentElement.classList.add('anim');
+G.registerPlugin(ScrollTrigger,SplitText,MotionPathPlugin,DrawSVGPlugin);
+G.defaults({ease:'power3.out'});
 
-/* ---- scene 1: messages fall into sorted columns ---- */
-const s1=$('#s1');const S1=[['Recruiter: can you chat Thursday?','var(--jobs)',0],['Essay feedback is up','var(--study)',1],['Rent due on the 1st','var(--money)',2],
-  ['HireVue invite from Deloitte','var(--jobs)',0],['Group project meeting moved','var(--study)',1],['Mum: call me back','var(--personal)',2]];
-let k1=0;
-async function s1Loop(){
-  const [t,c,col]=S1[k1++%S1.length];const box=s1.getBoundingClientRect();
-  const ch=document.createElement('div');ch.className='chip';ch.style.boxShadow=`inset 3px 0 0 ${c},var(--shadow)`;ch.textContent=t;s1.appendChild(ch);
-  const colEl=s1.querySelectorAll('.col')[col], cr=colEl.getBoundingClientRect();
-  const stack=[...s1.querySelectorAll('.chip.in')].filter(e=>e.dataset.col==col).length;
-  ch.style.left=(box.width/2-120)+'px';ch.style.top='18px';
-  await go(ch,{opacity:[0,1],y:[-30,0],scale:[.8,1]},{bounce:.5,vd:.5});
-  await sleep(250);
-  const tx=cr.left-box.left+6-(box.width/2-120), ty=cr.top-box.top+30+stack*44-18;
-  ch.style.maxWidth=(cr.width-12)+'px';ch.style.overflow='hidden';ch.style.textOverflow='ellipsis';ch.style.fontSize='.74rem';
-  await go(ch,{x:[0,tx],y:[0,ty],rotate:[0,col===0?-4:col===2?4:0,0]},{bounce:.3,vd:.7});
-  ch.classList.add('in');ch.dataset.col=col;
-  if(s1.querySelectorAll('.chip.in').length>=6){await sleep(1600);const all=[...s1.querySelectorAll('.chip')];await Promise.all(all.map((e,i)=>go(e,{opacity:[1,0],scale:[1,.8]},{duration:.3,delay:i*.04})));all.forEach(e=>e.remove())}
-  await sleep(250);
-}
-whenSeen(s1,s1Loop);
+/* ---------- progress bar ---------- */
+G.to('#bar',{scaleX:1,ease:'none',scrollTrigger:{start:0,end:'max',scrub:.3}});
 
-/* ---- scene 2: a week fills itself around your commitments ---- */
-const s2=$('#s2');
-s2.innerHTML=`<div class="cal" style="grid-auto-rows:52px"><span></span>${['Mon','Tue','Wed','Thu','Fri'].map(d=>`<span class="d">${d}</span>`).join('')}${[9,11,13,15].map(h=>`<span class="h">${h}:00</span>${'<span class="slot"></span>'.repeat(5)}`).join('')}</div><div class="now" style="position:absolute;left:58px;right:22px;height:2px;background:var(--late);opacity:.8"></div>`;
-const cal2=s2.querySelector('.cal');
-async function s2Loop(){
-  s2.querySelectorAll('.ev,.blk').forEach(e=>e.remove());
-  const cells=cal2.querySelectorAll('.slot'), br=s2.getBoundingClientRect();
-  const put=(d,r,cls,txt,c)=>{const el=cells[r*5+d].getBoundingClientRect();const e=document.createElement('div');e.className=cls;e.textContent=txt;
-    Object.assign(e.style,{left:(el.left-br.left)+'px',top:(el.top-br.top)+'px',width:el.width+'px',height:el.height+'px'});
-    if(c){e.style.background=`color-mix(in srgb,${c} 22%,var(--surface))`;e.style.boxShadow=`inset 3px 0 0 ${c}`;e.style.opacity=0}s2.appendChild(e);return e};
-  const evs=[[0,0,'Lecture'],[1,1,'Lecture'],[3,0,'Seminar'],[2,3,'Gym'],[4,2,'Lab']].map(([d,r,t])=>put(d,r,'ev',t));
-  await Promise.all(evs.map((e,i)=>go(e,{opacity:[0,1],scale:[.9,1]},{vd:.4,delay:i*.08})));
-  const now=s2.querySelector('.now');
-  go(now,{y:[cells[0].getBoundingClientRect().top-br.top,cells[15].getBoundingClientRect().bottom-br.top]},{duration:6,ease:'linear'});
-  const plan=[[0,1,'Apply: Monzo','var(--jobs)'],[1,0,'Shell test','var(--jobs)'],[2,1,'Essay','var(--study)'],[0,2,'Reply to Priya','var(--personal)'],[3,2,'Revise stats','var(--study)'],[4,0,'Pay rent','var(--money)']];
-  for(const [d,r,t,c] of plan){const b=put(d,r,'blk',t,c);await go(b,{opacity:[0,1],y:[-24,0],scale:[.6,1]},{bounce:.55,vd:.5});await sleep(260)}
-  await sleep(2600);
-}
-whenSeen(s2,s2Loop);
-
-/* ---- scene 3: notifications stack, then a call ---- */
-const s3=$('#s3');
-const NOTE=(t,s)=>`<div class="ic"><svg width="34" height="34"><use href="#logo"/></svg></div><div><b>${t}</b><span>${s}</span></div>`;
-async function s3Loop(){
-  s3.innerHTML='';
-  const notes=[['Heads up','Shell test should start by 14:00.'],['Still there?','You have 50 min left. It needs 60.'],['This one matters','Start now or you\'ll be 10 min short.']];
-  const els=notes.map(([t,s],i)=>{const n=document.createElement('div');n.className='note';n.innerHTML=NOTE(t,s);n.style.top=(24+i*78)+'px';s3.appendChild(n);return n});
-  for(const n of els){await go(n,{opacity:[0,1],y:[-40,0],scale:[.85,1]},{bounce:.5,vd:.5});await sleep(700)}
-  await Promise.all(els.map(n=>go(n,{opacity:[1,.35]},{duration:.4})));
-  const ph=document.createElement('div');ph.className='phone';ph.innerHTML=`<span style="font-weight:800;text-align:center;font-size:.8rem;line-height:1.1;z-index:2">Sparrow<br>calling</span>`;s3.appendChild(ph);
-  await go(ph,{opacity:[0,1],scale:[.3,1]},{bounce:.6,vd:.5});
-  for(let i=0;i<3;i++){const r=document.createElement('i');r.className='ring';ph.appendChild(r);r.animate([{transform:'scale(1)',opacity:.8},{transform:'scale(1.9)',opacity:0}],{duration:1200,easing:'ease-out'}).finished.then(()=>r.remove());
-    go(ph,{rotate:[0,-10,10,-8,8,0]},{duration:.5});await sleep(500)}
-  await sleep(900);
-  const ok=document.createElement('div');ok.className='note';ok.style.top='250px';ok.innerHTML=NOTE('You said: in 10 minutes','Okay. That still leaves enough time.');s3.appendChild(ok);
-  go(ph,{opacity:[1,0],scale:[1,.6]},{duration:.3});
-  await go(ok,{opacity:[0,1],y:[30,0]},{bounce:.4,vd:.5});
-  await sleep(2400);
-}
-whenSeen(s3,s3Loop);
-
-/* ---- scene 4: confirmation email ticks the task ---- */
-const s4=$('#s4');
-async function s4Loop(){
-  s4.innerHTML=`<div class="mailbig"><b>Monzo Careers</b><div style="color:var(--muted);font-size:.9rem;margin-top:4px">Thanks for applying to Monzo. We've received your application.</div></div>
-    <div class="task"><span class="ck"><svg width="16" height="16"><path d="M5 12l5 5L20 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Apply to Monzo</span></div>`;
-  const mail=s4.querySelector('.mailbig'), task=s4.querySelector('.task'), ck=task.querySelector('.ck');
-  await go(task,{opacity:[0,1],y:[20,0]},{vd:.4});
-  await sleep(500);
-  await go(mail,{opacity:[0,1],y:[-60,0],rotate:[-4,0]},{bounce:.45,vd:.6});
-  await sleep(500);
-  await go(mail,{y:[0,120],scale:[1,.4],opacity:[1,0]},{duration:.55,ease:[.6,0,.4,1]});
-  ck.style.background='var(--accent)';ck.style.borderColor='var(--accent)';
-  go(ck,{scale:[.5,1.5,1]},{bounce:.6,vd:.5});
-  const path=ck.querySelector('path');path.animate([{strokeDashoffset:24},{strokeDashoffset:0}],{duration:400,fill:'forwards'});
-  task.style.transition='box-shadow .3s';task.style.boxShadow='0 0 0 2px var(--accent)';
-  const tr=task.getBoundingClientRect(), br=s4.getBoundingClientRect();burst(s4,tr.left-br.left+30,tr.top-br.top+30,26);
-  const n=document.createElement('div');n.className='chip';n.textContent='Nice one. Your Monzo application went in.';n.style.cssText+=';left:22px;bottom:110px;opacity:0;white-space:normal';s4.appendChild(n);
-  await go(n,{opacity:[0,1],y:[16,0]},{bounce:.4,vd:.5});
-  await sleep(2600);
-}
-whenSeen(s4,s4Loop);
-
-/* ---- scene 5: job alerts get verdicts, a CV writes itself ---- */
-const s5=$('#s5'), cv=$('#cv');
-cv.innerHTML='<i class="t"></i><i style="width:45%"></i><i class="h"></i>'+'<i></i>'.repeat(4)+'<i class="h"></i>'+'<i></i>'.repeat(3)+'<i class="h"></i><i style="width:70%"></i>';
-async function s5Loop(){
-  s5.querySelectorAll('.job').forEach(e=>e.remove());cv.querySelectorAll('i').forEach(i=>i.style.transform='scaleX(0)');
-  const jobs=[['Graduate Data Analyst','Monzo, London','apply','Apply'],['Brand Designer','Canva, Sydney','skip','Skip'],['Risk Analyst','Barclays, London','maybe','Maybe']];
-  const els=jobs.map(([t,co,v,l],i)=>{const j=document.createElement('div');j.className='job';j.style.top=(24+i*92)+'px';j.innerHTML=`<b>${t}</b><span style="color:var(--muted)">${co}</span><br><span class="badge b-${v}">${l}</span>`;s5.appendChild(j);return j});
-  els.forEach((j,i)=>go(j,{opacity:[0,1],x:[-30,0]},{bounce:.35,vd:.4,delay:i*.12}));
-  await sleep(550);
-  for(const j of els){go(j.querySelector('.badge'),{opacity:[0,1],scale:[.3,1.15,1]},{bounce:.6,vd:.35});await sleep(260)}
-  go(els[1],{opacity:[1,.35],x:[0,-10]},{duration:.3});
-  go(els[0],{scale:[1,1.05,1]},{bounce:.5,vd:.35});
-  await sleep(250);
-  const lines=[...cv.querySelectorAll('i')];
-  for(let i=0;i<lines.length;i++){go(lines[i],{scaleX:[0,1]},{duration:.3,ease:[.2,.8,.2,1]});await sleep(70)}
-  await sleep(2400);
-  await Promise.all(els.map(j=>go(j,{opacity:[null,0]},{duration:.3})));
-}
-whenSeen(s5,s5Loop);
-
-/* ---- section headings and plans rise in ---- */
-if(M.inView&&!RM){
-  M.inView('.scene .copy',el=>{[...el.children].forEach((c,i)=>go(c,{opacity:[0,1],y:[40,0]},{bounce:.3,vd:.6,delay:i*.08}))},{amount:.4});
-  M.inView('.plans',el=>{el.querySelectorAll('.plan').forEach((p,i)=>go(p,{opacity:[0,1],y:[60,0],scale:[.94,1]},{bounce:.35,vd:.65,delay:i*.12}))},{amount:.25});
-  M.inView('.final h2',el=>go(el,{opacity:[0,1],scale:[.9,1],y:[30,0]},{bounce:.4,vd:.7}),{amount:.5});
-}else document.querySelectorAll('.plan').forEach(p=>p.style.opacity=1);
-
-/* ---- pricing toggle ---- */
-document.querySelectorAll('[data-bill]').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('[data-bill]').forEach(x=>x.classList.toggle('on',x===b));
-  const y=b.dataset.bill==='y', p=document.querySelector('.price[data-m]');
-  p.querySelector('span').textContent=y?p.dataset.y:p.dataset.m;p.querySelector('small').textContent=' '+(y?'/ year':'/ month');
-  go(p,{scale:[1.25,1],rotate:[-4,0]},{bounce:.6,vd:.4});
+/* ---------- hero: letters flip up, lede and buttons follow ---------- */
+document.fonts.ready.then(()=>{
+  const sp=SplitText.create('#h1',{type:'words,chars',charsClass:'ch',wordsClass:'wd'});
+  G.set('.hero h1',{perspective:700});
+  const emEl=$('#h1 em');if(emEl)emEl.style.background='none';
+  const em=$$('em .ch',$('#h1'));em.forEach((c,i)=>{c.style.backgroundSize=(em.length*100)+'% 100%';c.style.backgroundPosition=(em.length>1?i/(em.length-1)*100:0)+'% 0'});
+  G.from(sp.chars,{yPercent:120,rotationX:-95,opacity:0,transformOrigin:'50% 100% -40px',duration:1.1,stagger:.024,ease:'expo.out',delay:.15});
 });
+G.from('.eyebrow',{y:-16,opacity:0,duration:.8,delay:.05});
+G.from(['.lede','.ctas'],{y:26,opacity:0,duration:1,stagger:.12,delay:.75});
+G.from('.float',{scale:.6,opacity:0,duration:1.2,stagger:.1,delay:1,ease:'elastic.out(1,.6)'});
+$$('.float').forEach((f,i)=>G.to(f,{y:i%2?14:-14,duration:3+i*.4,repeat:-1,yoyo:true,ease:'sine.inOut'}));
+/* the cards drift with the pointer, nearer ones more */
+const floats=$$('.float').map(f=>({d:+f.dataset.depth,x:G.quickTo(f,'x',{duration:.9,ease:'power3'}),r:G.quickTo(f,'rotation',{duration:.9,ease:'power3'})}));
+addEventListener('pointermove',e=>{const nx=e.clientX/innerWidth-.5,ny=e.clientY/innerHeight-.5;floats.forEach(f=>{f.x(nx*38*f.d);f.r(nx*4*f.d)})},{passive:true});
+/* the sparrow flies its route, leaving a trail */
+const fly=G.timeline({repeat:-1,repeatDelay:1.2,delay:1.4});
+fly.fromTo('#fpath',{drawSVG:'0% 0%'},{drawSVG:'0% 100%',duration:4.2,ease:'power1.inOut'},0)
+   .to('#fbird',{motionPath:{path:'#fpath',align:'#fpath',alignOrigin:[.5,.5],autoRotate:-10},duration:4.2,ease:'power1.inOut'},0)
+   .to('#fpath',{drawSVG:'100% 100%',duration:1.4,ease:'power2.in'},3.4);
+/* hero content lifts away as you scroll */
+G.to('.hero .inner',{yPercent:-18,opacity:.2,ease:'none',scrollTrigger:{trigger:'.hero',start:'top top',end:'bottom top',scrub:true}});
+G.to('.scrollcue',{opacity:0,scrollTrigger:{trigger:'.hero',start:'top top',end:'15% top',scrub:true}});
+
+/* ---------- ticker ---------- */
+const row=$('#tick');row.innerHTML+=row.innerHTML;
+G.to(row,{xPercent:-50,duration:28,ease:'none',repeat:-1});
+
+/* ---------- magnetic buttons ---------- */
+$$('.mag').forEach(b=>{const x=G.quickTo(b,'x',{duration:.5,ease:'power3'}),y=G.quickTo(b,'y',{duration:.5,ease:'power3'});
+  b.addEventListener('pointermove',e=>{const r=b.getBoundingClientRect();x((e.clientX-r.left-r.width/2)*.35);y((e.clientY-r.top-r.height/2)*.45)});
+  b.addEventListener('pointerleave',()=>{x(0);y(0)})});
+
+/* ---------- the story: one timeline, scrubbed by scroll ---------- */
+/* the inbox fills as the stage comes into view */
+G.from('.mail>*',{x:50,opacity:0,stagger:.06,duration:.7,ease:'back.out(1.6)',scrollTrigger:{trigger:'#dev',start:'top 85%'}});
+G.from('#dev',{rotationY:-14,rotationX:8,y:60,duration:1.4,ease:'expo.out',scrollTrigger:{trigger:'#dev',start:'top 90%'}});
+const dev=$('#dev'), steps=$$('.step'), bars=$$('.rail b'), ttl=$$('.chrome .ttl span');
+const mails=$$('.mail',dev), heads=$$('.colh',dev), cards=$$('.card',dev), evs=$$('.ev',dev), toasts=$$('.toast',dev);
+const weekBits=[...$$('.week,.dayh,.hr',dev)];
+const phone=$('.phone',dev), conf=$('.conf',dev), bravo=$('.bravo',dev), jobs=$$('.job',dev), cv=$('.cv',dev);
+const inWeek=cards.map(c=>({left:c.style.left,top:c.style.top,width:c.style.width,height:c.style.height}));
+/* where each task sits while sorted: Jobs, Study, Jobs, Life */
+const colX=['5%','36.7%','5%','68.3%'], colY=['24%','24%','41%','24%'];
+const showTitle=i=>ttl.forEach((s,k)=>G.set(s,{opacity:k===i?1:0,y:k===i?0:6}));
+
+G.set([...heads,...toasts,phone,conf,bravo,...jobs,cv,...weekBits,...evs],{opacity:0});
+G.set(cards,{opacity:0});
+G.set(steps.slice(1),{opacity:0,y:30});
+G.set($$('i',cv),{scaleX:0});
+G.set($$('.badge',dev),{scale:0});
+showTitle(0);
+
+const mm=G.matchMedia();
+mm.add({wide:'(min-width:901px)',narrow:'(max-width:900px)'},ctx=>{
+  const tl=G.timeline({defaults:{ease:'power2.inOut',duration:1},
+    scrollTrigger:{trigger:'.story',start:'top top',end:'+=520%',pin:'.story-pin',scrub:.7,
+      snap:{snapTo:'labels',duration:{min:.3,max:.8},delay:.15,ease:'power2.inOut',inertia:false}}});
+  const step=(i,at)=>{tl.to(steps[i-1],{opacity:0,y:-30,duration:.5},at).to(steps[i],{opacity:1,y:0,duration:.6},at+.25)
+    .to(bars[i],{scaleX:1,duration:.4,ease:'none'},at)};
+  tl.addLabel('reads',0).to(bars[0],{scaleX:1,duration:.3,ease:'none'},0)
+    /* emails turn into tasks and drop into their columns */
+    .set(cards,{left:'5%',width:'90%',height:'14%',top:i=>['15%','32%','49%','66%'][i]},1)
+    .to(cards,{opacity:1,duration:.3,stagger:.05},1).to(mails,{opacity:0,scale:.96,duration:.3,stagger:.05},1.05)
+    .call(()=>showTitle(1),null,1.3).call(()=>showTitle(0),null,1.29)
+    .to(heads,{opacity:1,duration:.3,stagger:.06},1.3)
+    .to(cards,{left:i=>colX[i],top:i=>colY[i],width:'26.7%',height:'13%',stagger:.08,duration:.9,ease:'back.inOut(1.2)'},1.35)
+    .addLabel('sorted',2.4);
+  /* 2: plans. The week appears; tasks fly into free gaps */
+  step(1,2.6);
+  tl.to(heads,{opacity:0,duration:.3},2.6)
+    .to(weekBits,{opacity:1,duration:.5,stagger:.02},2.7)
+    .fromTo(evs,{opacity:0,scale:.8},{opacity:1,scale:1,stagger:.08,duration:.4,ease:'back.out(2)'},2.9)
+    .call(()=>showTitle(2),null,2.95).call(()=>showTitle(1),null,2.94)
+    .to(cards,{left:i=>inWeek[i].left,top:i=>inWeek[i].top,width:i=>inWeek[i].width,height:i=>inWeek[i].height,
+      stagger:.12,duration:1,ease:'power3.inOut'},3.2)
+    .call(()=>cards.forEach(c=>c.classList.add('slim')),null,3.21).call(()=>cards.forEach(c=>c.classList.remove('slim')),null,3.2)
+    .addLabel('plans',4.4);
+  /* 3: chases. Reminders stack, then it rings */
+  step(2,4.6);
+  tl.to([...weekBits,...evs,cards[0],cards[1],cards[3]],{opacity:.18,duration:.4},4.6)
+    .call(()=>showTitle(3),null,4.75).call(()=>showTitle(2),null,4.74)
+    .fromTo(toasts,{opacity:0,y:-30,scale:.9},{opacity:1,y:0,scale:1,stagger:.28,duration:.5,ease:'back.out(1.7)'},4.8)
+    .fromTo(phone,{opacity:0,scale:.3},{opacity:1,scale:1,duration:.6,ease:'elastic.out(1,.5)'},5.8)
+    .to(phone,{rotation:8,duration:.08,repeat:5,yoyo:true,ease:'none'},6.3)
+    .addLabel('chases',6.8);
+  /* 4: checks. A confirmation lands and the task ticks itself */
+  step(3,7);
+  tl.to([...toasts,phone,cards[1],cards[2],cards[3],...weekBits,...evs],{opacity:0,duration:.4},7)
+    .call(()=>showTitle(4),null,7.15).call(()=>showTitle(3),null,7.14)
+    .call(()=>cards[0].classList.remove('slim'),null,7.11).call(()=>cards[0].classList.add('slim'),null,7.1)
+    .to(cards[0],{opacity:1,left:'8%',top:'56%',width:'84%',height:'16%',duration:.8,ease:'power3.inOut'},7.1)
+    .fromTo(conf,{opacity:0,y:-50,rotation:-3},{opacity:1,y:0,rotation:0,duration:.7,ease:'back.out(1.6)'},7.4)
+    .to(conf,{scale:.97,duration:.15,yoyo:true,repeat:1},8.3)
+    .to($('.ck',cards[0]),{backgroundColor:'var(--accent)',borderColor:'var(--accent)',color:'#fff',opacity:1,scale:1.3,duration:.25},8.55)
+    .fromTo($('.ck path',cards[0]),{drawSVG:'0%'},{drawSVG:'100%',duration:.3},8.6)
+    .to($('.ck',cards[0]),{scale:1,duration:.3,ease:'back.out(3)'},8.8)
+    .to(cards[0],{boxShadow:'inset 3px 0 0 #4F46E5, 0 0 0 2px var(--accent)',duration:.3},8.6)
+    .call(dir=>burst(dev,.22,.64),null,8.62)
+    .fromTo(bravo,{opacity:0,y:12},{opacity:1,y:0,duration:.4},8.8)
+    .addLabel('checks',9.3);
+  /* 5: jobs. Verdicts, then a CV writes itself */
+  step(4,9.5);
+  tl.to([cards[0],bravo,conf],{opacity:0,duration:.4},9.5)
+    .call(()=>showTitle(5),null,9.65).call(()=>showTitle(4),null,9.64)
+    .fromTo(jobs,{opacity:0,x:-40},{opacity:1,x:0,stagger:.15,duration:.5,ease:'back.out(1.5)'},9.6)
+    .to($$('.badge',dev),{scale:1,stagger:.15,duration:.35,ease:'back.out(3)'},10.1)
+    .to(jobs[1],{opacity:.35,x:-8,duration:.3},10.7)
+    .fromTo(cv,{opacity:0,x:40,rotation:3},{opacity:1,x:0,rotation:0,duration:.5,ease:'back.out(1.4)'},10.7)
+    .to($$('i',cv),{scaleX:1,stagger:.05,duration:.3,ease:'power2.out'},11)
+    .addLabel('jobs',11.8);
+  return()=>{G.set(cards,{clearProps:'left,top,width,height'})};
+});
+
+/* confetti when the task ticks off */
+function burst(host,fx,fy){
+  const r=host.getBoundingClientRect(),x=r.width*fx,y=r.height*fy,cols=['#8FF0D0','#8B85FF','#F0A04B','#F06AA8','#4ACB7A','#FFD166'];
+  for(let i=0;i<28;i++){const s=document.createElement('i');s.className='spark';s.style.background=cols[i%6];s.style.left=x+'px';s.style.top=y+'px';host.appendChild(s);
+    const a=Math.random()*Math.PI*2,d=40+Math.random()*90;
+    G.to(s,{x:Math.cos(a)*d,y:Math.sin(a)*d+40,rotation:Math.random()*540,opacity:0,duration:.9+Math.random()*.5,ease:'power3.out',onComplete:()=>s.remove()})}
+}
+
+/* ---------- pricing: cards rise, tilt under the pointer, price flips ---------- */
+G.from('.plan',{y:80,opacity:0,rotationX:-12,duration:1,stagger:.12,ease:'expo.out',scrollTrigger:{trigger:'.plans',start:'top 82%'}});
+G.from('#pricing h2, #pricing .wrap>p, .toggle',{y:30,opacity:0,stagger:.08,duration:.8,scrollTrigger:{trigger:'#pricing',start:'top 78%'}});
+$$('.plan').forEach(p=>{const rx=G.quickTo(p,'rotationX',{duration:.6,ease:'power3'}),ry=G.quickTo(p,'rotationY',{duration:.6,ease:'power3'});
+  p.addEventListener('pointermove',e=>{const r=p.getBoundingClientRect();ry(((e.clientX-r.left)/r.width-.5)*10);rx(-((e.clientY-r.top)/r.height-.5)*10)});
+  p.addEventListener('pointerleave',()=>{rx(0);ry(0)})});
+const pill=$('.toggle .pill');const place=b=>G.to(pill,{x:b.offsetLeft-4,width:b.offsetWidth,duration:.45,ease:'power3.inOut'});
+G.set(pill,{width:$('[data-bill].on').offsetWidth});
+$$('[data-bill]').forEach(b=>b.onclick=()=>{
+  $$('[data-bill]').forEach(x=>x.classList.toggle('on',x===b));place(b);
+  const y=b.dataset.bill==='y', p=$('.price[data-m]');
+  G.timeline().to(p,{rotationX:90,opacity:0,duration:.18,ease:'power2.in'})
+    .call(()=>{p.querySelector('span').textContent=y?p.dataset.y:p.dataset.m;p.querySelector('small').textContent=y?'/ year':'/ month'})
+    .to(p,{rotationX:0,opacity:1,duration:.35,ease:'back.out(2)'});
+});
+
+/* ---------- final line: words light up as you scroll to it ---------- */
+const fin=SplitText.create('#fin',{type:'words',wordsClass:'w'});
+G.fromTo(fin.words,{opacity:.12,y:20},{opacity:1,y:0,stagger:.08,ease:'none',scrollTrigger:{trigger:'.final',start:'top 80%',end:'top 30%',scrub:true}});
+G.from('.final .btn',{scale:.6,opacity:0,duration:.9,ease:'elastic.out(1,.55)',scrollTrigger:{trigger:'.final .btn',start:'top 92%'}});
 })();
 </script>
 </body>
