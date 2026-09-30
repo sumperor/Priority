@@ -64,3 +64,31 @@ def test_past_deadline_is_asked_again_a_few_times(tmp_path, monkeypatch):
 
     got = [bool(asked(NOW + timedelta(hours=h))) for h in (0, 0.5, 3.1, 6.2, 9.3, 12.4)]
     assert got[0] and not got[1] and sum(got) == 3
+
+
+def test_other_answer_when_ticking_off(tmp_path, monkeypatch):
+    from loops import config as C
+    monkeypatch.setattr(C, "DB_PATH", str(tmp_path / "o.db"))
+    monkeypatch.setattr(C, "CONNECTORS", [])
+    monkeypatch.setattr(C, "SECRETS_DIR", str(tmp_path / "secrets"))
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    from fastapi.testclient import TestClient
+    from loops.server import app
+    c = TestClient(app)
+    # a chase task: you chased, no reply yet, so it stays open and comes back in 3 days
+    k = c.post("/api/capture", json={"text": "Chase Priya about the referral"}).json()["id"]
+    r = c.post(f"/api/loops/{k}/finish", json={"happened": "other", "other": "Chased her, no reply yet"}).json()
+    assert r["kept"] and "check again" in r["message"]
+    assert k in [l["id"] for l in c.get("/api/state").json()["loops"] if l["type"] == "waiting"]
+    # a task of yours: done, and now you're waiting on her
+    i = c.post("/api/capture", json={"text": "Email Priya my CV for the referral"}).json()["id"]
+    c.patch(f"/api/loops/{i}", json={"person": "Priya"})
+    r = c.post(f"/api/loops/{i}/finish", json={"happened": "other", "other": "I chased her up but she hasn't replied yet"}).json()
+    loops = c.get("/api/state").json()["loops"]
+    assert i not in [l["id"] for l in loops]                       # my part is done
+    w = [l for l in loops if l["type"] == "waiting" and l["id"] != k]
+    assert r["created"] and w and w[0]["summary"] == "Hear back from Priya" and "hasn't replied" in w[0]["note"]
+    # not done yet in your own words: it stays on the list with the note
+    j = c.post("/api/capture", json={"text": "Send the council form"}).json()["id"]
+    r = c.post(f"/api/loops/{j}/finish", json={"happened": "other", "other": "Couldn't find the form, will do it tomorrow"}).json()
+    assert r["kept"] and j in [l["id"] for l in c.get("/api/state").json()["loops"]]

@@ -1414,17 +1414,23 @@ function frame(html){
   }else{const kids=[...d.children];kids.forEach((k,i)=>motion(k,{opacity:[0,1],x:[30,0]},{bounce:.3,vd:.4,delay:i*.03}))}
   return d;
 }
-function step({ctx,q,kind='choice',options=[],n=1,of=1,skip=false,skipLabel='',placeholder='',extra='',grid=false}){
+function step({ctx,q,kind='choice',options=[],n=1,of=1,skip=false,skipLabel='',placeholder='',extra='',grid=false,other=''}){
   return new Promise(res=>{
     pending=res;
     const bar=`<div class="progress"><i style="width:${Math.round(100*(n-1)/of)}%"></i></div>`;
     const body=kind==='choice'
-      ?`${extra}<div class="choices${grid?' grid':''}">${options.map((o,k)=>`<button data-k="${k}"${o.off?' disabled':''}>${esc(o.label)}${o.sub?`<small>${esc(o.sub)}</small>`:''}</button>`).join('')}</div>${skip?`<div class="srow"><button class="btn ghost" id="s-skip">${skipLabel||'Skip'}</button></div>`:''}`
+      ?`${extra}<div class="choices${grid?' grid':''}">${options.map((o,k)=>`<button data-k="${k}"${o.off?' disabled':''}>${esc(o.label)}${o.sub?`<small>${esc(o.sub)}</small>`:''}</button>`).join('')}${other?'<button data-other="1">Other</button>':''}</div>${skip?`<div class="srow"><button class="btn ghost" id="s-skip">${skipLabel||'Skip'}</button></div>`:''}`
       :`<div class="inrow"><textarea id="s-text" placeholder="${esc(placeholder)}"></textarea><button class="mic" id="s-mic" aria-label="Dictate">${MIC}</button></div><div class="srow"><button class="btn pri" id="s-save">Next</button>${skip?`<button class="btn ghost" id="s-skip">${skipLabel||'Nothing to add'}</button>`:''}</div>`;
     const d=frame(`${of>1?bar:''}${ctx?`<p class="ctx">${esc(ctx)}</p>`:''}<h2>${esc(q)}</h2>${body}`);
     if(of>1)requestAnimationFrame(()=>{const i=d.querySelector('.progress i');if(i)i.style.width=Math.round(100*n/of)+'%'});
     const done=v=>{stopAllMics();pending=null;res(v)};
-    if(kind==='choice'){d.querySelector('.choices').onclick=e=>{const b=e.target.closest('button');if(b)done(options[+b.dataset.k].value)};(d.querySelector('.choices button:not([disabled])')||d.querySelector('.choices button')).focus()}
+    const otherBox=()=>{  // none of the options fit: say what happened in your own words
+      d.querySelector('.choices').outerHTML=`<div class="inrow"><textarea id="s-other" placeholder="${esc(other)}"></textarea><button class="mic" id="s-omic" aria-label="Dictate">${MIC}</button></div><div class="srow"><button class="btn pri" id="s-onext">Next</button><button class="btn ghost" id="s-oback">Back</button></div>`;
+      const t=d.querySelector('#s-other');t.focus();attachMic(d.querySelector('#s-omic'),t);
+      const go=()=>{if(t.value.trim())done({other:t.value.trim()});else t.focus()};
+      d.querySelector('#s-onext').onclick=go;t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()}});
+      d.querySelector('#s-oback').onclick=()=>{stopAllMics();pending=null;step({ctx,q,kind,options,n,of,skip,skipLabel,placeholder,extra,grid,other}).then(res)}};
+    if(kind==='choice'){d.querySelector('.choices').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.other)return otherBox();done(options[+b.dataset.k].value)};(d.querySelector('.choices button:not([disabled])')||d.querySelector('.choices button')).focus()}
     else{const t=d.querySelector('#s-text');t.focus();attachMic(d.querySelector('#s-mic'),t);d.querySelector('#s-save').onclick=()=>done(t.value.trim());
       t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();done(t.value.trim())}})}
     const sk=d.querySelector('#s-skip');if(sk)sk.onclick=()=>done('');
@@ -1445,17 +1451,23 @@ async function closeFlow(l){
   loading('One moment');
   let Q;try{Q=await api(`/api/loops/${l.id}/closing`)}catch(e){closeS();unTick(l.id);toast(e.message);return}
   const of=1+Q.followups.length;
-  const h=await step({ctx:l.summary,q:Q.happened,options:Q.happened_options,n:1,of});
+  const h=await step({ctx:l.summary,q:Q.happened,options:Q.happened_options,n:1,of,other:'What happened instead? e.g. I chased her up but she hasn\'t replied yet'});
   if(h===null)return unTick(l.id);
+  if(h&&h.other){closeS();
+    const r=await api(`/api/loops/${l.id}/finish`,{method:'POST',body:{happened:'other',other:h.other}});
+    if(r.kept){unTick(l.id);toast(r.message||'Noted. It stays on your list.');return refresh()}
+    celebrate(tapDone.x,tapDone.y);await refresh();
+    return toast(r.created.length?`Done. Added: ${r.created.map(c=>c.summary).join(', ')}`:'Noted. Done.')}
   if(h==='not_yet'){unTick(l.id);return laterFlow(l)}
   if(h==='no'){closeS();await api(`/api/loops/${l.id}/finish`,{method:'POST',body:{happened:'no'}});toast('Closed as not needed.');return refresh()}
   const answers=[];
   for(let i=0;i<Q.followups.length;i++){
     const f=Q.followups[i];
-    const v=await step({ctx:l.summary,q:f.question,kind:f.kind,options:(f.options||[]).map(o=>({label:o,value:o})),n:i+2,of,skip:true,
+    let v=await step({ctx:l.summary,q:f.question,kind:f.kind,options:(f.options||[]).map(o=>({label:o,value:o})),n:i+2,of,skip:true,other:'What happened instead?',
       placeholder:f.use==='next_loop'?'e.g. Send a thank-you email tomorrow morning':f.use==='interview_notes'?'Who you met, what you talked about, anything they asked, next steps':''});
     if(v===null)return unTick(l.id);
-    answers.push({question:f.question,use:f.use,value:v});
+    const own=!!(v&&v.other);if(own)v=v.other;
+    answers.push({question:f.question,use:own&&f.use==='effort'?'note':f.use,value:v});
   }
   if(answers.some(a=>a.use==='interview_notes'))loading('Writing it up');else closeS();
   const r=await api(`/api/loops/${l.id}/finish`,{method:'POST',body:{happened:'yes',answers}});

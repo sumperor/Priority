@@ -1,5 +1,6 @@
 """Local app server: binds to 127.0.0.1 only, so your data never leaves this machine
 except the excerpts sent to Claude for decisions."""
+import re
 import threading
 import time
 from datetime import datetime, timedelta, timezone
@@ -422,8 +423,25 @@ class Answer(BaseModel):
 
 
 class Finish(BaseModel):
-    happened: str                  # yes | no
+    happened: str                  # yes | no | other
     answers: list[Answer] = []
+    other: str = ""                # "Other": what happened instead, in your words
+
+
+WAITING_ON = re.compile(r"\b(no (reply|response|answer|word)|not (heard|replied)|haven'?t heard|hasn'?t (replied|got back|responded)|"
+                        r"waiting (for|on)|wait(ing)? to hear|ghost(ed)?|no news|chas(ed|ing) (her|him|them|up))\b", re.I)
+NOT_DONE = re.compile(r"\b(not yet|haven'?t (done|started|sent|finished)|didn'?t|couldn'?t|still (need|have) to|next week|tomorrow)\b", re.I)
+
+
+def _waiting_loop(s, l, said):
+    """You did your part and are now waiting on someone: that's its own loop, chased gently."""
+    who = l["person"] or "them"
+    i = s.create_loop(source=l["source"] or "manual", thread_id=l["thread_id"] or "", type="waiting", person=l["person"] or "",
+                      summary=f"Hear back from {who}", done_when=f"A reply from {who}",
+                      due=(datetime.now(timezone.utc) + timedelta(days=3)).isoformat(), cost=35, consequence="opportunity",
+                      reversible=1, hard_deadline=0, effort_h=0.1, stakes="")
+    s.update_loop(i, note=f"After: {l['summary']}. You said: {said[:200]}")
+    return {"id": i, "summary": f"Hear back from {who}", "questions": []}
 
 
 def _create_from_text(s, text):
@@ -447,7 +465,22 @@ def finish(loop_id: int, body: Finish):
         s.close_loop(loop_id, outcome="dropped")
         s.label_decision(loop_id, "detect", True)
         return {"created": []}
+    said = body.other.strip()
+    still_waiting = l["type"] == "waiting" and WAITING_ON.search(said)
+    if body.happened == "other" and said and (still_waiting or (NOT_DONE.search(said) and not WAITING_ON.search(said))):
+        old = l["note"] or ""
+        f = {"note": (old + " | " if old else "") + f"You said: {said[:200]}"}
+        msg = "Noted. It stays on your list."
+        if still_waiting:              # you chased, they haven't answered: check again in 3 days
+            nxt = datetime.now(timezone.utc) + timedelta(days=3)
+            f["due"] = nxt.isoformat()
+            msg = f"Still waiting, then. I'll check again on {nxt.astimezone():%a %d %b}."
+        s.update_loop(loop_id, **f)
+        s.add_chat(loop_id, "user", said)
+        return {"created": [], "kept": True, "message": msg}
     outcome, actual, notes, created, interview_notes = "done", None, [], [], ""
+    if said:
+        notes.append(f"What happened: {said}")
     for a in body.answers:
         v = a.value.strip()
         if not v:
@@ -463,6 +496,9 @@ def finish(loop_id: int, body: Finish):
             interview_notes = v
         else:
             notes.append(f"{a.question} {v}")
+    everything = " ".join([said] + [a.value for a in body.answers])
+    if WAITING_ON.search(everything) and l["type"] != "waiting":
+        created.append(_waiting_loop(s, l, everything.strip()))
     s.close_loop(loop_id, outcome=outcome, actual_h=actual)
     if notes:
         s.update_loop(loop_id, note=" | ".join(notes))
@@ -1159,5 +1195,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.38 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.39 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")
