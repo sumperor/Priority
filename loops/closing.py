@@ -62,6 +62,13 @@ def _rules(loop):
 
 def closing_questions(loop):
     loop = dict(loop)
+    if loop.get("close_json"):    # Claude read the email and wrote the question for this exact task
+        import json as _j
+        q = _j.loads(loop["close_json"])
+        if q.get("happened"):
+            return {"happened": q["happened"], "followups": q.get("followups") or [],
+                    "happened_options": [{"label": "Yes, done", "value": "yes"}, {"label": "Not yet", "value": "not_yet"},
+                                         {"label": "No, it's not needed", "value": "no"}]}
     if loop.get("action"):   # made from a company email: ask about the thing it asked for
         from .actions import questions
         q = questions(loop["action"], loop)

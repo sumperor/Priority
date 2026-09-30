@@ -58,6 +58,74 @@ def _body(payload) -> str:
     return html_text(h) if h else ""
 
 
+QUOTE_START = re.compile(r"^(on .{6,120} wrote:|-{2,}\s*original message\s*-{2,}|from:\s.+\s+sent:\s|_{8,}|"
+                         r"sent from my (iphone|ipad|android)|get outlook for)", re.I)
+
+
+def clean_body(text):
+    """The new part of an email: no quoted earlier messages, no signature, no runs of blank lines."""
+    out = []
+    for line in (text or "").splitlines():
+        t = line.strip()
+        if QUOTE_START.match(t) or t == "--":
+            break
+        if t.startswith(">"):
+            continue
+        out.append(line.rstrip())
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip()
+
+
+def parse_ics(ics):
+    """SUMMARY, start, end, LOCATION and a join URL from a calendar attachment."""
+    if not ics:
+        return None
+    lines = re.sub(r"\r?\n[ \t]", "", ics).splitlines()        # unfold long lines
+    ev, inside = {}, False
+    for ln in lines:
+        if ln.startswith("BEGIN:VEVENT"):
+            inside = True
+        elif ln.startswith("END:VEVENT"):
+            break
+        elif inside and ":" in ln:
+            k, v = ln.split(":", 1)
+            ev[k.split(";")[0].upper()] = (k, v.replace("\\n", " ").replace("\\,", ",").strip())
+
+    def when(key):
+        if key not in ev:
+            return None
+        k, v = ev[key]
+        tz = re.search(r"TZID=([^;:]+)", k)
+        try:
+            if len(v) == 8:
+                return datetime.strptime(v, "%Y%m%d").replace(tzinfo=timezone.utc)
+            d = datetime.strptime(v.rstrip("Z"), "%Y%m%dT%H%M%S")
+            if v.endswith("Z"):
+                return d.replace(tzinfo=timezone.utc)
+            if tz:
+                from zoneinfo import ZoneInfo
+                return d.replace(tzinfo=ZoneInfo(tz.group(1))).astimezone(timezone.utc)
+            return d.astimezone(timezone.utc)
+        except Exception:
+            return None
+    start = when("DTSTART")
+    if not start:
+        return None
+    desc = ev.get("DESCRIPTION", ("", ""))[1] + " " + ev.get("URL", ("", ""))[1] + " " + ev.get("LOCATION", ("", ""))[1]
+    join = re.search(r"https?://\S*(zoom\.us/j/|meet\.google\.com/|teams\.microsoft\.com/l/meetup|webex\.com)\S*", desc)
+    return {"title": ev.get("SUMMARY", ("", ""))[1], "start": start, "end": when("DTEND"),
+            "place": ev.get("LOCATION", ("", ""))[1][:80], "join": join.group(0).rstrip(".,>") if join else ""}
+
+
+def event_line(ev):
+    """A calendar attachment written as one plain line at the top of the email, for Claude and the date rules alike."""
+    if not ev:
+        return ""
+    s, e = ev["start"].astimezone(), (ev["end"] or ev["start"]).astimezone()
+    return (f"Calendar event: {ev['title']}, {s:%A} {s.day} {s:%B} {s.year} at {s:%H:%M} to {e:%H:%M}"
+            + (f". Place: {ev['place']}" if ev["place"] else "") + (f". Join {ev['join']}" if ev["join"] else "")
+            + f". (start {ev['start'].isoformat()}, end {(ev['end'] or ev['start']).isoformat()})")
+
+
 class GmailConnector:
     name = "gmail"
 
@@ -134,17 +202,41 @@ class GmailConnector:
             h = {x["name"].lower(): x["value"] for x in m["payload"].get("headers", [])}
             name, addr = parseaddr(h.get("from", ""))
             addr = addr.lower()
-            if "list-unsubscribe" in h and addr != me and not is_job_alert(addr, name, h.get("subject", "")) \
-                    and not ACTIONABLE.search(f"{h.get('subject', '')} {m.get('snippet', '')}"):
-                self.skipped.append(mid)  # newsletters never create loops; bookings, orders and job alerts do
+            bulk = "list-unsubscribe" in h and addr != me and not is_job_alert(addr, name, h.get("subject", "")) \
+                and not ACTIONABLE.search(f"{h.get('subject', '')} {m.get('snippet', '')}")
+            if bulk and not os.getenv("ANTHROPIC_API_KEY"):
+                self.skipped.append(mid)  # without Claude, newsletters are skipped; bookings, orders and job alerts are read
                 continue
+            ics = ""
+            try:
+                ics = event_line(self._ics(svc, mid, m["payload"]))
+            except Exception:
+                pass
+            body = clean_body(_body(m["payload"]) or m.get("snippet", ""))
+            cap = 20000 if is_job_alert(addr, name, h.get("subject", "")) else 2500 if bulk else 12000
             out.append(Message(
                 source="gmail", msg_id=mid, thread_id=m["threadId"], sender=addr,
                 sender_name=name or addr, is_from_me=(addr == me),
-                text=(_body(m["payload"]) or m.get("snippet", ""))[:15000 if is_job_alert(addr, name, h.get("subject", "")) else 4000],
+                text=((ics + "\n\n") if ics else "") + body[:cap],
                 ts=datetime.fromtimestamp(int(m["internalDate"]) / 1000, tz=timezone.utc),
                 subject=h.get("subject", "")))
         return out
+
+    def _ics(self, svc, mid, payload):
+        """Text of a calendar (.ics) attachment, if the email has one."""
+        stack = [payload]
+        while stack:
+            p = stack.pop()
+            stack += p.get("parts", []) or []
+            if p.get("mimeType") in ("text/calendar", "application/ics") or (p.get("filename") or "").lower().endswith(".ics"):
+                b = p.get("body", {})
+                data = b.get("data")
+                if not data and b.get("attachmentId"):
+                    data = svc.users().messages().attachments().get(userId="me", messageId=mid, id=b["attachmentId"]).execute(
+                        num_retries=1).get("data")
+                if data:
+                    return base64.urlsafe_b64decode(data).decode("utf-8", "ignore")
+        return ""
 
     def events(self, start: datetime, end: datetime) -> list[dict]:
         from googleapiclient.discovery import build

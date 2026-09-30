@@ -552,6 +552,74 @@ def restore_loop(loop_id: int):
     return {"ok": True}
 
 
+# ---------------------------------------------------------------- reading emails: review and corrections
+@app.get("/api/review")
+def review(days: int = 7):
+    from .reader import review as rv
+    return rv(db(), max(1, min(30, days)))
+
+
+class Verdict(BaseModel):
+    verdict: str                 # right | wrong
+    kind: str | None = None      # what it really is, when wrong
+    summary: str | None = None   # what the task should say, when wrong
+
+
+def _correct(s, row, kind, summary):
+    """Apply your correction: close a task that shouldn't exist, fix one that's wrong, or add a missing one."""
+    import json as _j
+    from .reader import KINDS
+    if kind not in KINDS:
+        raise HTTPException(400, "Unknown kind")
+    s.db.execute("UPDATE readings SET verdict='wrong', fix=? WHERE source=? AND msg_id=?",
+                 (_j.dumps({"kind": kind, "summary": (summary or "").strip()[:120]}), row["source"], row["msg_id"]))
+    s.db.commit()
+    loop = s.get_loop(row["loop_id"]) if row["loop_id"] else None
+    if kind in ("fyi", "receipt", "job_alert"):
+        if loop and loop["status"] not in ("closed", "deleted"):
+            s.close_loop(loop["id"], outcome="dismissed")
+            s.label_decision(loop["id"], "detect", False)
+        return "Removed. Emails like this from them won't become tasks."
+    new_type = {"action": "task", "reply": "reply", "meeting": "meeting", "assessment": "assessment"}[kind]
+    if loop and loop["status"] not in ("closed", "deleted"):
+        f = {"type": new_type}
+        if summary and summary.strip():
+            f["summary"] = summary.strip()[:120]
+        s.update_loop(loop["id"], **f)
+        return "Fixed."
+    title = (summary or "").strip() or row["subject"] or "Deal with this email"
+    i = s.create_loop(source=row["source"], thread_id=row["thread_id"], type=new_type, person=row["sender"].split("<")[0].strip(),
+                      summary=title[:120], done_when="", due=(datetime.now(timezone.utc) + timedelta(hours=48)).isoformat(),
+                      cost=45, consequence="minor", reversible=1, hard_deadline=0, effort_h=0.25, stakes="", trigger_ts=row["ts"])
+    s.db.execute("UPDATE readings SET loop_id=? WHERE source=? AND msg_id=?", (i, row["source"], row["msg_id"]))
+    s.db.commit()
+    return "Added to your list."
+
+
+@app.post("/api/review/{source}/{msg_id}")
+def review_mark(source: str, msg_id: str, body: Verdict):
+    s = db()
+    row = s.db.execute("SELECT * FROM readings WHERE source=? AND msg_id=?", (source, msg_id)).fetchone()
+    if not row:
+        raise HTTPException(404, "No such email")
+    if body.verdict == "right":
+        s.db.execute("UPDATE readings SET verdict='right' WHERE source=? AND msg_id=?", (source, msg_id))
+        s.db.commit()
+        return {"ok": True, "message": "Thanks."}
+    return {"ok": True, "message": _correct(s, row, body.kind or "", body.summary)}
+
+
+@app.post("/api/loops/{loop_id}/wrong")
+def loop_wrong(loop_id: int, body: Verdict):
+    """'Wrong?' on a card: correct the reading of the email this task came from."""
+    s = db(); l = _loop(s, loop_id)
+    row = s.db.execute("SELECT * FROM readings WHERE loop_id=? ORDER BY ts DESC LIMIT 1", (loop_id,)).fetchone() or \
+        s.db.execute("SELECT * FROM readings WHERE source=? AND thread_id=? ORDER BY ts DESC LIMIT 1", (l["source"], l["thread_id"])).fetchone()
+    if not row:
+        raise HTTPException(400, "This task didn't come from an email Sparrow read.")
+    return {"ok": True, "message": _correct(s, row, body.kind or "", body.summary)}
+
+
 @app.post("/api/loops/{loop_id}/reopen")
 def reopen(loop_id: int):
     s = db(); l = _loop(s, loop_id)
@@ -1091,5 +1159,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.35 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.36 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")

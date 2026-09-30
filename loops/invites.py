@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 
 PREFIX = r"^(?:updated\s+|new\s+)?invitation(?:\s+updated)?(?:\s+from\s+an?\s+unknown\s+sender)?\s*:\s*"
 SUBJECT = re.compile(PREFIX + r"(.+?)\s*@\s*(.+?)(?:\s*\(([^()]*@[^()]*)\))?\s*$", re.I)
-BODY_HINT = re.compile(r"(calendar\.google\.com/calendar/event|invitation from google calendar|join with google meet|"
+BODY_HINT = re.compile(r"(^calendar event: |calendar\.google\.com/calendar/event|invitation from google calendar|join with google meet|"
                        r"microsoft teams meeting|join the meeting now|zoom\.us/j/|\.ics\b)", re.I)
 BOILER = re.compile(r"(this event isn't in your calendar yet|you haven't interacted with|do you want to automatically add|"
                     r"^add to calendar|invitation from google calendar|you are receiving this|forwarding this invitation|"
@@ -87,6 +87,8 @@ def parse(m):
     start, end = when(sm.group(2) if sm else "")
     if not start:
         start, end = when(m.text)
+    if not start:
+        start, end = when_loose(m.text, now=m.ts)
     body = clean(m.text)
     org = re.search(r"(?:organi[sz]er|organi[sz]ed by)\s*\n?\s*([^\n]+)", body, re.I)
     organizer = (org.group(1).strip() if org else m.sender_name or m.sender).split("<")[0].strip()

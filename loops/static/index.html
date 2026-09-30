@@ -566,6 +566,12 @@ h1,h2,h3,.sheet h2,.hero h1,.intake h1,.shead h1,#fx h2,.empty h1{font-family:va
 .objs li::before{border-radius:2px;border-color:var(--ink)}
 #fx .big{font-family:var(--serif);font-weight:500;color:var(--ink)}
 
+.rvlist{display:grid;gap:0;max-height:58vh;overflow:auto;margin:0 -4px;padding:0 4px}
+.rv{padding:12px 0;border-top:1px solid var(--rule)}
+.rv:first-child{border-top:0}
+.rv-h b{display:block;font-weight:600;line-height:1.3}
+.rv-h small{font-family:var(--mono);font-size:.76rem;color:var(--muted)}
+.rv-d{margin:6px 0 0;font-size:.95rem}
 /* yellow highlighter for anything that needs attention soon; red pen only for late */
 .hl,.warn,.lvl-soon .when,.dl.soon,.verdict.maybe,.lead-card .flag{color:var(--ink)!important;background:linear-gradient(transparent 38%,color-mix(in srgb,var(--marker) 85%,transparent) 38%,color-mix(in srgb,var(--marker) 85%,transparent) 92%,transparent 92%)!important;padding:0 .2em;border-radius:2px}
 .dl.soon{background:color-mix(in srgb,var(--marker) 70%,transparent)!important}
@@ -1361,7 +1367,7 @@ function details(l){
     ${l.hard_deadline?`<p><b>If it slips a day:</b> ${esc(f.slip_1d)}</p>`:''}
     <p class="nums">${Math.round(100*f.p_miss)}% chance of missing it. Takes about ${dur(l.effort_adj)}. From ${esc(l.source==='manual'?'your notes':SRC_NAME[l.source]||l.source)}.</p>
     ${l.note?`<p class="nums">${esc(l.note)}</p>`:''}
-    <div class="links">${linkBtn(l,'link')}<button class="link" data-act="talk" data-id="${l.id}">Tell Sparrow when you'll start</button>${canExplore(l)?`<button class="link" data-act="explore" data-id="${l.id}">Look up ${esc(l.person||'who this is')}</button>`:''}<button class="link" data-act="focus-this" data-id="${l.id}">Start a timer for it</button><button class="link" data-act="later" data-id="${l.id}">Move to later</button>${l.source!=='manual'?`<button class="link" data-act="dismiss" data-id="${l.id}">Not a task</button>`:''}</div></div>`;
+    <div class="links">${linkBtn(l,'link')}<button class="link" data-act="talk" data-id="${l.id}">Tell Sparrow when you'll start</button>${canExplore(l)?`<button class="link" data-act="explore" data-id="${l.id}">Look up ${esc(l.person||'who this is')}</button>`:''}<button class="link" data-act="focus-this" data-id="${l.id}">Start a timer for it</button><button class="link" data-act="later" data-id="${l.id}">Move to later</button>${l.source!=='manual'?`<button class="link" data-act="wrong" data-id="${l.id}">Read this email wrong?</button>`:''}</div></div>`;
 }
 function row(l){
   const why=l.type==='waiting'?`waiting on ${l.person||'them'}`:l.bucket==='Later'?'when you have a gap':(l.why||'');
@@ -1605,6 +1611,42 @@ function editFlow(l){
     try{await api(`/api/loops/${l.id}`,{method:'PATCH',body});closeS();toast('Changes saved.');refresh()}catch(e){toast(e.message)}
   };
 }
+/* ---------- how Sparrow read your emails: review, and corrections it learns from ---------- */
+const KIND_OPTS=[['action','Something to do'],['reply','Someone waiting on a reply'],['meeting','A meeting or event'],
+  ['assessment','An online test or assessment'],['fyi','Nothing to do'],['receipt','A receipt or confirmation'],['job_alert','Job alert']];
+async function pickFix(ctx){
+  const kind=await step({ctx,q:'What is this email really?',options:KIND_OPTS.map(([v,l])=>({label:l,value:v})),n:1,of:2});
+  if(kind===null)return null;
+  let summary='';
+  if(['action','reply','meeting','assessment'].includes(kind)){
+    summary=await step({ctx,q:'What should the task say?',kind:'text',placeholder:'e.g. Update my Netflix payment method',n:2,of:2,skip:true,skipLabel:'Keep it as it is'});
+    if(summary===null)return null}
+  return {kind,summary:summary||''};
+}
+async function wrongFlow(l){
+  const f=await pickFix(l.summary);if(!f)return;
+  try{const r=await api(`/api/loops/${l.id}/wrong`,{method:'POST',body:{verdict:'wrong',...f}});closeS();toast(r.message+' Sparrow will read emails like this better.');refresh()}catch(e){closeS();toast(e.message)}
+}
+async function reviewFlow(){
+  loading('Getting the last 7 days');
+  let R;try{R=await api('/api/review?days=7')}catch(e){closeS();return toast(e.message)}
+  const by={claude:'Read by Claude',rules:'Read by rules','your correction':'Your rule'};
+  const item=(x,k)=>`<div class="rv" data-k="${k}"><div class="rv-h"><b>${esc(x.subject||'(no subject)')}</b><small>${esc((x.sender||'').replace(/<.*>/,'').trim())}, ${new Date(x.ts).toLocaleDateString([], {weekday:'short',day:'numeric',month:'short'})}</small></div>
+    <p class="rv-d"><span class="tag">${esc(x.fix?(R.labels[x.fix.kind]||x.fix.kind):x.label)}</span> ${esc(x.fix&&x.fix.summary?x.fix.summary:x.summary||'')}</p>
+    <p class="nums" style="margin:2px 0 0">${esc(by[x.by]||x.by)}${x.detail&&x.detail.why?'. '+esc(x.detail.why):''}</p>
+    <div class="acts" style="margin-top:6px">${x.verdict==='right'?'<span class="hl">Marked right</span>':x.verdict==='wrong'?'<span class="hl">Corrected</span>':
+      `<button class="btn" data-rv="right" data-k="${k}">Right</button><button class="btn" data-rv="wrong" data-k="${k}">Wrong</button>`}</div></div>`;
+  const d=frame(`<p class="ctx">How Sparrow read your emails</p><h2>${R.accuracy==null?'The last 7 days':`${R.accuracy}% right`}</h2>
+    <p class="nums" style="margin:-8px 0 12px">${R.items.length} emails. ${R.marked?`You've checked ${R.marked}, ${R.right} right.`:'Mark a few right or wrong to see how accurate it is.'} Your corrections are used next time.</p>
+    <div class="rvlist">${R.items.map(item).join('')||'<p class="nums">Nothing read yet. It fills in as new emails arrive.</p>'}</div>
+    <div class="srow"><button class="btn pri" id="rv-x">Done</button></div>`);
+  d.querySelector('#rv-x').onclick=()=>{closeS();refresh()};
+  d.querySelectorAll('[data-rv]').forEach(b=>b.onclick=async()=>{
+    const x=R.items[+b.dataset.k];let body={verdict:'right'};
+    if(b.dataset.rv==='wrong'){const f=await pickFix(x.subject);if(!f)return reviewFlow();body={verdict:'wrong',...f}}
+    try{const r=await api(`/api/review/${encodeURIComponent(x.source)}/${encodeURIComponent(x.msg_id)}`,{method:'POST',body});toast(r.message)}catch(e){toast(e.message)}
+    reviewFlow()});
+}
 function accuracyFlow(){
   const A=S.accuracy,o=A.on_time_14d,d=A.detect,c=A.close,pct=(k,n)=>n?Math.round(100*k/n)+'%':'Not enough yet';
   const dd=frame(`<p class="ctx">Accuracy</p><h2>How well it's working for you</h2>
@@ -1612,8 +1654,8 @@ function accuracyFlow(){
     <div class="stat"><b>${pct(d.correct,d.n)}</b><span>Spotted real tasks correctly: ${d.correct} of ${d.n}</span></div>
     <div class="stat"><b>${pct(c.correct,c.n)}</b><span>Knew a task was done without asking: ${c.correct} of ${c.n}</span></div>
     <p class="nums">Built only from your answers, including every “Nice” and “Not done yet”. Under about 20 each, treat these as rough.</p>
-    <div class="srow"><button class="btn pri" id="a-x">Done</button></div>`);
-  dd.querySelector('#a-x').onclick=closeS;
+    <div class="srow"><button class="btn pri" id="a-rev">Check how it read your emails</button><button class="btn" id="a-x">Done</button></div>`);
+  dd.querySelector('#a-x').onclick=closeS;dd.querySelector('#a-rev').onclick=()=>reviewFlow();
 }
 
 document.addEventListener('submit',async e=>{
@@ -1631,6 +1673,7 @@ document.addEventListener('click',async e=>{
   const id=+b.dataset.id, act=b.dataset.act, l=S&&[...S.loops,...S.closed].find(x=>x.id===id);
   try{
     if(act==='delete')return deleteLoop(l);
+    if(act==='wrong')return wrongFlow(l);
     if(act==='focus'){answers={};preset=new Set();qi=0;return openFocus()}
     if(act==='focus-this'){answers={kind:'custom',which:l.summary};preset=new Set(['kind','which']);qi=0;return openFocus()}
     if(act==='toggle'){

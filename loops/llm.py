@@ -15,8 +15,8 @@ def client():
     return _client
 
 
-def ask_json(system: str, user: str, max_tokens: int = 700) -> dict:
-    r = client().messages.create(model=ANTHROPIC_MODEL, max_tokens=max_tokens, system=system,
+def ask_json(system: str, user: str, max_tokens: int = 700, model: str = "") -> dict:
+    r = client().messages.create(model=model or ANTHROPIC_MODEL, max_tokens=max_tokens, system=system,
                                  messages=[{"role": "user", "content": user}])
     text = "".join(b.text for b in r.content if b.type == "text")
     m = re.search(r"\{.*\}", re.sub(r"```(?:json)?", "", text), re.S)

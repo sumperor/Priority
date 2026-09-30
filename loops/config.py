@@ -19,6 +19,8 @@ CONFIRM_CLOSE = _f("CONFIRM_THRESHOLD", "0.6")
 DETECT_THRESHOLD = _f("DETECT_THRESHOLD", "0.6")
 
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5")
+# Reading every email is high volume and simple: a small, fast model keeps it cheap
+READER_MODEL = os.getenv("READER_MODEL", "claude-haiku-4-5")
 DECISION_BACKEND = os.getenv("DECISION_BACKEND", "claude")
 JEV_API_KEY = os.getenv("JEV_API_KEY", "")
 

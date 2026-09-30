@@ -147,8 +147,42 @@ def _create_event(store, source, thread_id, m):
 
 
 def detect(store, decide, source, thread_id, msgs, extract=default_extract):
+    """Claude reads the newest incoming email once (if there's a key); otherwise the rules below decide.
+    Either way the decision is saved for the review screen."""
     if not msgs:
         return []
+    from . import reader
+    last = msgs[-1]
+    key = f"read:{source}:{last.msg_id}"
+    fresh = not last.is_from_me and not store.checked(key)
+    rule_keys = [f"{k}:{source}:{last.msg_id}" for k in ("invite", "event", "action", "detect:reply")]
+    if fresh and reader.muted(store, last):
+        store.mark_checked(key)
+        [store.mark_checked(k) for k in rule_keys + [f"assess:{source}:{last.msg_id}"]]
+        reader.record(store, last, "fyi", "", None, "your correction")
+        return []
+    if fresh and reader.enabled():
+        r = reader.read(store, msgs)
+        if r:
+            store.mark_checked(key)
+            [store.mark_checked(k) for k in rule_keys]
+            if r["kind"] != "assessment":      # tests keep their own careful handling below
+                i = reader.act(store, source, thread_id, msgs, r)
+                reader.record(store, last, r["kind"], r["task"], i, "claude", {"why": r["why"], "link": r["link"]})
+                return [i] if i else []
+    created = _detect_rules(store, decide, source, thread_id, msgs, extract)
+    if fresh and not store.checked(key):
+        store.mark_checked(key)
+        from .leads import is_job_alert
+        loop = store.get_loop(created[-1]) if created else store.db.execute(
+            "SELECT * FROM loops WHERE source=? AND thread_id=? ORDER BY id DESC LIMIT 1", (source, thread_id)).fetchone()
+        kind = ({"meeting": "meeting", "task": "action", "reply": "reply", "assessment": "assessment"}.get(loop["type"], "action")
+                if loop else "job_alert" if is_job_alert(last.sender, last.sender_name, last.subject) else "fyi")
+        reader.record(store, last, kind, loop["summary"] if loop else "", loop["id"] if loop else None, "rules")
+    return created
+
+
+def _detect_rules(store, decide, source, thread_id, msgs, extract=default_extract):
     last, created = msgs[-1], []
 
     def ask(type_):

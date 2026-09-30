@@ -19,6 +19,10 @@ CREATE TABLE IF NOT EXISTS loops(
   close_confidence REAL, outcome TEXT, actual_h REAL,
   trigger_ts TEXT, created TEXT, closed_at TEXT, on_time INTEGER, snoozes INTEGER DEFAULT 0);
 CREATE TABLE IF NOT EXISTS checks(key TEXT PRIMARY KEY, ts TEXT);
+CREATE TABLE IF NOT EXISTS readings(
+  source TEXT, msg_id TEXT, thread_id TEXT, subject TEXT, sender TEXT, ts TEXT,
+  kind TEXT, summary TEXT, loop_id INTEGER, by TEXT, detail TEXT, verdict TEXT, fix TEXT, created TEXT,
+  PRIMARY KEY(source, msg_id));
 CREATE TABLE IF NOT EXISTS chat(
   id INTEGER PRIMARY KEY AUTOINCREMENT, loop_id INTEGER, role TEXT, text TEXT, ts TEXT);
 CREATE TABLE IF NOT EXISTS decisions(
@@ -53,7 +57,7 @@ class Store:
                                 ("loops", "acked", "INTEGER"), ("loops", "place", "TEXT"),
                                 ("loops", "travel_mode", "TEXT"), ("loops", "travel_min", "INTEGER"),
                                 ("loops", "base_h", "REAL"), ("loops", "errand_day", "TEXT"),
-                                ("loops", "place_ok", "INTEGER"), ("loops", "link", "TEXT"), ("loops", "action", "TEXT"), ("leads", "review", "TEXT"), ("leads", "jd", "TEXT")]:
+                                ("loops", "place_ok", "INTEGER"), ("loops", "link", "TEXT"), ("loops", "action", "TEXT"), ("loops", "close_json", "TEXT"), ("leads", "review", "TEXT"), ("leads", "jd", "TEXT")]:
             cols = {r["name"] for r in self.db.execute(f"PRAGMA table_info({table})")}
             if col not in cols:
                 self.db.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
