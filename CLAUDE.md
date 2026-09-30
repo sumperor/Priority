@@ -43,3 +43,4 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - Replies: lead with the main point, then short bullets. Be direct about what's broken or untested
 - He dictates by voice, so expect phonetic spellings ("cheesing" means chasing)
 - Before building something big, restate what you understood in 2 to 3 bullets
+- After any change he can try, end the reply with the run code block: `cd ~/loops`, `source .venv/bin/activate`, `git pull`, `pip install -r requirements.txt`, `python run.py serve`, plus the URL to open and the version to expect
