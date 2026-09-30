@@ -106,11 +106,16 @@ def _create_meeting(store, source, thread_id, m):
     if inv["start"] and (inv["end"] or inv["start"]) < utcnow():
         return None   # it already happened: nothing to do
     due = (inv["start"] or utcnow() + timedelta(hours=48)).isoformat()
-    return store.create_loop(
+    i = store.create_loop(
         source=source, thread_id=thread_id, type="meeting", person=inv["organizer"], summary=summary(inv),
         done_when="The meeting happened", due=due, cost=55, consequence="relationship", reversible=0,
         hard_deadline=1, effort_h=0.17, stakes="It's at a fixed time. Missing it without a word looks bad.",
         trigger_ts=m.ts.isoformat())
+    from .actions import best_link
+    join = best_link(m.text, r"join|meeting|event|view", prefer_meeting=True)
+    if join:
+        store.update_loop(i, link=join)
+    return i
 
 
 def _create_event(store, source, thread_id, m):
@@ -136,7 +141,8 @@ def _create_event(store, source, thread_id, m):
         done_when="It happened", due=start.isoformat(), cost=55, consequence="relationship", reversible=0,
         hard_deadline=1, effort_h=round(((end or start) - start).total_seconds() / 3600, 2) or 1.0,
         stakes="It's at a fixed time.", trigger_ts=m.ts.isoformat())
-    store.update_loop(i, note=note)
+    from .actions import best_link
+    store.update_loop(i, note=note, link=best_link(m.text, r"join|event|ticket|details|view|manage|booking|calendar", prefer_meeting=True) or None)
     return i, "booked" if booked else "asked"
 
 
@@ -195,6 +201,26 @@ def detect(store, decide, source, thread_id, msgs, extract=default_extract):
                 if mid[1] == "booked":
                     store.mark_checked(f"detect:reply:{source}:{last.msg_id}")   # a confirmation needs no reply
                     return created
+    # Company emails that ask you to do something (top up credits, update a card, verify, pay, collect)
+    # become that task, with the link to do it, instead of "reply to them"
+    if not last.is_from_me and not is_job_alert(last.sender, last.sender_name, last.subject) and not created:
+        key = f"action:{source}:{last.msg_id}"
+        if not store.checked(key):
+            store.mark_checked(key)
+            from .actions import action_for, is_automated
+            act = action_for(last)
+            if act and not store.open_loop(source, thread_id, "task"):
+                store.mark_checked(f"detect:reply:{source}:{last.msg_id}")
+                from .actions import org_of
+                i = store.create_loop(
+                    source=source, thread_id=thread_id, type="task", person=org_of(last), summary=act["summary"],
+                    done_when=act["happened"], due=(utcnow() + timedelta(hours=48)).isoformat(), cost=45,
+                    consequence="minor", reversible=1, hard_deadline=0, effort_h=0.25, stakes="",
+                    trigger_ts=last.ts.isoformat())
+                store.update_loop(i, action=act["key"], link=act["link"] or None)
+                return created + [i]
+            if not act and is_automated(last):
+                return created        # you can't reply to a no-reply address, and it asks nothing specific
     if not last.is_from_me:
         # Job alerts become leads, not replies; recruiter emails with scam signs are never chased
         if not is_job_alert(last.sender, last.sender_name, last.subject) and not looks_like_scam(last):

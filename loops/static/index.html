@@ -421,19 +421,19 @@ details.closed[open] summary::after{content:" \2212"}
 /* ================= paper planner theme (same art direction as /welcome) =================
    Paper and ink, serif type, handwriting for the things you have to do, typewriter for times.
    Overrides the styles above; the markup and scripts are unchanged. */
-:root{--bg:#F3EDE1;--surface:#FBF8F1;--raised:#F4EFE4;--ink:#1F2330;--muted:#555A66;--faint:#8C8F97;--line:color-mix(in srgb,#1F2330 14%,transparent);
-  --accent:#2E6A4C;--accent-ink:#FBF8F1;--accent-soft:#E2EDDF;--late:#B8402B;--soon:#9A6A12;
-  --jobs:#2A4A94;--study:#8A5A1C;--work:#2F6A7A;--money:#8E3A5C;--personal:#2E6A4C;--other:#5B5B5B;
+:root{--bg:#F3EDE1;--surface:#FBF8F1;--raised:#F4EFE4;--ink:#1F2330;--muted:#444955;--faint:#6E717A;--line:color-mix(in srgb,#1F2330 14%,transparent);
+  --accent:#2E6A4C;--accent-ink:#FBF8F1;--accent-soft:#E2EDDF;--late:#A8201A;--soon:#5E4B00;
+  --jobs:#2A4A94;--study:#6B4E9B;--work:#2F6A7A;--money:#8E3A5C;--personal:#2E6A4C;--other:#5B5B5B;
   --rule:#CFDAE6;--margin:#E6AFA6;--marker:#F4DC6B;--hatch:#B9B3A6;--tape:rgba(222,208,168,.72);
   --shadow:0 1px 0 rgba(31,35,48,.06),0 10px 24px -14px rgba(31,35,48,.38);
   --font:"Source Serif 4",Georgia,serif;--serif:"Fraunces",Georgia,serif;--hand:"Caveat","Bradley Hand","Segoe Print",cursive;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#191814;--surface:#23211C;--raised:#2A2823;--ink:#ECE5D6;--muted:#B4AD9F;--faint:#857F73;--line:color-mix(in srgb,#ECE5D6 14%,transparent);
-  --accent:#7CC39A;--accent-ink:#191814;--accent-soft:#233A2C;--late:#E07A63;--soon:#E0B45A;
-  --jobs:#8FA8E8;--study:#E0A96A;--work:#7FC0CF;--money:#E08AAE;--personal:#7CC39A;--other:#B4AD9F;
+  --accent:#7CC39A;--accent-ink:#191814;--accent-soft:#233A2C;--late:#F07A6E;--soon:#F2DE7A;
+  --jobs:#8FA8E8;--study:#B9A2E6;--work:#7FC0CF;--money:#E08AAE;--personal:#7CC39A;--other:#B4AD9F;
   --rule:#34383F;--margin:#6A3A33;--marker:#8C7722;--hatch:#5E5A51;--tape:rgba(120,108,80,.55);--shadow:0 12px 28px -14px rgba(0,0,0,.7)}}
 :root[data-theme="dark"]{--bg:#191814;--surface:#23211C;--raised:#2A2823;--ink:#ECE5D6;--muted:#B4AD9F;--faint:#857F73;--line:color-mix(in srgb,#ECE5D6 14%,transparent);
-  --accent:#7CC39A;--accent-ink:#191814;--accent-soft:#233A2C;--late:#E07A63;--soon:#E0B45A;
-  --jobs:#8FA8E8;--study:#E0A96A;--work:#7FC0CF;--money:#E08AAE;--personal:#7CC39A;--other:#B4AD9F;
+  --accent:#7CC39A;--accent-ink:#191814;--accent-soft:#233A2C;--late:#F07A6E;--soon:#F2DE7A;
+  --jobs:#8FA8E8;--study:#B9A2E6;--work:#7FC0CF;--money:#E08AAE;--personal:#7CC39A;--other:#B4AD9F;
   --rule:#34383F;--margin:#6A3A33;--marker:#8C7722;--hatch:#5E5A51;--tape:rgba(120,108,80,.55);--shadow:0 12px 28px -14px rgba(0,0,0,.7)}
 body{font-size:17px;background-color:var(--bg);
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .055 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
@@ -565,6 +565,21 @@ h1,h2,h3,.sheet h2,.hero h1,.intake h1,.shead h1,#fx h2,.empty h1{font-family:va
 .tally span.on{background:transparent;border-color:var(--accent);box-shadow:inset 0 0 0 4px var(--surface),inset 0 0 0 20px var(--accent)}
 .objs li::before{border-radius:2px;border-color:var(--ink)}
 #fx .big{font-family:var(--serif);font-weight:500;color:var(--ink)}
+
+/* yellow highlighter for anything that needs attention soon; red pen only for late */
+.hl,.warn,.lvl-soon .when,.dl.soon,.verdict.maybe,.lead-card .flag{color:var(--ink)!important;background:linear-gradient(transparent 38%,color-mix(in srgb,var(--marker) 85%,transparent) 38%,color-mix(in srgb,var(--marker) 85%,transparent) 92%,transparent 92%)!important;padding:0 .2em;border-radius:2px}
+.dl.soon{background:color-mix(in srgb,var(--marker) 70%,transparent)!important}
+.focusnow{background:color-mix(in srgb,var(--marker) 45%,var(--surface))}
+.src-chip.checking .d{background:var(--marker)}
+/* legibility: larger labels and handwriting, darker secondary text */
+.nums,.meta{font-size:.84rem}
+.hello,.src-chip,.chip,.count,.tag,.verdict,.seg button,.miniclock,.calfoot,.gutter span,.dayhead{font-size:.8rem}
+.side .hero h1,.hero h1{font-size:clamp(2.2rem,3.2vw,3rem);line-height:1.05}
+.blk b{font-size:1.08rem!important}
+.say,.msg.agent,.msg.coach{font-size:1.38rem}
+/* handwriting that appears word by word, with a soft inky edge */
+.ww{display:inline-block;padding:0 .05em .14em;margin:0 -.05em -.14em;-webkit-mask-image:linear-gradient(90deg,#000 calc(var(--w,130%) - .45em),transparent calc(var(--w,130%) + .15em));
+  mask-image:linear-gradient(90deg,#000 calc(var(--w,130%) - .45em),transparent calc(var(--w,130%) + .15em))}
 </style>
 </head>
 <body>
@@ -698,10 +713,15 @@ function flip(before){
   });
 }
 /* "Do this next": the title rises in word by word */
-function wordsIn(h1){
+function wordsIn(h1,lettersPerSec=11){
   if(!h1||RM)return;
-  h1.innerHTML=h1.textContent.split(/\s+/).filter(Boolean).map(w=>`<span class="w">${esc(w)}</span>`).join(' ');
-  h1.querySelectorAll('.w').forEach((w,i)=>motion(w,{opacity:[0,1],y:[48,0],rotate:[8,0],scale:[.8,1]},{bounce:.45,vd:.65,delay:.06+i*.05}));
+  const ws=h1.textContent.split(/\s+/).filter(Boolean);
+  h1.innerHTML=ws.map(w=>`<span class="ww">${esc(w)}</span>`).join(' ');
+  const els=[...h1.querySelectorAll('.ww')];let t=180;
+  const plan=els.map(el=>{el.style.setProperty('--w','-25%');const d=Math.max(160,(el.textContent.length+1)/lettersPerSec*1000);const p={el,s:t,d};t+=d+70;return p});
+  const t0=performance.now();
+  (function f(now){let busy=false;for(const p of plan){const k=Math.min(1,Math.max(0,(now-t0-p.s)/p.d)),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    p.el.style.setProperty('--w',(-25+155*e)+'%');if(k<1)busy=true}if(busy)requestAnimationFrame(f)})(t0);
 }
 function bump(el){motion(el,{scale:[1.7,1],rotate:[-12,0]},{bounce:.6,vd:.5})}
 
@@ -926,6 +946,9 @@ function originLine(o,{quote=false}={}){
 /* ---------- explore: who is this person, and why are we meeting ---------- */
 const SPARK_I='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
 const BIN='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>';
+function linkBtn(l,cls='btn'){if(!l.link||!/^https?:/.test(l.link))return '';let host='';try{host=new URL(l.link).hostname.replace(/^www\./,'')}catch(e){}
+  const meet=/zoom\.us|meet\.google|teams\.microsoft|webex|whereby/.test(l.link);
+  return `<a class="${cls}" href="${esc(l.link)}" target="_blank" rel="noopener">${meet?'Join the meeting':'Open '+esc(host||'link')} \u2197</a>`}
 const canExplore=l=>!!(l.person||(l.origin&&l.origin.from)||/\b(with|meet|meeting|call)\b/i.test(l.summary));
 const exploreFirst=l=>/\b(meet|meeting|call|chat|catch up|coffee)\b|unknown|not sure|\?/i.test(l.summary);
 async function exploreFlow(l,fresh=false){
@@ -934,7 +957,7 @@ async function exploreFlow(l,fresh=false){
   const li=a=>(a||[]).map(v=>`<li>${esc(v)}</li>`).join('');
   const d=frame(`<div class="xp"><p class="ctx">Explore</p><h2>${esc(x.name||'Who is this?')}</h2>
     <p class="who">${esc(x.who)}${x.role||x.org?`<br><span class="nums">${esc([x.role,x.org].filter(Boolean).join(', '))}</span>`:''}</p>
-    ${x.unsure?`<p class="note" style="color:var(--soon)">${esc(x.unsure)}</p>`:''}
+    ${x.unsure?`<p class="note"><span class="hl">${esc(x.unsure)}</span></p>`:''}
     ${x.background&&x.background.length?`<h4>What they do</h4><ul>${li(x.background)}</ul>`:''}
     <h4>Why you might be meeting</h4><ul>${li(x.likely_reasons)}</ul>
     ${x.prep&&x.prep.length?`<h4>Before you go</h4><ul>${li(x.prep)}</ul>`:''}
@@ -1103,7 +1126,7 @@ function drawCal(){
     <div class="seg">${[['day','Day'],['3day','3 days'],['week','Week'],['month','Month']].map(([k,t])=>`<button data-view="${k}" class="${CV.view===k?'on':''}">${t}</button>`).join('')}</div></div>`;
   const foot=`<div class="calfoot"><span><i style="background:color-mix(in srgb,var(--jobs) 40%,transparent)"></i>Meeting</span><span><i style="background:var(--raised);border:1px solid var(--line)"></i>Calendar</span>
     <span><i style="border:1px dashed var(--muted)"></i>Sparrow's plan (drag to move)</span><span><i style="background:var(--muted)"></i>Your chosen time</span><span><i style="border-top:2px dashed var(--late);height:0;width:14px;border-radius:0"></i>Deadline</span>
-    ${D&&D.unplaced&&D.unplaced.length?`<span style="color:var(--soon)">${D.unplaced.length} task${D.unplaced.length>1?'s':''} didn't fit this view</span>`:''}</div>`;
+    ${D&&D.unplaced&&D.unplaced.length?`<span class="hl">${D.unplaced.length} task${D.unplaced.length>1?'s':''} didn't fit this view</span>`:''}</div>`;
   if(!D){pane.innerHTML=head+'<p class="nums" style="padding:20px">Couldn\'t load the calendar.</p>';return}
   const body=CV.view==='month'?monthHTML(r,D):gridHTML(r,D);
   const prevScroll=pane.querySelector('.calscroll')?.scrollTop;
@@ -1193,7 +1216,7 @@ document.addEventListener('click',e=>{
 function taskSheet(l){
   const d=frame(`<p class="ctx">${esc(l.area||'Task')}</p><h2>${esc(l.summary)}</h2>
     <p style="margin:0">${esc(l.why||'')}</p>${originLine(l.origin)}${l.note?`<p class="nums">${esc(l.note)}</p>`:''}
-    <div class="srow"><button class="btn pri" id="t-done">Done</button><button class="btn" id="t-talk">Say when you'll start</button>
+    <div class="srow"><button class="btn pri" id="t-done">Done</button>${linkBtn(l)}<button class="btn" id="t-talk">Say when you'll start</button>
     ${canExplore(l)?'<button class="btn" id="t-exp">Explore</button>':''}<button class="btn ghost" id="t-later">Not now</button><button class="btn ghost" id="t-edit">Edit</button><button class="btn ghost" id="t-del">Delete</button></div>`);
   d.querySelector('#t-done').onclick=()=>closeFlow(l);d.querySelector('#t-talk').onclick=()=>talkFlow(l);
   d.querySelector('#t-later').onclick=()=>laterFlow(l);d.querySelector('#t-edit').onclick=()=>editFlow(l);d.querySelector('#t-del').onclick=()=>{closeS();deleteLoop(l)};
@@ -1266,7 +1289,7 @@ function render(){
       <h1>${esc(top.summary)}</h1>
       ${originLine(top.origin,{quote:true})}${!top.origin&&top.note?`<p class="origin"><span>${esc(top.note)}</span></p>`:''}
       <p class="why${top.forecast.level==='late'?' late':''}">${esc(top.why||top.forecast.headline)}</p>
-      <div class="heroacts"><button class="closer" data-act="close" data-id="${top.id}"><span class="ring">${TICK}</span>Done</button>
+      <div class="heroacts"><button class="closer" data-act="close" data-id="${top.id}"><span class="ring">${TICK}</span>Done</button>${linkBtn(top)}
         ${canExplore(top)?`<button class="btn${exploreFirst(top)?'':' ghost'}" data-act="explore" data-id="${top.id}">${SPARK_I} Explore</button>`:''}
         <button class="btn ghost" data-act="later" data-id="${top.id}">Not now</button>
         <button class="btn ghost" data-act="edit" data-id="${top.id}">Edit</button>
@@ -1338,7 +1361,7 @@ function details(l){
     ${l.hard_deadline?`<p><b>If it slips a day:</b> ${esc(f.slip_1d)}</p>`:''}
     <p class="nums">${Math.round(100*f.p_miss)}% chance of missing it. Takes about ${dur(l.effort_adj)}. From ${esc(l.source==='manual'?'your notes':SRC_NAME[l.source]||l.source)}.</p>
     ${l.note?`<p class="nums">${esc(l.note)}</p>`:''}
-    <div class="links"><button class="link" data-act="talk" data-id="${l.id}">Tell Sparrow when you'll start</button>${canExplore(l)?`<button class="link" data-act="explore" data-id="${l.id}">Look up ${esc(l.person||'who this is')}</button>`:''}<button class="link" data-act="focus-this" data-id="${l.id}">Start a timer for it</button><button class="link" data-act="later" data-id="${l.id}">Move to later</button>${l.source!=='manual'?`<button class="link" data-act="dismiss" data-id="${l.id}">Not a task</button>`:''}</div></div>`;
+    <div class="links">${linkBtn(l,'link')}<button class="link" data-act="talk" data-id="${l.id}">Tell Sparrow when you'll start</button>${canExplore(l)?`<button class="link" data-act="explore" data-id="${l.id}">Look up ${esc(l.person||'who this is')}</button>`:''}<button class="link" data-act="focus-this" data-id="${l.id}">Start a timer for it</button><button class="link" data-act="later" data-id="${l.id}">Move to later</button>${l.source!=='manual'?`<button class="link" data-act="dismiss" data-id="${l.id}">Not a task</button>`:''}</div></div>`;
 }
 function row(l){
   const why=l.type==='waiting'?`waiting on ${l.person||'them'}`:l.bucket==='Later'?'when you have a gap':(l.why||'');
@@ -1603,7 +1626,7 @@ document.addEventListener('click',async e=>{
   const h=e.target.closest('.ahead');
   if(h){const a=h.dataset.area,sec=h.closest('.area');sec.classList.toggle('shut');const s=sec.classList.contains('shut');h.setAttribute('aria-expanded',!s);
     s?shut.add(a):shut.delete(a);try{localStorage.setItem('loops.shut',JSON.stringify([...shut]))}catch(err){}return}
-  if(e.target.closest('form.why-ask'))return;
+  if(e.target.closest('form.why-ask')||e.target.closest('a[href]'))return;
   const b=e.target.closest('[data-act]');if(!b||b.closest('#sheet')||b.closest('#focus'))return;
   const id=+b.dataset.id, act=b.dataset.act, l=S&&[...S.loops,...S.closed].find(x=>x.id===id);
   try{
@@ -1663,7 +1686,7 @@ async function remindersFlow(){
         <label class="field"><span>ElevenLabs phone number ID (your Twilio number, added in ElevenLabs)</span><input id="k-pn" value="${esc(K.phone_number_id)}" placeholder="phnum_..."></label>
         <div class="srow" style="margin-top:0"><label class="field" style="margin:0"><span>Quiet from</span><input id="k-qf" type="number" min="0" max="23" value="${K.quiet_from}" style="width:90px"></label>
           <label class="field" style="margin:0"><span>until</span><input id="k-qt" type="number" min="0" max="23" value="${K.quiet_to}" style="width:90px"></label></div>
-        ${K.api_key?'':'<p class="note" style="color:var(--soon)">Add ELEVENLABS_API_KEY to your .env file, then restart Sparrow.</p>'}
+        ${K.api_key?'':'<p class="note"><span class="hl">Add ELEVENLABS_API_KEY to your .env file, then restart Sparrow.</span></p>'}
         <details style="margin-top:10px"><summary class="link" style="cursor:pointer">How to set up the agent (once)</summary><ol class="steps" style="margin-top:10px">
           <li>In <a href="https://www.twilio.com/console" target="_blank" rel="noopener">Twilio</a>, buy a UK number.</li>
           <li>In <a href="https://elevenlabs.io/app/agents" target="_blank" rel="noopener">ElevenLabs Agents</a>, go to Phone Numbers, import your Twilio number, and copy its ID.</li>

@@ -62,3 +62,19 @@ def test_list_first_then_check_relevance_on_request(tmp_path, monkeypatch):
         time.sleep(0.05)
     J = c.get("/api/jobs").json()
     assert all(x["review"] for x in J["jobs"]) and jobs.check_state["done"] == 3
+
+
+def test_tracking_links_and_unknown_senders_still_give_jobs():
+    from loops.connectors.gmail import html_text
+    from loops.leads import is_job_alert, parse_alert
+    from loops.models import Message
+    html = """<a href="https://u123.ct.sendgrid.net/ls/click?upn=aaa">Graduate Strategy Analyst</a><p>Northwind Energy</p><p>London</p>
+    <a href="https://u123.ct.sendgrid.net/ls/click?upn=bbb">Software Engineer Intern</a><p>Acme</p><p>Remote</p>
+    <a href="https://u123.ct.sendgrid.net/ls/click?upn=ccc">Privacy policy</a>
+    <a href="https://u123.ct.sendgrid.net/ls/click?upn=ddd">View all jobs</a>"""
+    m = Message("gmail", "t1", "t1", "digest@newjobsite.io", "NewJobSite", False, html_text(html),
+                datetime.now(timezone.utc), "Graduate jobs for you this week")
+    assert is_job_alert(m.sender, m.sender_name, m.subject)
+    jobs = parse_alert(m)
+    assert [j["title"] for j in jobs] == ["Graduate Strategy Analyst", "Software Engineer Intern"]
+    assert jobs[0]["company"] == "Northwind Energy"

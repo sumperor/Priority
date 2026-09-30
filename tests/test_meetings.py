@@ -77,3 +77,31 @@ def test_each_email_is_only_turned_into_a_meeting_once(store):
     run(store, m)
     loops = run(store, m)
     assert len([l for l in loops if l["type"] == "meeting"]) == 1
+
+
+def test_company_emails_become_the_thing_they_ask_for(store):
+    loops = run(store,
+                mail("c1", "billing@anthropic.com", "Anthropic", "Your credit balance is running low",
+                     "Your Claude API credit balance is below $5.\nAdd funds https://console.anthropic.com/settings/billing"),
+                mail("c2", "info@account.netflix.com", "Netflix", "Update your payment method",
+                     "We couldn't process your payment.\nUpdate payment method https://www.netflix.com/YourAccount"),
+                mail("c3", "no-reply@shop.com", "Shop", "Thanks for your order", "Your order has shipped."))
+    by = {l["person"]: l for l in loops}
+    assert by["Anthropic"]["summary"] == "Top up your Anthropic credits" and by["Anthropic"]["type"] == "task"
+    assert by["Anthropic"]["link"] == "https://console.anthropic.com/settings/billing"
+    assert by["Netflix"]["summary"] == "Update your payment details for Netflix"
+    assert by["Netflix"]["link"] == "https://www.netflix.com/YourAccount"
+    assert not [l for l in loops if l["type"] == "reply"]                    # nothing asks you to reply to a no-reply
+    from loops.closing import closing_questions
+    q = closing_questions(by["Netflix"])
+    assert q["happened"] == "Did you update your payment details for Netflix?"
+    assert "Changed the payment type" in q["followups"][0]["options"]
+    assert closing_questions(by["Anthropic"])["happened"] == "Did you top up your Anthropic credits?"
+
+
+def test_meeting_keeps_its_join_link(store):
+    d, words = day_ahead(2)
+    loops = run(store, mail("z1", "sam@firm.com", "Sam", "Confirmed: intro call",
+                            f"Your call is booked for {words} at 11:00.\nJoin Zoom meeting https://firm.zoom.us/j/123456"))
+    m = [l for l in loops if l["type"] == "meeting"][0]
+    assert m["link"] == "https://firm.zoom.us/j/123456"

@@ -15,6 +15,8 @@ Then 0 to 2 follow-ups ONLY if the answer is useful later:
 - applications or submissions: whether a confirmation arrived
 - long pieces of work: whether it took longer than planned
 Everyday personal tasks (calling a friend back, replying to a message, reading) get NO follow-ups.
+If the task came from a company or automated email, never ask "did you reply?"; ask whether the thing it
+asked for was done (e.g. "Did you update your payment method?", "Did you top up your credits?").
 Reply ONLY with JSON:
 {"happened": "question text",
  "followups": [{"question": "text", "kind": "choice" or "text",
@@ -31,7 +33,7 @@ def _happened(loop):
     if t == "call":
         return f"Did you call {p} back?" if p else "Did the call happen?"
     if t == "reply":
-        return f"Did you reply to {p}?" if p else "Did you reply?"
+        return f"Did you deal with {p}'s email?" if p else "Did you deal with this email?"
     if t == "waiting":
         return f"Did {p} get back to you?" if p else "Did they get back to you?"
     low = s.lower()
@@ -59,6 +61,13 @@ def _rules(loop):
 
 
 def closing_questions(loop):
+    loop = dict(loop)
+    if loop.get("action"):   # made from a company email: ask about the thing it asked for
+        from .actions import questions
+        q = questions(loop["action"], loop)
+        if q:
+            return {**q, "happened_options": [{"label": "Yes, done", "value": "yes"}, {"label": "Not yet", "value": "not_yet"},
+                                              {"label": "No, it's not needed", "value": "no"}]}
     try:
         d = ask_json(SYSTEM, f"Task: {loop['summary']}\nType: {loop['type']}\nWith: {loop['person'] or 'n/a'}\n"
                              f"Why it matters: {loop['stakes'] or 'n/a'}\nEstimated effort: {loop['effort_h']}h")
@@ -76,6 +85,8 @@ def closing_questions(loop):
         out = {"happened": d.get("happened") or _happened(loop), "followups": fu}
     except Exception:
         out = _rules(loop)
-    out["happened_options"] = [{"label": "Yes", "value": "yes"}, {"label": "Not yet", "value": "not_yet"},
-                               {"label": "No, it's not needed any more", "value": "no"}]
+    yes = ([{"label": "Yes, I replied", "value": "yes"}, {"label": "Yes, I did what it asked", "value": "yes"}]
+           if loop["type"] == "reply" else [{"label": "Yes", "value": "yes"}])
+    out["happened_options"] = yes + [{"label": "Not yet", "value": "not_yet"},
+                                     {"label": "No, it's not needed any more", "value": "no"}]
     return out

@@ -16,10 +16,16 @@ SHOW_FIT = 60
 JOB_BOARDS = ("linkedin", "indeed", "glassdoor", "totaljobs", "reed.co.uk", "cv-library", "prospects.ac.uk",
               "gradcracker", "brightnetwork", "targetjobs", "milkround", "otta", "welcometothejungle", "wellfound",
               "joinhandshake", "ziprecruiter", "monster", "jobs.ac.uk", "guardianjobs", "civilservicejobs",
-              "ratemyplacement", "trackr", "efinancialcareers")
+              "ratemyplacement", "trackr", "efinancialcareers", "adzuna", "cwjobs", "jobsite", "graduateland", "jobteaser",
+              "unitemps", "cord.co", "hired.com", "dice.com", "simplyhired", "jooble", "talent.com", "studentjob", "jora",
+              "gradsingames", "e4s", "instantimpact", "institutional", "careerjet", "workday", "greenhouse", "lever.co",
+              "smartrecruiters", "ashby", "teamtailor", "workable", "tal.net", "jobvite", "icims", "handshake", "prospects",
+              "bright network", "higherin", "the student room", "grb", "debut", "springpod", "uptree")
 ALERT_SUBJ = re.compile(r"(job alert|jobs? (for you|matching|you might)|new jobs?\b|recommended (jobs?|roles?)|"
                         r"is hiring|are hiring|roles? (for you|matching)|opportunit(y|ies) (for you|matching)|"
-                        r"\d+ new (jobs?|roles?|opportunities))", re.I)
+                        r"\d+ new (jobs?|roles?|opportunities)|jobs? (you|we) (think|recommend)|top jobs|new (roles?|vacancies|positions?)|"
+                        r"(graduate|internship|placement|entry.level) (jobs|roles|opportunities|schemes?) (for you|this week|near you|closing)|"
+                        r"applications? (are )?(now )?open|closing soon|and \d+ more jobs?|\bjobs? digest|weekly jobs|job matches)", re.I)
 RECRUITER = re.compile(r"(came across your (profile|cv)|your (profile|background|experience) (looks|seems|caught|stood)|"
                        r"reach(ing)? out (about|regarding|with) (a|an|the) .{0,40}(role|position|opportunity)|"
                        r"(role|position|opportunity) (that )?(might|may|could|would) (interest|suit|be a (good|great) fit))", re.I)
@@ -52,15 +58,39 @@ def is_recruiter(m):
     return not m.is_from_me and bool(RECRUITER.search(f"{m.subject}\n{m.text}"))
 
 
-def parse_alert(m, limit=60):
-    """Pull (title, company, location, url) out of a job-alert email's plain text."""
+NOT_JOB = re.compile(r"(privacy|terms|help|unsubscribe|settings|preferences|manage|view in (your )?browser|download|app store|"
+                     r"google play|facebook|twitter|instagram|youtube|tiktok|contact|about us|blog|advice|salary guide|log ?in|"
+                     r"sign ?in|update|profile|see all|view all|search|more jobs|view jobs|browse|explore|feedback|why am i)", re.I)
+TITLE_WORD = re.compile(r"\b(analyst|engineer|developer|manager|associate|intern(ship)?|graduate|consultant|designer|scientist|"
+                        r"specialist|coordinator|assistant|officer|executive|trainee|apprentice|lead|director|advisor|adviser|"
+                        r"researcher|accountant|administrator|architect|technician|representative|scheme|programme|placement|"
+                        r"banker|trader|economist|lawyer|solicitor|paralegal|teacher|nurse|marketer|writer|editor|product|sales|"
+                        r"operations|strategy|finance|data|software|marketing|recruiter|buyer|planner|surveyor)\b", re.I)
+
+
+def job_key(u):
+    """One key per job: a real job page without its tracking parameters; a redirect link as it is,
+    since the part after '?' is the only thing telling two jobs apart."""
+    return u.split("?")[0].rstrip("/") if JOB_URL.search(u.split("?")[0]) else u
+
+
+def _job_title(text):
+    t = (text or "").strip()
+    return 3 <= len(t) <= 90 and not NOT_JOB.search(t) and bool(TITLE_WORD.search(t)) and len(t.split()) <= 12
+
+
+def parse_alert(m, limit=60, loose=True):
+    """Pull (title, company, location, url) out of a job-alert email's text. With loose=True a link whose words
+    read like a job title counts even when it's hidden behind a tracking redirect."""
     lines = [l.strip() for l in (m.text or "").splitlines()]
     out, seen = [], set()
     for i, line in enumerate(lines):
         for u in URL.findall(line):
             u = u.rstrip(".,;")
-            key = u.split("?")[0].rstrip("/")
-            if not JOB_URL.search(u) or key in seen or any(s in u for s in ("unsubscribe", "settings", "alerts")):
+            key = job_key(u)
+            anchor = URL.sub("", line).strip(" :-|")
+            looks_job = bool(JOB_URL.search(u)) or (loose and _job_title(anchor))
+            if not looks_job or key in seen or any(s in u for s in ("unsubscribe", "settings", "alerts", "preferences", "privacy")):
                 continue
             seen.add(key)
             ctx, before = [], URL.sub("", line).strip(" :-|")
@@ -199,11 +229,13 @@ def scan(store, since, use_ai=False):
         if store.checked(key):
             continue
         alert, recruiter = is_job_alert(m.sender, m.sender_name, m.subject), is_recruiter(m)
+        if not (alert or recruiter) and not m.is_from_me and len(parse_alert(m, limit=3, loose=False)) >= 3:
+            alert = True   # a digest from a sender we don't know, listing several job links
         if not (alert or recruiter):
             continue
         store.mark_checked(key)
         for lead in (parse_alert(m) if alert else parse_recruiter(m)):
-            ukey = (lead["url"] or f"{m.msg_id}:{lead['title']}").split("?")[0]
+            ukey = job_key(lead["url"]) if lead["url"] else f"{m.msg_id}:{lead['title']}"
             if store.db.execute("SELECT 1 FROM leads WHERE url=?", (ukey,)).fetchone():
                 continue
             cred, flags = credibility(lead, m, recruiter=recruiter and not alert)

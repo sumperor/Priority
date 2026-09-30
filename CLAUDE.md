@@ -15,7 +15,7 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - `loops/engine.py` sync, loop detection (incl. assessment emails), auto-close, EV ranking, `plan()` ordering
 - `loops/forecast.py` latest safe start, cost-of-miss text, knock-on via `blocks`
 - `loops/agent.py` chasing nudges, reply parsing ("in 10 minutes"), spoken corrections
-- `loops/closing.py` task-specific close questions; `loops/extract.py` Claude extraction + `rule_parse` fallback
+- `loops/actions.py` company/no-reply emails become the thing they ask for (top up credits, update payment, renew, pay, verify, security, parcel, forms) with the link to do it and the right close question; `loops/closing.py` task-specific close questions; `loops/extract.py` Claude extraction + `rule_parse` fallback
 - `loops/decisions.py` yes/no decisions (Claude now, Jev stub); `loops/llm.py` Claude wrappers (incl. web search)
 - `loops/store.py` SQLite schema, migrations in `_migrate()`, accuracy stats
 - `loops/evidence.py` proof in the inbox that a loop is done (checked after sync and before every nudge)

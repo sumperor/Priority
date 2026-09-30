@@ -9,8 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..800,50;1,9..144,300..800,50&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Caveat:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--paper:#F3EDE1;--sheet:#FBF8F1;--ink:#1F2330;--ink2:#555A66;--faint:#8C8F97;--rule:#CFDAE6;--margin:#E6AFA6;
-  --red:#B8402B;--green:#2E6A4C;--blue:#2A4A94;--marker:#F4DC6B;--hatch:#B9B3A6;--tape:rgba(222,208,168,.72);
+:root{--paper:#F3EDE1;--sheet:#FBF8F1;--ink:#1F2330;--ink2:#444955;--faint:#6E717A;--rule:#CFDAE6;--margin:#E6AFA6;
+  --red:#A8201A;--green:#2E6A4C;--blue:#2A4A94;--marker:#F4DC6B;--hatch:#B9B3A6;--tape:rgba(222,208,168,.72);
   --serif:"Fraunces",Georgia,"Times New Roman",serif;--body:"Source Serif 4",Georgia,serif;--hand:"Caveat","Bradley Hand","Segoe Print",cursive;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   --lift:0 1px 0 rgba(31,35,48,.06),0 10px 24px -12px rgba(31,35,48,.35)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#191814;--sheet:#23211C;--ink:#ECE5D6;--ink2:#B4AD9F;--faint:#857F73;--rule:#34383F;--margin:#6A3A33;
@@ -74,18 +74,19 @@ nav .links a:not(.btn){text-decoration:none;color:var(--ink2)} nav .links a:not(
 .pg-head small{font-family:var(--mono);font-size:.42em;color:var(--faint);font-weight:400}
 .ttl{position:relative;height:1.2em;flex:1}
 .ttl span{position:absolute;left:0;top:0;white-space:nowrap}
-.line{left:22%;right:5%;font-family:var(--hand);font-size:1.75em;line-height:1;color:var(--blue);white-space:nowrap;clip-path:inset(0 0 -20% 0)}
+.line{left:22%;right:5%;font-family:var(--hand);font-size:1.85em;font-weight:700;line-height:1;color:var(--blue);white-space:nowrap}
+.ww{display:inline-block;padding:0 .04em .12em;margin:0 -.04em -.12em;-webkit-mask-image:linear-gradient(90deg,#000 calc(var(--w,130%) - .45em),transparent calc(var(--w,130%) + .15em));mask-image:linear-gradient(90deg,#000 calc(var(--w,130%) - .45em),transparent calc(var(--w,130%) + .15em))}
 .line em{font-style:normal;color:var(--faint);font-size:.8em}
 .ink{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .ink.red{stroke:var(--red)} .ink.green{stroke:var(--green)} .ink.blue{stroke:var(--blue)} .ink.soft{stroke:var(--rule);stroke-width:1.2}
 .ink.thick{stroke-width:2.4}
 .draw{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:2}
-.note{font-family:var(--hand);color:var(--red);font-size:1.45em;line-height:1.05}
+.note{font-family:var(--hand);font-weight:700;color:var(--red);font-size:1.6em;line-height:1.08}
 .slip{left:16%;width:78%;background:#fff;color:#2B2B2B;font-family:var(--mono);font-size:.72em;line-height:1.35;padding:.8em 1em;box-shadow:0 1px 0 rgba(0,0,0,.06),0 6px 14px -8px rgba(0,0,0,.35)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .slip{background:#2E2C26;color:#DDD5C4}}
 .slip b{font-weight:500}
 .slip span{color:#77736A}
-.cell{font-family:var(--hand);font-size:1.25em;line-height:1;color:var(--blue);padding:.35em .3em;overflow:hidden}
+.cell{font-family:var(--hand);font-weight:700;font-size:1.3em;line-height:1;color:var(--blue);padding:.35em .3em;overflow:hidden}
 .hatchc{background:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in srgb,var(--hatch) 55%,transparent) 6px 7px);color:var(--ink2);font-family:var(--hand);font-size:1.2em;padding:.3em .35em;line-height:1}
 .dayh{font-family:var(--hand);font-size:1.3em;font-weight:700;color:var(--ink);text-align:center}
 .hr{font-family:var(--mono);font-size:.62em;color:var(--faint);text-align:right}
@@ -301,29 +302,36 @@ const d=new Date();$('#hsDate').textContent=d.toLocaleDateString('en-GB',{weekda
 if(!G||RM)return;                     // everything is readable and drawn without animation
 document.documentElement.classList.add('anim');
 G.registerPlugin(ScrollTrigger,DrawSVGPlugin);
-const write=(el,dur)=>G.fromTo(el,{clipPath:'inset(0 100% -20% 0)'},{clipPath:'inset(0 0% -20% 0)',duration:dur||.9,ease:'none'});
-const draw=(el,dur,ease)=>G.fromTo(el,{drawSVG:'0%'},{drawSVG:'100%',duration:dur||.5,ease:ease||'power1.inOut'});
+const words=el=>{if(!el._ww){el.innerHTML=el.innerHTML.replace(/(^|>)([^<]+)(?=<|$)/g,(m,a,t)=>a+t.replace(/\S+/g,w=>`<span class="ww">${w}</span>`));el._ww=$$('.ww',el)}return el._ww};
+const unwrite=el=>G.set(words(el),{'--w':'-25%'});
+/* write el over dur seconds, word by word, each word taking time in proportion to its letters */
+const pen=(el,dur)=>{const ws=words(el),n=ws.reduce((a,w)=>a+w.textContent.length+1.5,0),t=G.timeline();
+  ws.forEach(w=>t.fromTo(w,{'--w':'-25%'},{'--w':'130%',duration:dur*(w.textContent.length+1.5)/n,ease:'sine.inOut',immediateRender:false}));return t};
+const draw=(el,dur,ease)=>G.fromTo(el,{drawSVG:'0%',opacity:0},{drawSVG:'100%',opacity:1,duration:dur||.5,ease:ease||'power1.inOut'});
 
 /* ---------- hero: headline sets in, the marker sweeps, the page gets written ---------- */
 G.from('#h1 .l>span',{yPercent:105,duration:1.1,stagger:.12,ease:'expo.out',delay:.1});
 G.fromTo('#mk',{'--mk':0},{'--mk':1,duration:.7,ease:'power2.inOut',delay:1});
 G.from(['.dateline','.lede','.ctas'],{y:14,opacity:0,duration:.8,stagger:.1,delay:.55,ease:'power2.out'});
 G.from('.hero .sheet',{y:40,rotation:5,opacity:0,duration:1.2,ease:'expo.out',delay:.25});
-G.fromTo('#asArrow',{drawSVG:'0%'},{drawSVG:'100%',duration:.8,delay:1.8,ease:'power2.inOut'});
+G.fromTo('#asArrow',{drawSVG:'0%',opacity:0},{drawSVG:'100%',opacity:1,duration:.8,delay:1.8,ease:'power2.inOut'});
 G.from('.aside span',{opacity:0,duration:.6,delay:1.6});
 
 const hs=$('#hs'), hl=$$('.line',hs), hbox=$$('.hbox',hs), htick=$$('.htick',hs);
-const hero=G.timeline({repeat:-1,repeatDelay:1.2,delay:.9});
-G.set(hl,{clipPath:'inset(0 100% -20% 0)'});G.set([...hbox,...htick,'.hstrike','.harrow'],{drawSVG:'0%'});G.set($('.note',hs),{opacity:0});
-hl.forEach((l,i)=>{hero.to(hbox[i],{drawSVG:'100%',duration:.3,ease:'none'},.4+i*.9).to(l,{clipPath:'inset(0 0% -20% 0)',duration:.75,ease:'none'},.6+i*.9)});
-hero.to(htick[0],{drawSVG:'100%',duration:.35,ease:'power2.in'},4.4)
-    .to('.hstrike',{drawSVG:'100%',duration:.45,ease:'power1.inOut'},4.75)
-    .to($('.note',hs),{opacity:1,duration:.01},5.4).fromTo($('.note',hs),{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0% 0 0)',duration:1.1,ease:'none'},5.4)
-    .to('.harrow',{drawSVG:'100%',duration:.5},6.5)
-    .to(htick[1],{drawSVG:'100%',duration:.35,ease:'power2.in'},7.4)
-    .to(hs.querySelectorAll('.line,.note,.draw path'),{opacity:0,duration:.6},10)
-    .set(hl,{clipPath:'inset(0 100% -20% 0)',opacity:1},10.7).set([...hbox,...htick,'.hstrike','.harrow'],{drawSVG:'0%',opacity:1},10.7)
-    .set($('.note',hs),{opacity:0},10.7);
+const hero=G.timeline({repeat:-1,repeatDelay:1.4,delay:.9});
+const pace=el=>Math.max(.7,el.textContent.length/9);
+const hnote=$('.note',hs);
+hl.forEach(unwrite);unwrite(hnote);G.set([...hbox,...htick,'.hstrike','.harrow'],{drawSVG:'0%',opacity:0});
+let at=.3;
+hl.forEach((l,i)=>{hero.to(hbox[i],{drawSVG:'100%',opacity:1,duration:.35,ease:'none'},at).add(pen(l,pace(l)),at+.35);at+=.35+pace(l)+.35});
+hero.to(htick[0],{drawSVG:'100%',opacity:1,duration:.4,ease:'power2.in'},at)
+    .to('.hstrike',{drawSVG:'100%',opacity:1,duration:.55,ease:'power1.inOut'},at+.45)
+    .add(pen(hnote,pace(hnote)),at+1.2)
+    .to('.harrow',{drawSVG:'100%',opacity:1,duration:.6},at+1.3+pace(hnote))
+    .to(htick[1],{drawSVG:'100%',opacity:1,duration:.4,ease:'power2.in'},at+2.2+pace(hnote))
+    .to(hs.querySelectorAll('.line,.note,.draw path'),{opacity:0,duration:.6},at+5.5+pace(hnote))
+    .call(()=>{hl.forEach(unwrite);unwrite(hnote)},null,at+6.2+pace(hnote))
+    .set([...hl,hnote],{opacity:1},at+6.2+pace(hnote)).set([...hbox,...htick,'.hstrike','.harrow'],{drawSVG:'0%',opacity:0},at+6.2+pace(hnote));
 new IntersectionObserver(e=>e[0].isIntersecting?hero.play():hero.pause()).observe(hs);
 
 /* ---------- the story: one page, written as you scroll ---------- */
@@ -332,8 +340,8 @@ const S=n=>$$('.S'+n,pg);
 const show=i=>{ttl.forEach((s,k)=>G.set(s,{opacity:k===i?1:0}));num.textContent=i+1};
 G.set([...S(2),...S(3),...S(4),...S(5)],{opacity:0});
 G.set(steps.slice(1),{opacity:0,y:24});
-G.set($$('.line.S1',pg),{clipPath:'inset(0 100% -20% 0)'});
-G.set($$('path.S1,path.S2,path.S3,path.S4,.S5.ring,.S5.cross',pg),{drawSVG:'0%'});
+$$('.line.S1,.cell.wr,.note,.line.S4',pg).forEach(unwrite);
+G.set($$('path.S1,path.S2,path.S3,path.S4,.S5.ring,.S5.cross',pg),{drawSVG:'0%',opacity:0});
 G.set($$('.cv i',pg),{scaleX:0});G.set('#cbar',{drawSVG:'0% 20%'});
 show(0);
 const mm=G.matchMedia();
@@ -345,7 +353,7 @@ mm.add('(min-width:0px)',()=>{
     .to('#cbar',{drawSVG:`0% ${20+i*20}%`,duration:.5},at).call(()=>show(i),null,at+.21).call(()=>show(i-1),null,at+.2)};
   /* 1: emails are copied out as written tasks */
   tl.addLabel('reads',0);
-  $$('.line.S1',pg).forEach((l,i)=>{tl.to($$('.box',pg)[i],{drawSVG:'100%',duration:.2,ease:'none'},.2+i*.45).to(l,{clipPath:'inset(0 0% -20% 0)',duration:.4,ease:'none'},.3+i*.45)});
+  $$('.line.S1',pg).forEach((l,i)=>{tl.to($$('.box',pg)[i],{drawSVG:'100%',opacity:1,duration:.2,ease:'none'},.2+i*.45).add(pen(l,.42),.3+i*.45)});
   tl.to($$('.slip.S1',pg),{x:-16,opacity:.25,stagger:.1,duration:.4},.2).addLabel('written',1.8);
   /* 2: the week is ruled up and the tasks go into free gaps */
   step(1,2);
@@ -353,15 +361,15 @@ mm.add('(min-width:0px)',()=>{
     .to($('.grid',pg),{opacity:1,drawSVG:'100%',duration:.8,ease:'power1.inOut'},2.2)
     .to($$('.dayh.S2,.hr.S2',pg),{opacity:1,stagger:.03,duration:.3},2.4)
     .to($$('.hatchc',pg),{opacity:1,stagger:.08,duration:.3},2.8);
-  $$('.cell.wr',pg).forEach((c,i)=>tl.set(c,{opacity:1},3.2+i*.3).fromTo(c,{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0% 0 0)',duration:.35,ease:'none'},3.2+i*.3));
+  $$('.cell.wr',pg).forEach((c,i)=>tl.set(c,{opacity:1},3.2+i*.3).add(pen(c,.32),3.2+i*.3));
   tl.addLabel('plans',4.6);
   /* 3: red pen in the margin, then it rings */
   step(2,4.8);
   tl.to([...$$('.hatchc',pg),...$$('.cell',pg).filter((c,i)=>i!==1)],{opacity:.35,duration:.3},4.8)
     .to($('.arr',pg),{opacity:1,drawSVG:'100%',duration:.5},5)
-    .set($$('.note.S3',pg)[0],{opacity:1},5.4).fromTo($$('.note.S3',pg)[0],{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0% 0 0)',duration:.7,ease:'none'},5.4)
+    .set($$('.note.S3',pg)[0],{opacity:1},5.4).add(pen($$('.note.S3',pg)[0],.7),5.4)
     .to($('.phone',pg),{opacity:1,drawSVG:'100%',duration:.5},6.1)
-    .set($$('.note.S3',pg)[1],{opacity:1},6.5).fromTo($$('.note.S3',pg)[1],{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0% 0 0)',duration:.3,ease:'none'},6.5)
+    .set($$('.note.S3',pg)[1],{opacity:1},6.5).add(pen($$('.note.S3',pg)[1],.3),6.5)
     .to($('.phone',pg),{rotation:8,transformOrigin:'80% 85%',duration:.06,repeat:5,yoyo:true,ease:'none'},6.6)
     .addLabel('chases',7.2);
   /* 4: the confirmation arrives, the task is ticked, crossed out and stamped */
@@ -369,7 +377,7 @@ mm.add('(min-width:0px)',()=>{
   tl.to([...S(2),...S(3)],{opacity:0,duration:.35},7.4)
     .fromTo($('.slip.S4',pg),{opacity:0,y:-40},{opacity:1,y:0,duration:.5,ease:'back.out(1.5)'},7.6)
     .to($('.box2',pg),{opacity:1,drawSVG:'100%',duration:.2,ease:'none'},7.9)
-    .set($('.line.S4',pg),{opacity:1},8).fromTo($('.line.S4',pg),{clipPath:'inset(0 100% -20% 0)'},{clipPath:'inset(0 0% -20% 0)',duration:.4,ease:'none'},8)
+    .set($('.line.S4',pg),{opacity:1},8).add(pen($('.line.S4',pg),.45),8)
     .to($('.tick',pg),{opacity:1,drawSVG:'100%',duration:.25,ease:'power2.in'},8.5)
     .to($('.strike',pg),{opacity:1,drawSVG:'100%',duration:.3},8.75)
     .fromTo($('.stamp',pg),{opacity:0,scale:2.4,rotation:-22},{opacity:.92,scale:1,rotation:-12,duration:.22,ease:'power4.in'},9.05)
@@ -381,7 +389,7 @@ mm.add('(min-width:0px)',()=>{
     .fromTo($$('.clip.S5',pg),{opacity:0,y:18,rotation:i=>[-1.5,1,-.6][i]},{opacity:1,y:0,stagger:.12,duration:.4},10.2)
     .to($('.ring',pg),{opacity:1,drawSVG:'100%',duration:.5},10.7)
     .to($('.cross',pg),{opacity:1,drawSVG:'100%',duration:.3},11.1);
-  $$('.note.S5',pg).forEach((n,i)=>tl.set(n,{opacity:1},11.3+i*.35).fromTo(n,{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0% 0 0)',duration:.35,ease:'none'},11.3+i*.35));
+  $$('.note.S5',pg).forEach((n,i)=>tl.set(n,{opacity:1},11.3+i*.35).add(pen(n,.33),11.3+i*.35));
   tl.fromTo($('.cv',pg),{opacity:0,y:20,rotation:3},{opacity:1,y:0,rotation:1.5,duration:.4},11.4)
     .to($$('.cv i',pg),{scaleX:1,stagger:.04,duration:.2,ease:'none'},11.7)
     .addLabel('jobs',12.4);
@@ -390,10 +398,10 @@ mm.add('(min-width:0px)',()=>{
 /* ---------- pricing ---------- */
 G.from('.card',{y:60,opacity:0,rotation:(i)=>[-5,4,-3][i],duration:.9,stagger:.12,ease:'expo.out',scrollTrigger:{trigger:'.plans',start:'top 82%'}});
 G.from('#pricing .head>*',{y:20,opacity:0,stagger:.08,duration:.7,scrollTrigger:{trigger:'#pricing',start:'top 78%'}});
-G.set('.pk',{drawSVG:'0%'});
-G.to('.pk',{drawSVG:'100%',duration:.6,delay:.6,scrollTrigger:{trigger:'.plans',start:'top 75%'}});
+G.set('.pk',{drawSVG:'0%',opacity:0});
+G.to('.pk',{drawSVG:'100%',opacity:1,duration:.6,delay:.6,scrollTrigger:{trigger:'.plans',start:'top 75%'}});
 G.from('.pick',{opacity:0,duration:.4,delay:.5,scrollTrigger:{trigger:'.plans',start:'top 75%'}});
-const circles=$$('.bill .circ');G.set(circles,{drawSVG:'0%'});G.to(circles[0],{drawSVG:'100%',duration:.6,scrollTrigger:{trigger:'.bill',start:'top 85%'}});
+const circles=$$('.bill .circ');G.set(circles,{drawSVG:'0%',opacity:0});G.to(circles[0],{drawSVG:'100%',opacity:1,duration:.6,scrollTrigger:{trigger:'.bill',start:'top 85%'}});
 $$('[data-bill]').forEach((b,k)=>b.onclick=()=>{
   $$('[data-bill]').forEach(x=>x.classList.toggle('on',x===b));
   G.to(circles[1-k],{drawSVG:'0%',duration:.2});draw(circles[k],.5);
@@ -403,8 +411,8 @@ $$('[data-bill]').forEach((b,k)=>b.onclick=()=>{
 });
 
 /* ---------- last line: underlined in red pen ---------- */
-G.set('#fin',{drawSVG:'0%'});
-G.to('#fin',{drawSVG:'100%',ease:'none',scrollTrigger:{trigger:'.final',start:'top 70%',end:'top 35%',scrub:true}});
+G.set('#fin',{drawSVG:'0%',opacity:0});
+G.to('#fin',{drawSVG:'100%',opacity:1,ease:'none',scrollTrigger:{trigger:'.final',start:'top 70%',end:'top 35%',scrub:true}});
 G.from('.final h2',{y:30,opacity:0,duration:1,ease:'expo.out',scrollTrigger:{trigger:'.final',start:'top 80%'}});
 })();
 </script>

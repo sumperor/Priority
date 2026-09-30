@@ -101,7 +101,11 @@ class GmailConnector:
         self.note, self.skipped = "", []
         svc = build("gmail", "v1", credentials=self._creds(), cache_discovery=False)
         me = svc.users().getProfile(userId="me").execute(num_retries=2)["emailAddress"].lower()
-        return self._get(svc, me, self._list(svc, f"after:{int(since.timestamp())} {JOB_QUERY}", known, 300))
+        # one OR group: a job board sender, an alert subject, or a subject about jobs
+        q = (f"after:{int(since.timestamp())} " + JOB_QUERY[:-1] + " subject:(job OR jobs OR role OR roles OR hiring OR "
+             "vacancy OR vacancies OR internship OR internships OR graduate OR placement OR opportunity OR opportunities OR "
+             "position OR positions OR careers OR apply OR scheme)}")
+        return self._get(svc, me, self._list(svc, q, known, 500))
 
     def _list(self, svc, q, known, cap=MAX_MESSAGES):
         ids, page = [], None
