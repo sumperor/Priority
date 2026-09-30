@@ -45,3 +45,4 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - He dictates by voice, so expect phonetic spellings ("cheesing" means chasing)
 - Before building something big, restate what you understood in 2 to 3 bullets
 - After any change he can try, end the reply with the run code block: `cd ~/loops`, `source .venv/bin/activate`, `git pull`, `pip install -r requirements.txt`, `python run.py serve`, plus the URL to open and the version to expect
+- The run block also covers the website: a second terminal with `cloudflared tunnel run --url http://localhost:8765 sparrow`, then https://sparrow.sumedhgarimella.com (behind Cloudflare Access). One-time tunnel setup is in HANDOFF.md
