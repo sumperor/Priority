@@ -113,6 +113,33 @@ def _create_meeting(store, source, thread_id, m):
         trigger_ts=m.ts.isoformat())
 
 
+def _create_event(store, source, thread_id, m):
+    """(loop id, 'booked' | 'asked') for a booking or a request to meet at a stated time, else None."""
+    from .invites import asks_to_meet, booking_title, is_booking, when_loose
+    booked = is_booking(m)
+    if not (booked or asks_to_meet(m)):
+        return None
+    start, end = when_loose(f"{m.subject}\n{m.text}", now=m.ts)
+    if not start or (end or start) < utcnow():
+        return None
+    who = (m.sender_name or m.sender).split("<")[0].strip()
+    local = start.astimezone()
+    if booked:
+        title = booking_title(m)
+        summary = title if len(title) <= 70 else title[:70].rsplit(" ", 1)[0] + "\u2026"
+        note = f"Booked. {local:%a %d %b, %H:%M}, from {who}."
+    else:
+        summary = f"Meeting with {who}, to confirm"
+        note = f"{who} asked to meet {local:%a %d %b at %H:%M}. Reply to confirm."
+    i = store.create_loop(
+        source=source, thread_id=thread_id, type="meeting", person=who, summary=summary,
+        done_when="It happened", due=start.isoformat(), cost=55, consequence="relationship", reversible=0,
+        hard_deadline=1, effort_h=round(((end or start) - start).total_seconds() / 3600, 2) or 1.0,
+        stakes="It's at a fixed time.", trigger_ts=m.ts.isoformat())
+    store.update_loop(i, note=note)
+    return i, "booked" if booked else "asked"
+
+
 def detect(store, decide, source, thread_id, msgs, extract=default_extract):
     if not msgs:
         return []
@@ -156,6 +183,18 @@ def detect(store, decide, source, thread_id, msgs, extract=default_extract):
                 store.label_decision(old["id"], "detect", False)
         return created
     from .leads import is_job_alert, looks_like_scam
+    # Bookings and confirmations ("you're registered for ... Thursday 2 Oct at 6pm") and people asking to meet
+    # at a time ("can we meet Thursday at 3?") go on the calendar as meetings
+    if not last.is_from_me and not is_job_alert(last.sender, last.sender_name, last.subject) and not created:
+        key = f"event:{source}:{last.msg_id}"
+        if not store.checked(key) and not store.open_loop(source, thread_id, "meeting"):
+            store.mark_checked(key)
+            mid = _create_event(store, source, thread_id, last)
+            if mid:
+                created.append(mid[0])
+                if mid[1] == "booked":
+                    store.mark_checked(f"detect:reply:{source}:{last.msg_id}")   # a confirmation needs no reply
+                    return created
     if not last.is_from_me:
         # Job alerts become leads, not replies; recruiter emails with scam signs are never chased
         if not is_job_alert(last.sender, last.sender_name, last.subject) and not looks_like_scam(last):

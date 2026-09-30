@@ -20,7 +20,7 @@ user until they're done, and runs focused job-hunt sessions with a Claude-backed
 - `loops/store.py` SQLite schema, migrations in `_migrate()`, accuracy stats
 - `loops/evidence.py` proof in the inbox that a loop is done (checked after sync and before every nudge)
 - `loops/leads.py` job-alert and recruiter emails: credibility, fit, "worth applying"; `loops/interviews.py` write-ups
-- `loops/areas.py` which section a loop lives in (rules only); `loops/explore.py` "Explore": who someone is, why you are meeting; `loops/invites.py` calendar invites become meetings
+- `loops/areas.py` which section a loop lives in (rules only); `loops/explore.py` "Explore": who someone is, why you are meeting; `loops/invites.py` calendar invites, bookings/confirmations and "can we meet Thursday at 3?" emails become meetings (`when_loose` reads everyday dates)
 - `loops/jobs.py` jobs from the inbox: scan 14 days lists every job (HTML alerts too) without judging; "Check relevance" (one or all, background) reads the posting and compares with CV/LinkedIn/interests; firm research, tailored CV
 - `loops/planner.py` the calendar: events, meetings, deadlines and planned task blocks in free time (08:00 to 22:00); drag keeps a time
 - `loops/errands.py` errands: one question at a time via `next_step` (`GET /api/loops/{id}/next`): calendar day, free time, place from the note or asked, map with walk/cycle/drive minutes, time there, then the estimate; `loops/maps.py` travel time from where you are (browser location, else the Mac via CoreLocationCLI, else asked) to the nearest match on OpenStreetMap (walk, cycle, drive); Claude web search tidies misheard names if a key is set; asks for bus/train or if the lookup fails

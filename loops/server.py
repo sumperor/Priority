@@ -88,9 +88,12 @@ def _plain_error(err, label):
 
 
 def _scheduler():
+    """Check every few minutes; while new mail keeps arriving, check every minute until it goes quiet."""
     while True:
         _run_sync()
-        time.sleep(C.AUTO_SYNC_MINUTES * 60)
+        from .engine import SOURCES
+        busy = any((st or {}).get("count") for st in SOURCES.values())
+        time.sleep(60 if busy else C.AUTO_SYNC_MINUTES * 60)
 
 
 @app.on_event("startup")
@@ -1088,5 +1091,5 @@ def brief():
 
 def serve():
     import uvicorn
-    print(f"Sparrow v0.31 running at http://127.0.0.1:{C.PORT}")
+    print(f"Sparrow v0.32 running at http://127.0.0.1:{C.PORT}")
     uvicorn.run(app, host="127.0.0.1", port=C.PORT, log_level="warning")
