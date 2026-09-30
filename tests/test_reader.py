@@ -119,3 +119,45 @@ def test_calendar_attachment_and_quotes():
     assert s == datetime(2030, 10, 2, 13, tzinfo=timezone.utc) or s.astimezone().hour == ev["start"].astimezone().hour
     body = "Sounds good, see you then.\n\nOn Mon, 29 Sep 2030 at 10:00, Sam <sam@x.com> wrote:\n> Can we meet?\n> Thanks"
     assert clean_body(body) == "Sounds good, see you then."
+
+
+def test_deadlines_decide_the_order_and_attend_is_an_event(app, monkeypatch):
+    c, db = app
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
+    from loops import llm
+    t_int = (NOW + timedelta(hours=3)).replace(second=0, microsecond=0)
+    t_app = (NOW + timedelta(days=2)).replace(second=0, microsecond=0)
+    t_pay = (NOW + timedelta(hours=20)).replace(second=0, microsecond=0)
+    answers = {
+        "i1": {"kind": "action", "task": "Attend Life Cafes interview at Alice Holt", "who": "Life Cafes", "due": t_int.isoformat()},
+        "a1": {"kind": "action", "task": "Apply for the PG Plantscape role", "who": "PG", "due": t_app.isoformat()},
+        "p1": {"kind": "action", "task": "Pay the council tax bill", "who": "Council", "due": t_pay.isoformat()},
+        "r1": {"kind": "reply", "task": "Reply to Mahan about coffee", "who": "Mahan", "due": ""},
+        "r2": {"kind": "reply", "task": "Reply to Priya about the slides", "who": "Priya", "due": ""},
+    }
+    cur = {}
+    monkeypatch.setattr(llm, "ask_json", lambda *a, **k: {**answers[cur["id"]], "close_question": ""})
+    from loops.decisions import RuleDecisions
+    from loops.engine import sync
+    for mid in answers:
+        cur["id"] = mid
+
+        class F:
+            name = "gmail"
+            def fetch(self, since, _m=mid): return [mail(_m, f"{_m}@x.com", answers[_m]["who"], "Subject", "Body")]
+        sync(db(), [F()], RuleDecisions())
+    S = c.get("/api/state").json()["loops"]
+    by = {l["summary"]: l for l in S}
+    assert by["Attend Life Cafes interview at Alice Holt"]["type"] == "meeting"
+    tasks = [l["summary"] for l in S if l["type"] != "meeting"]
+    # real deadlines soonest first, then the no-deadline replies
+    assert tasks.index("Pay the council tax bill") < tasks.index("Apply for the PG Plantscape role")
+    assert tasks.index("Apply for the PG Plantscape role") < tasks.index("Reply to Mahan about coffee")
+    assert by["Reply to Mahan about coffee"]["due_guess"] == 1
+    # the calendar places them in the same order and never on top of each other
+    cal = c.get(f"/api/calendar?start={NOW.date().isoformat()}&days=4").json()
+    blocks = sorted(cal["blocks"], key=lambda b: b["start"])
+    for a, b in zip(blocks, blocks[1:]):
+        assert a["end"] <= b["start"]
+    order = [b["title"] for b in blocks]
+    assert order.index("Pay the council tax bill") < order.index("Apply for the PG Plantscape role")

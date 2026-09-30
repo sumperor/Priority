@@ -20,7 +20,8 @@ LABELS = {"meeting": "A meeting or event", "action": "Something to do", "reply":
 
 SYSTEM = """You read one email for a busy student who is job hunting, and decide what (if anything) they must do.
 Classify it as exactly one kind:
-- meeting: an event at a fixed time they will attend (invite, booking, registration, interview slot, appointment)
+- meeting: an event at a fixed time they will attend (invite, booking, registration, interview slot, appointment).
+  Anything they must "attend" or "be at" at a stated time is a meeting, with event_start set.
 - action: a company or service asks them to do something (update payment, top up credits, verify, renew, pay, sign, fill in, collect)
 - reply: a real person is waiting for them to reply or decide
 - assessment: an online test, video interview or case study to complete for an application
@@ -29,7 +30,8 @@ Classify it as exactly one kind:
 - fyi: newsletters, marketing, updates that need nothing
 Rules: be concrete and short. The task is an instruction starting with a verb, naming the company or person
 ("Update your payment method for Netflix", "Reply to Priya about the slides"). Use only dates and times written
-in the email; if none, leave them empty. The link must be copied exactly from the email and must be the one to do
+in the email; if none, leave them empty. "due" is the real deadline stated in the email (apply by, pay by,
+expires on, respond by); leave it empty when the email gives none rather than guessing. The link must be copied exactly from the email and must be the one to do
 the task (a join link for meetings). Never ask "did you reply" about an automated email; ask about the thing.
 Reply ONLY with JSON:
 {"kind": "...", "task": "...", "who": "person or company", "due": "ISO datetime or empty",
@@ -118,6 +120,9 @@ def act(store, source, thread_id, msgs, r):
     last = msgs[-1]
     now = datetime.now(timezone.utc)
     kind, i = r["kind"], None
+    from .engine import ATTEND
+    if kind in ("action", "reply") and ATTEND.search(r["task"]) and (r["start"] or r["due"]):
+        kind, r["start"] = "meeting", r["start"] or r["due"]      # "Attend the interview at 13:15" happens at 13:15
     existing = store.db.execute("SELECT id FROM loops WHERE source=? AND thread_id=? AND status NOT IN ('closed','deleted') "
                                 "ORDER BY id DESC LIMIT 1", (source, thread_id)).fetchone()
     if existing:
@@ -141,6 +146,8 @@ def act(store, source, thread_id, msgs, r):
         f = {"link": r["link"] or None}
         if r["close"]["happened"]:
             f["close_json"] = json.dumps(r["close"])
+        if kind in ("action", "reply") and not r["due"]:
+            f["due_guess"] = 1
         store.update_loop(i, **f)
     return i
 

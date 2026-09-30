@@ -82,7 +82,7 @@ def build(rows, start, days, events=None, now=None):
             m = {"id": r["id"], "title": r["summary"], "start": s.isoformat(), "end": (s + timedelta(minutes=30)).isoformat()}
             meetings.append(m)
             busy.append((s, s + timedelta(minutes=30)))
-        elif r["type"] != "waiting" and not r.get("past_deadline"):
+        elif r["type"] != "waiting" and not r.get("past_deadline") and not r.get("due_guess"):
             deadlines.append({"id": r["id"], "title": r["summary"], "at": r["due"], "level": r["forecast"]["level"]})
 
     # Fixed first: times you chose or dragged to
@@ -93,8 +93,11 @@ def build(rows, start, days, events=None, now=None):
             dur = max(STEP, timedelta(hours=r["effort_adj"]))
             busy.append((s, s + dur))
             blocks.append(_block(r, s, dur, fixed=True))
-    # Then the rest, in plan order, as early as possible before each latest safe start
-    for r in todo:
+    # Then the rest: earliest real deadline first (the order that misses the fewest), ties by value;
+    # tasks with no deadline fill the gaps after
+    order = sorted(todo, key=lambda r: (bool(r.get("due_guess")), _utc(r["forecast"]["latest_start"]),
+                                        -(r.get("ev_per_hour") or 0)))
+    for r in order:
         if r.get("commit_at"):
             continue
         dur = max(STEP, timedelta(minutes=round(r["effort_adj"] * 60 / 15) * 15))

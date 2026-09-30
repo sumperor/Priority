@@ -57,7 +57,7 @@ class Store:
                                 ("loops", "acked", "INTEGER"), ("loops", "place", "TEXT"),
                                 ("loops", "travel_mode", "TEXT"), ("loops", "travel_min", "INTEGER"),
                                 ("loops", "base_h", "REAL"), ("loops", "errand_day", "TEXT"),
-                                ("loops", "place_ok", "INTEGER"), ("loops", "link", "TEXT"), ("loops", "action", "TEXT"), ("loops", "close_json", "TEXT"), ("leads", "review", "TEXT"), ("leads", "jd", "TEXT")]:
+                                ("loops", "place_ok", "INTEGER"), ("loops", "link", "TEXT"), ("loops", "action", "TEXT"), ("loops", "close_json", "TEXT"), ("loops", "due_guess", "INTEGER"), ("leads", "review", "TEXT"), ("leads", "jd", "TEXT")]:
             cols = {r["name"] for r in self.db.execute(f"PRAGMA table_info({table})")}
             if col not in cols:
                 self.db.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")

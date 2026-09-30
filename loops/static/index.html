@@ -566,6 +566,9 @@ h1,h2,h3,.sheet h2,.hero h1,.intake h1,.shead h1,#fx h2,.empty h1{font-family:va
 .objs li::before{border-radius:2px;border-color:var(--ink)}
 #fx .big{font-family:var(--serif);font-weight:500;color:var(--ink)}
 
+.blk.short{padding:1px 6px;display:flex;align-items:center;gap:6px}
+.blk.short b{font-family:var(--font)!important;font-size:.72rem!important;font-weight:600!important;line-height:1.1}
+.blk.short small{display:none}
 .rvlist{display:grid;gap:0;max-height:58vh;overflow:auto;margin:0 -4px;padding:0 4px}
 .rv{padding:12px 0;border-top:1px solid var(--rule)}
 .rv:first-child{border-top:0}
@@ -799,6 +802,7 @@ async function refresh(){
 function whenText(l){
   if(l.type==='waiting')return `Chase ${dayName(l.due)}`;
   if(l.type==='meeting'){const d=new Date(l.due);return `${sameDay(d,new Date())?'Today':dayName(d).replace(/^./,c=>c.toUpperCase())} ${hm(d)}`}
+  if(l.due_guess)return 'No deadline';
   if(l.forecast.level==='late')return l.forecast.hours_left<0?'Overdue':'Start now';
   if(l.bucket==='Later')return `Due ${dayName(l.due)}`;
   const d=new Date(l.forecast.latest_start);
@@ -1173,7 +1177,7 @@ function gridHTML(r,D){
       const pos=`top:${top}px;height:${h}px;left:calc(${it.lane*w}% + 2px);width:calc(${w}% - 4px)`;
       if(it.k==='event')return `<div class="blk event" style="${pos}" data-event="${esc(x.title)}|${x.start}"><b>${esc(x.title)}</b><small>${hm(x.start)}</small></div>`;
       if(it.k==='meet')return `<div class="blk meet" style="${pos}" data-task="${x.id}"><b>${esc(x.title)}</b><small>${hm(x.start)}</small></div>`;
-      return `<div class="blk task${x.fixed?' fixed':''}${x.late?' late':''}" style="${pos};--c:${AREA_C[x.area]||AREA_C.Other}" data-block="${x.id}" data-start="${x.start}" data-min="${x.minutes}" title="${esc(x.title)}"><b>${esc(x.title)}</b><small>${hm(x.start)}, ${dur(x.minutes/60)}${x.late?' · late':''}</small></div>`}).join('');
+      return `<div class="blk task${x.fixed?' fixed':''}${x.late?' late':''}${x.minutes<30?' short':''}" style="${pos};--c:${AREA_C[x.area]||AREA_C.Other}" data-block="${x.id}" data-start="${x.start}" data-min="${x.minutes}" title="${esc(x.title)}"><b>${esc(x.title)}</b><small>${hm(x.start)}, ${dur(x.minutes/60)}${x.late?' · late':''}</small></div>`}).join('');
     const ticks=dls.map(x=>`<div class="duetick" style="top:${px(mins(x.at))}px"></div>`).join('');
     const off=`<div class="off" style="top:0;height:${px(D.day_start*60)}px"></div><div class="off" style="top:${px(D.day_end*60)}px;bottom:0"></div>`;
     const lines=[...Array(SHOW_TO-SHOW_FROM)].map((_,k)=>`<div class="hline" style="top:${k*HOUR}px"></div>`).join('');

@@ -49,12 +49,12 @@ def _create(store, decide, extract, source, thread_id, msgs, type_, p):
     except Exception as e:
         print(f"[loops] extraction fell back to rules: {e}")
         d = _rules_extract(msgs, type_)
-    due = d.get("due")
-    if not due:
-        due = (utcnow() + timedelta(hours=DEFAULT_DUE_HOURS[type_])).isoformat()
-    else:
+    due, guess = d.get("due"), False
+    if due:
         from .extract import norm_due
-        due = norm_due(due) or (utcnow() + timedelta(hours=DEFAULT_DUE_HOURS[type_])).isoformat()
+        due = norm_due(due)
+    if not due:
+        due, guess = (utcnow() + timedelta(hours=DEFAULT_DUE_HOURS[type_])).isoformat(), True
     other = next((m.sender_name for m in reversed(msgs) if not m.is_from_me), "")
     loop_id = store.create_loop(
         source=source, thread_id=thread_id, type=type_, person=d.get("person") or other,
@@ -62,6 +62,8 @@ def _create(store, decide, extract, source, thread_id, msgs, type_, p):
         consequence=d.get("consequence", "minor"), reversible=int(bool(d.get("reversible", True))),
         hard_deadline=int(bool(d.get("hard_deadline", False))), effort_h=d["effort_h"],
         stakes=d.get("stakes", ""), trigger_ts=msgs[-1].ts.isoformat())
+    if guess:
+        store.update_loop(loop_id, due_guess=1)
     store.log_decision(loop_id, QUESTIONS[type_], p, decide.name)
     return loop_id
 
@@ -251,7 +253,7 @@ def _detect_rules(store, decide, source, thread_id, msgs, extract=default_extrac
                     done_when=act["happened"], due=(utcnow() + timedelta(hours=48)).isoformat(), cost=45,
                     consequence="minor", reversible=1, hard_deadline=0, effort_h=0.25, stakes="",
                     trigger_ts=last.ts.isoformat())
-                store.update_loop(i, action=act["key"], link=act["link"] or None)
+                store.update_loop(i, action=act["key"], link=act["link"] or None, due_guess=1)
                 return created + [i]
             if not act and is_automated(last):
                 return created        # you can't reply to a no-reply address, and it asks nothing specific
@@ -311,6 +313,9 @@ def p_miss(store, loop):
     return min(0.99, p + 0.05 * (loop["snoozes"] or 0))
 
 
+ATTEND = re.compile(r"^(attend|go to|be at|interview|appointment)\b", re.I)
+
+
 def ranked(store):
     """Priority = P(miss) x cost / effort, with irreversible high-cost loops always first.
     Cost is adjusted by what you've told it mattered more or less than expected."""
@@ -319,6 +324,11 @@ def ranked(store):
     for l in store.loops("open"):
         if l["type"] == "meeting" and datetime.fromisoformat(l["due"]) < now - timedelta(hours=1):
             store.close_loop(l["id"], outcome="passed")   # a meeting that's over needs nothing from you
+    for l in store.loops("open"):
+        if l["type"] in ("task", "reply") and ATTEND.search(l["summary"] or "") and not l["due_guess"]:
+            store.update_loop(l["id"], type="meeting")
+        elif l["due_guess"] and datetime.fromisoformat(l["due"]) < now + timedelta(hours=12):
+            store.update_loop(l["id"], due=(now + timedelta(hours=48)).isoformat())   # no real deadline: it floats
     loops = [dict(l) for l in store.loops()]
     from .areas import classify
     for l in loops:
@@ -374,16 +384,20 @@ def plan(rows):
     now = utcnow()
     for r in rows:
         r["_ls"] = datetime.fromisoformat(r["forecast"]["latest_start"])
-    pressing = sorted([r for r in rows if r["forecast"]["level"] != "ok"
-                       or (r["tier"] == 0 and r["forecast"]["hours_left"] < 72)], key=lambda r: r["_ls"])
-    others = sorted([r for r in rows if r not in pressing], key=lambda r: -r["ev_per_hour"])
+    real = [r for r in rows if not r.get("due_guess")]
+    pressing = sorted([r for r in real if r["forecast"]["level"] != "ok"
+                       or (r["tier"] == 0 and r["forecast"]["hours_left"] < 72)], key=lambda r: (r["_ls"], -r["ev_per_hour"]))
+    # everything else: real deadlines soonest first, then things with no deadline by value
+    others = sorted([r for r in rows if r not in pressing],
+                    key=lambda r: (bool(r.get("due_guess")), r["_ls"] if not r.get("due_guess") else now, -r["ev_per_hour"]))
     # Quick pressing items can also be slotted in front of bigger pressing ones
     out, t = [], now
     queue = list(pressing)
     while queue:
         c = queue.pop(0)
         spare = (c["_ls"] - t).total_seconds() / 3600
-        candidates = sorted([o for o in others + queue if o["effort_adj"] <= 0.5 and o["type"] != "meeting"],
+        candidates = sorted([o for o in others + queue if o["effort_adj"] <= 0.5 and o["type"] != "meeting"
+                             and o["forecast"]["hours_left"] < 72 and not o.get("due_guess")],
                             key=lambda o: (o not in queue, -o["ev_per_hour"]))
         budget = spare / 2
         for o in candidates:
@@ -401,7 +415,11 @@ def plan(rows):
         out.append(c)
         t = max(t, now) + timedelta(hours=c["effort_adj"])
     for o in others:
-        o["why"] = "When you have a gap."
+        if o.get("due_guess"):
+            o["why"] = "No deadline. When you have a gap."
+        else:
+            at = o["_ls"].astimezone()
+            o["why"] = f"Start by {at:%a %H:%M}. It needs about {_dur(o['effort_adj'])}."
         out.append(o)
     for r in out:
         if r["type"] == "meeting":  # a meeting happens at its time; it isn't slotted in like a task
